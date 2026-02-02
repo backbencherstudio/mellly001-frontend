@@ -4,6 +4,7 @@ import * as React from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { Mail, Phone, MapPin, MoreVertical, Search } from "lucide-react";
 import { DataTable } from "@/components/reusable/Table";
+import Link from "next/link";
 
 type Employee = {
   id: string;
@@ -271,7 +272,7 @@ export default function EmployeesTable() {
           setPageSize(size);
         }}
         renderAction={() => (
-          <MoreVertical className="cursor-pointer text-gray-400" />
+          <Link href="#"><MoreVertical className="cursor-pointer text-gray-400" /></Link>
         )}
       />
     </div>
