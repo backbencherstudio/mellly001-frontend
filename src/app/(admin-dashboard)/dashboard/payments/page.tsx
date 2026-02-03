@@ -6,13 +6,31 @@ import {
   Search,
   CreditCard,
   Wallet,
+  Users,
+  UserCheck,
+  Calendar,
+  DollarSign,
+  Clock4,
+  CreditCardIcon,
+  DollarSignIcon,
 } from "lucide-react";
 import { DataTable } from "@/components/reusable/Table";
+import ArrowIcon from "@/components/icon/ArrowIcon";
 
 /* ================= TYPES ================= */
 type PaymentStatus = "completed" | "pending" | "refunded";
 
 type PaymentMethod = "Credit Card" | "Debit Card" | "Paypal" | "Wallet";
+
+type Stat = {
+  id: string;
+  title: string;
+  value: string;
+  revinew:string;
+  bg: string;
+  textcolor: string;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+};
 
 type Payment = {
   id: string;
@@ -27,6 +45,40 @@ type Payment = {
   method: PaymentMethod;
   status: PaymentStatus;
 };
+
+ const stats: Stat[] = [
+    {
+      id: "users",
+      title: "Total Homeowners",
+     value: "$480",
+     revinew:"Total Revenue",
+     icon: DollarSignIcon   ,
+     bg: "#00C950",
+      textcolor: "#155DFC",
+    },
+    {
+      id: "consults",
+      title: "10% commission earned",
+      value: "$48",
+      revinew: "Platform Fees",
+
+      icon: DollarSignIcon,
+      bg: "#2B7FFF",
+      textcolor: "#00A63E",
+    },
+    {
+      id: "simulations",
+      title: "Total payment records",
+      value: "86",
+      revinew: "Transactions",
+
+      icon: CreditCardIcon  ,
+      bg: "#AD46FF",
+      textcolor: "#9810FA",
+    },
+ 
+  
+  ];
 
 /* ================= DATA ================= */
 const payments: Payment[] = [
@@ -143,25 +195,29 @@ const columns: ColumnDef<Payment>[] = [
     cell: ({ row }) => (
       <div className="text-sm">
         <p>
-          <span className="text-gray-500">From:</span>{" "}
+          <span className="text-[#101828]">From:</span>{" "}
           {row.original.from}
         </p>
-        <p>
-          <span className="text-gray-500">To:</span>{" "}
-          {row.original.to}
+        <p className="text-gray-500">
+          To: {row.original.to}
         </p>
+
       </div>
     ),
   },
   {
     header: "Amount",
     cell: ({ row }) => (
-      <span className="font-semibold">${row.original.amount}</span>
+      <span className="font-bold text-base">${row.original.amount}</span>
     ),
   },
   {
     header: "Platform Fee",
-    cell: ({ row }) => `$${row.original.platformFee}`,
+    cell: ({ row }) => (
+      <p className="text-[#101828] text-base font-normal">
+        ${row.original.platformFee}
+      </p>
+    ),
   },
   {
     header: "Cleaner Earns",
@@ -219,45 +275,82 @@ export default function PaymentsTable() {
   }, [filtered, page, pageSize]);
 
   return (
-    <div className="space-y-6">
-      {/* 🔝 Top bar */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="relative w-full max-w-xl">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by transaction ID, booking number, or homeowner..."
-            className="w-full rounded-xl border px-11 py-2.5 text-sm"
-          />
+    <div>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 pb-6">
+        {stats.map((item) => {
+          const Icon = item.icon;
+
+          return (
+            <div
+              key={item.id}
+              className="flex justify-between gap-6 rounded-xl border border-[#E9E9E9]  p-5 shadow-[0px_4px_33px_8px_rgba(0,0,0,0.04)]"
+              style={{ backgroundColor: item.bg }} >
+              {/* Left */}
+              <div className="space-y-2 w-full ">
+                <div
+                  className="flex h-12 w-12 items-center justify-center rounded-xl"
+                  style={{ backgroundColor: item.bg }}
+                >
+                  <p className="text-[#DCFCE7] w-full whitespace-nowrap">{item.revinew}</p>
+                </div>
+                <p className="text-3xl font-bold text-white leading-100%">
+                  {item.value}
+                </p>
+                <p className="text-sm font-normal text-[#DCFCE7]">
+                  {item.title}
+                </p>
+
+              </div>
+
+              {/* Right Icon */}
+              <div>
+                <div className="text-sm ">
+                  <Icon
+                    className="h-5 w-5 text-white"
+
+                  />
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="space-y-6">
+        {/* 🔝 Top bar */}
+        <div className="flex items-center justify-between gap-4">
+          <div className="relative w-full ">
+            <Search className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by transaction ID, booking number, or homeowner..."
+              className="w-full rounded-xl border px-11 py-2.5 text-sm"
+            />
+          </div>
+
+          <div className="w-40">
+            <select className="h-full w-full rounded-lg border px-3 py-2 focus:outline-none text-[12px]">
+              <option value="">Sort by</option>
+              {/* <option value="name">Name</option>
+            <option value="date">Date</option> */}
+            </select>
+          </div>
         </div>
 
-        <button className="flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm text-gray-600">
-          Sort by
-          <svg width="14" height="14" viewBox="0 0 24 24">
-            <polyline
-              points="6 9 12 15 18 9"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            />
-          </svg>
-        </button>
+        {/* 📊 Table */}
+        <DataTable
+          columns={columns}
+          data={paginated}
+          page={page}
+          pageSize={pageSize}
+          total={filtered.length}
+          onPageChange={setPage}
+          onPageSizeChange={(size) => {
+            setPage(1);
+            setPageSize(size);
+          }}
+        />
       </div>
-
-      {/* 📊 Table */}
-      <DataTable
-        columns={columns}
-        data={paginated}
-        page={page}
-        pageSize={pageSize}
-        total={filtered.length}
-        onPageChange={setPage}
-        onPageSizeChange={(size) => {
-          setPage(1);
-          setPageSize(size);
-        }}
-      />
     </div>
   );
 }

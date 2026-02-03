@@ -68,7 +68,7 @@ export function DataTable<TData, TValue>({
             {table.getHeaderGroups().map((hg) => (
               <TableRow key={hg.id}>
                 {hg.headers.map((h) => (
-                  <TableHead key={h.id} className="px-6 py-4 bg-gray-50">
+                  <TableHead key={h.id} className="px-6 py-4 bg-[#F9FAFB] text-[#6A7282] font-normal text-[12px]">
                     {flexRender(h.column.columnDef.header, h.getContext())}
                   </TableHead>
                 ))}

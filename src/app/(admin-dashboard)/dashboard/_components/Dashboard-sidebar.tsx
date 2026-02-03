@@ -1,3 +1,8 @@
+import BookingIcon from "@/components/icon/BookingIcon";
+import CleanerIcon from "@/components/icon/CleanersIcon";
+import HomeWonerIcon from "@/components/icon/HomeWonerIcon";
+import JobAppruvalIcon from "@/components/icon/JobAppruvalIcon";
+import PaymentIcon from "@/components/icon/PaymentIcon";
 import {
   LayoutDashboard,
   Users,
@@ -24,30 +29,30 @@ export const SidebarData: SidebarDataType[] = [
     id: 2,
     name: "Homeowners",
     href: "/dashboard/homeowners",
-    icon: Users,
+    icon: HomeWonerIcon,
   },
   {
     id: 3,
     name: "Cleaners",
     href: "/dashboard/cleaners",
-    icon: Brain,
+    icon: CleanerIcon,
   },
   {
     id: 4,
     name: "Bookings",
     href: "/dashboard/booking",
-    icon: BriefcaseBusiness,
+    icon: BookingIcon,
   },
     {
     id: 4,
     name: "Payments",
     href: "/dashboard/payments",
-    icon: BriefcaseBusiness,
+    icon: PaymentIcon,
   },
   {
     id: 5,
     name: "Job Approvals",
     href: "/dashboard/jobAppruve",
-    icon: Settings,
+    icon: JobAppruvalIcon,
   },
 ];
