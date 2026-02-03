@@ -27,7 +27,7 @@ export default function DashboardSidebar() {
       <SidebarContent>
         <SidebarGroup>
        
-<div className="flex items-center gap-3 ">
+<div className="flex items-center gap-3 pb-10">
   {/* Logo Image – NEVER shrink */}
   <div className="shrink-1  ">
     <Image
@@ -70,10 +70,10 @@ export default function DashboardSidebar() {
           <Link href={item.href}>
             <Icon
               className={`h-4 w-4 ${
-                isActive ? "text-[#03652B]" : "text-muted-foreground"
+                isActive ? "text-[#03652B] font-semibold " : "text-muted-foreground"
               }`}
             />
-            <span>{item.name}</span>
+            <span className="text-base ">{item.name}</span>
           </Link>
         </SidebarMenuButton>
       </SidebarMenuItem>
