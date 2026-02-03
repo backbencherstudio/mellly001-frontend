@@ -195,12 +195,12 @@ const columns: ColumnDef<Employee>[] = [
       const initials = name.split(" ").map(n => n[0]).join("");
       return (
         <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-full bg-indigo-100 flex items-center justify-center font-semibold text-indigo-700">
+          <div className="h-9 w-9 rounded-full bg-[#E0E7FF] flex items-center justify-center font-semibold text-indigo-700">
             {initials}
           </div>
           <div>
-            <p className="font-medium">{name}</p>
-            <p className="text-xs text-gray-500">
+            <p className="font-normal text-base">{name}</p>
+            <p className="text-sm text-[#6A7282]">
               Joined {row.original.joined}
             </p>
           </div>
@@ -212,15 +212,15 @@ const columns: ColumnDef<Employee>[] = [
     header: "Contact",
     cell: ({ row }) => (
       <div className="space-y-1">
-        <p className="flex gap-2"><Mail size={14} />{row.original.email}</p>
-        <p className="flex gap-2"><Phone size={14} />{row.original.phone}</p>
+        <p className="flex gap-2 text-sm text-[#101828]"><Mail className="text-[#6A7282] mt-1" size={12} />{row.original.email}</p>
+        <p className="flex gap-2 text-[#6A7282]"><Phone size={12} className="text-[#6A7282] mt-1" />{row.original.phone}</p>
       </div>
     ),
   },
   {
     header: "Location",
     cell: ({ row }) => (
-      <div className="flex gap-2"><MapPin size={14} />{row.original.location}</div>
+      <div className="flex gap-2 text-[#101828]"><MapPin size={14} className="text-[#6A7282]" />{row.original.location}</div>
     ),
   },
   { accessorKey: "bookings", header: "Bookings" },
@@ -245,27 +245,77 @@ export default function EmployeesTable() {
   const [page, setPage] = React.useState(1);
   const [pageSize, setPageSize] = React.useState(8);
 
+  const [search, setSearch] = React.useState("");
+  const [sort, setSort] = React.useState("");
+
+  const filteredEmployees = React.useMemo(() => {
+    let data = employees;
+
+    // 🔍 search
+    if (search) {
+      const lower = search.toLowerCase();
+      data = data.filter((emp) =>
+        emp.name.toLowerCase().includes(lower)
+      );
+    }
+
+    // 🔃 sort
+    if (sort === "name-asc") {
+      data = [...data].sort((a, b) =>
+        a.name.localeCompare(b.name)
+      );
+    }
+
+    if (sort === "name-desc") {
+      data = [...data].sort((a, b) =>
+        b.name.localeCompare(a.name)
+      );
+    }
+
+    return data;
+  }, [search, sort]);
+
+
+
   const paginatedData = React.useMemo(() => {
-    const start = (page - 1) * pageSize;
-    return employees.slice(start, start + pageSize);
-  }, [page, pageSize]);
+  const start = (page - 1) * pageSize;
+  return filteredEmployees.slice(start, start + pageSize);
+}, [page, pageSize, filteredEmployees]);
+
+ 
 
   return (
     <div className="space-y-6">
-      <div className="relative w-72">
-        <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-        <input
-          placeholder="Search employee"
-          className="w-full rounded-lg border px-10 py-2"
-        />
-      </div>
+  <div className="relative flex w-full items-center gap-3">
+  {/* Search */}
+  <div className="relative flex-1">
+    <Search className="absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+    <input
+  placeholder="Search employee"
+  value={search}
+  onChange={(e) => setSearch(e.target.value)}
+  className="w-full rounded-lg border px-10 py-2 focus:outline-none"
+/>
+
+  </div>
+
+  {/* Sort */}
+  <div className="w-40">
+    <select className="h-full w-full rounded-lg border px-3 py-2 focus:outline-none text-[12px]">
+      <option value="">Sort by</option>
+      <option value="name">Name</option>
+      <option value="date">Date</option>
+    </select>
+  </div>
+</div>
+
 
       <DataTable
         columns={columns}
         data={paginatedData}
         page={page}
         pageSize={pageSize}
-        total={employees.length}
+        total={filteredEmployees.length}
         onPageChange={setPage}
         onPageSizeChange={(size) => {
           setPage(1);

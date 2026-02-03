@@ -3,11 +3,14 @@
 
 import React from "react";
 import {
-  ShoppingBag,
   Calendar,
-  UserRound,
+  Users,
+  UserCheck,
+  DollarSign,
+  Clock4,
 } from "lucide-react";
 import { LuUserPlus } from "react-icons/lu";
+import ArrowIcon from "@/components/icon/ArrowIcon";
 
 type Stat = {
   id: string;
@@ -32,56 +35,56 @@ export default function DashboardPage() {
   const stats: Stat[] = [
     {
       id: "users",
-      title: "New Leads",
-      value: "48",
-      percent: "+12% vs last week",
-      icon: LuUserPlus,
-      bg: "#EFF6FF",
+      title: "Total Homeowners",
+      value: "1,248",
+      percent: "+12%",
+      icon: Users   ,
+      bg: "#2B7FFF",
       textcolor: "#155DFC",
     },
     {
       id: "consults",
-      title: "Consults Booked",
-      value: "23",
-      percent: "+8% vs last week",
-      icon: Calendar,
-      bg: "#F0FDF4",
+      title: "Total Cleaners",
+      value: "342",
+      percent: "+8%",
+      icon: UserCheck ,
+      bg: "#00C950",
       textcolor: "#00A63E",
     },
     {
       id: "simulations",
-      title: "Simulations Created",
-      value: "35",
-      percent: "+15% vs last week",
-      icon: ShoppingBag,
-      bg: "#FAF5FF",
+      title: "Active Bookings",
+      value: "86",
+      percent: "+5%",
+      icon: Calendar ,
+      bg: "#AD46FF",
       textcolor: "#9810FA",
     },
     {
       id: "patients",
-      title: "Active Patients",
-      value: "142",
-      percent: "+5% vs last week",
-      icon: UserRound,
-      bg: "#FFF7ED",
+      title: "Total Revenue",
+      value: "$45,231",
+      percent: "+23%",
+      icon: DollarSign ,
+      bg: "#F0B100",
       textcolor: "#F54900",
     },
     {
       id: "users",
-      title: "New Leads",
-      value: "48",
-      percent: "+12% vs last week",
-      icon: LuUserPlus,
-      bg: "#EFF6FF",
+      title: "Completed Jobs",
+      value: "2,847",
+      percent: "+18%",
+      icon: ArrowIcon,
+      bg: "#615FFF",
       textcolor: "#155DFC",
     },
     {
       id: "consults",
-      title: "Consults Booked",
-      value: "23",
-      percent: "+8% vs last week",
-      icon: Calendar,
-      bg: "#F0FDF4",
+      title: "Pending Approvals",
+      value: "12",
+      percent: "-3%",
+      icon: Clock4 ,
+      bg: "#FF6900",
       textcolor: "#00A63E",
     },
   
@@ -148,15 +151,15 @@ export default function DashboardPage() {
                   style={{ backgroundColor: item.bg }}
                 >
                   <Icon
-                    className="h-5 w-5"
-                    style={{ color: item.textcolor }}
+                    className="h-5 w-5 text-white"
+                    
                   />
                 </div>
-                <p className="text-lg font-medium text-[#444950]">
+                <p className="text-sm font-normal text-[#4A5565]">
                   {item.title}
                 </p>
 
-                <p className="text-[32px] font-semibold text-[#444950] leading-10">
+                <p className="text-3xl font-bold text-[#101828] leading-100%">
                   {item.value}
                 </p>
 
@@ -165,8 +168,8 @@ export default function DashboardPage() {
 
               {/* Right Icon */}
               <div>
-                <div className="text-sm text-[#4CAF50]">
-                  {item.percent}
+                <div className="text-sm text-[#4CAF50] bg-[#F0FDF4] rounded-sm">
+                  <p className="px-2 py-1">{item.percent}</p>
                 </div>
               </div>
             </div>
@@ -195,7 +198,9 @@ export default function DashboardPage() {
                   </div>
                   <hr className="mt-3"/>
                   </div>
+                
                 </div>
+            
               })
             }
           </div>

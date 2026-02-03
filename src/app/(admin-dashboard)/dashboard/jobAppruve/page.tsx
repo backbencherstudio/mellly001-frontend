@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Pagination from "@/components/reusable/pagination";
+import { Search } from "lucide-react";
 
 /* ================= TYPES ================= */
 type Job = {
@@ -72,14 +73,78 @@ const jobs: Job[] = [
 export default function JobApprovals() {
   const [page, setPage] = React.useState(1);
   const [pageSize, setPageSize] = React.useState(2);
+  const [search, setSearch] = React.useState("");
+  const [sort, setSort] = React.useState("");
 
+  const processedJobs = React.useMemo(() => {
+    let data = jobs;
+
+    // 🔍 search (bookingNo / homeowner / cleaner)
+    if (search) {
+      const lower = search.toLowerCase();
+      data = data.filter(
+        (job) =>
+          job.bookingNo.toLowerCase().includes(lower) ||
+          job.homeowner.toLowerCase().includes(lower) ||
+          job.cleaner.toLowerCase().includes(lower)
+      );
+    }
+
+    // 🔃 sort
+    if (sort === "name-asc") {
+      data = [...data].sort((a, b) =>
+        a.homeowner.localeCompare(b.homeowner)
+      );
+    }
+
+    if (sort === "name-desc") {
+      data = [...data].sort((a, b) =>
+        b.homeowner.localeCompare(a.homeowner)
+      );
+    }
+
+    return data;
+  }, [search, sort]);
+
+  
+  
+  
   const paginatedJobs = React.useMemo(() => {
     const start = (page - 1) * pageSize;
-    return jobs.slice(start, start + pageSize);
-  }, [page, pageSize]);
+    return processedJobs.slice(start, start + pageSize);
+  }, [page, pageSize, processedJobs]);
+
 
   return (
     <div className="space-y-6">
+      <div className="relative flex w-full items-center gap-3">
+        {/* Search */}
+        <div className="relative flex-1">
+          <Search className="absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <input
+            placeholder="Search booking / homeowner / cleaner"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full rounded-lg border px-10 py-2 focus:outline-none"
+          />
+
+
+        </div>
+
+        {/* Sort */}
+        <div className="w-40">
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value)}
+            className="h-full w-full rounded-lg border px-3 py-2 text-[12px]"
+          >
+            <option value="">Sort by</option>
+            <option value="name-asc">Homeowner (A–Z)</option>
+            <option value="name-desc">Homeowner (Z–A)</option>
+          </select>
+
+        </div>
+      </div>
       {/* Job cards */}
       {paginatedJobs.map((job) => (
         <div
@@ -171,10 +236,10 @@ export default function JobApprovals() {
 
           {/* Actions */}
           <div className="flex gap-4 pt-2">
-            <button className="flex-1 rounded-lg bg-green-600 py-2 text-white font-medium hover:bg-green-700">
+            <button className="flex-1 rounded-lg bg-green-600 py-2 text-white font-medium hover:bg-green-700 cursor-pointer">
               ✓ Approve Job
             </button>
-            <button className="flex-1 rounded-lg bg-red-600 py-2 text-white font-medium hover:bg-red-700">
+            <button className="flex-1 rounded-lg bg-red-600 py-2 text-white font-medium hover:bg-red-700 cursor-pointer">
               ✕ Reject Job
             </button>
           </div>
@@ -185,14 +250,15 @@ export default function JobApprovals() {
       <Pagination
         page={page}
         pageSize={pageSize}
-        total={jobs.length}
-        totalPages={Math.ceil(jobs.length / pageSize)}
+        total={processedJobs.length}
+        totalPages={Math.ceil(processedJobs.length / pageSize)}
         onPageChange={setPage}
         onPageSizeChange={(size) => {
           setPage(1);
           setPageSize(size);
         }}
       />
+
     </div>
   );
 }
