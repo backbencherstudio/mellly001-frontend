@@ -12,7 +12,7 @@ export default function DashboardLayout({
       <div className="flex min-h-screen w-full">
         <DashboardSidebar />
 
-        <div className="flex flex-1 flex-col">
+        <div className="flex flex-1 flex-col min-w-0">
           {/* Header */}
           <header className="flex h-25 items-center gap-4 border-b pr-5 pl-4">
             <SidebarTrigger />
@@ -20,7 +20,7 @@ export default function DashboardLayout({
           </header>
 
           {/* Content */}
-          <main className="flex-1 bg-muted/40 p-6">
+          <main className="flex-1 bg-muted/40 p-6 overflow-auto">
             {children}
           </main>
         </div>

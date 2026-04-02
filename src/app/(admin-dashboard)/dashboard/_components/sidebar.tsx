@@ -22,7 +22,7 @@ export default function DashboardSidebar() {
   const router = useRouter();
 
   return (
-    // 🔥 এই লাইনটাই magic
+ 
     <Sidebar collapsible="icon">
       <SidebarContent>
         <SidebarGroup>
