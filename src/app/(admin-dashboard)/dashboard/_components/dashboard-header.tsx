@@ -22,7 +22,11 @@ const routeMeta: Record<
     title: "Cleaners",
     desc: "Manage all cleaner accounts and their activities.",
   },
-   "/dashboard/booking": {
+  "/dashboard/cleaner-request": {
+    title: "Cleaners Request",
+    desc: "Manage all homeowner accounts and their activities.",
+  },
+  "/dashboard/booking": {
     title: "Bookings",
     desc: "Manage all Bookings accounts and their activities.",
   },
@@ -33,6 +37,10 @@ const routeMeta: Record<
   "/dashboard/jobAppruve": {
     title: "Job Approvals",
     desc: "Approve or reject job requests from homeowners.",
+  },
+  "/dashboard/danger-request": {
+    title: "Danger Request",
+    desc: "Manage all homeowner accounts and their activities.",
   },
 };
 
@@ -56,16 +64,16 @@ const DashboardHeader = () => {
         </div>
 
         {/* Right */}
-       <div className="relative">
-         <div>
+        <div className="relative">
+          <div>
             <Link href="#">
-          <NotificationsIcon />
-        </Link>
-        </div>
-        <div className="absolute -top-1 right-1">
+              <NotificationsIcon />
+            </Link>
+          </div>
+          <div className="absolute -top-1 right-1">
             <div className="h-3 w-3 bg-red-500 rounded-full"></div>
+          </div>
         </div>
-       </div>
       </div>
     </div>
   );

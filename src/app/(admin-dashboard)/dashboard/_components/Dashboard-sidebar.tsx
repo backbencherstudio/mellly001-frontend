@@ -9,6 +9,7 @@ import {
   Brain,
   Settings,
   BriefcaseBusiness,
+  TriangleAlert,
 } from "lucide-react";
 
 export interface SidebarDataType {
@@ -38,12 +39,18 @@ export const SidebarData: SidebarDataType[] = [
     icon: CleanerIcon,
   },
   {
+    id: 3,
+    name: "Cleaner Request",
+    href: "/dashboard/cleaner-request",
+    icon: Users,
+  },
+  {
     id: 4,
     name: "Bookings",
     href: "/dashboard/booking",
     icon: BookingIcon,
   },
-    {
+  {
     id: 4,
     name: "Payments",
     href: "/dashboard/payments",
@@ -54,5 +61,12 @@ export const SidebarData: SidebarDataType[] = [
     name: "Job Approvals",
     href: "/dashboard/jobAppruve",
     icon: JobAppruvalIcon,
+  },
+
+  {
+    id: 5,
+    name: "Danger Request",
+    href: "/dashboard/danger-request",
+    icon: TriangleAlert,
   },
 ];
