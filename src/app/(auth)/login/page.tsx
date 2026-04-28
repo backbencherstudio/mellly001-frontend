@@ -1,5 +1,7 @@
 "use client"
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
 interface LoginFormInputs {
@@ -8,23 +10,55 @@ interface LoginFormInputs {
 }
 
 export default function AdminLogin() {
+
+  const FAKE_EMAIL = "admin@gmail.com";
+  const FAKE_PASSWORD = "123";
+  const router = useRouter();
+  const [token, setToken] = useState<string | null>(null);
+
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm <LoginFormInputs >();
+  } = useForm<LoginFormInputs>();
 
-  const onSubmit = (data :LoginFormInputs ) => {
-    console.log("Login Data:", data);
+  const onSubmit = (data: LoginFormInputs) => {
+    if (data.email === FAKE_EMAIL && data.password === FAKE_PASSWORD) {
+
+      const fakeToken = "my_fake_jwt_token_123";
+
+      localStorage.setItem("token", fakeToken);
+      setToken(fakeToken);
+
+      // redirect to dashboard
+      router.push("/dashboard");
+
+    } else {
+      alert("Invalid email or password");
+    }
   };
 
+  useEffect(() => {
+    const savedToken = localStorage.getItem("token");
+
+    if (savedToken) {
+      setTimeout(() => {
+        setToken(savedToken);
+      }, 0);
+    }
+  }, []);
+
+  const logout = () => {
+    localStorage.removeItem("token");
+    setToken(null);
+  };
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F9FEF0]">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8">
-        
+
         {/* Logo */}
         <div className="flex justify-center mb-6">
-          <Image src="/assets/images/authlogo.png" width={210} height={38} alt="auth logo"/>
+          <Image src="/assets/images/authlogo.png" width={210} height={38} alt="auth logo" />
         </div>
 
         {/* Title */}
@@ -37,7 +71,7 @@ export default function AdminLogin() {
 
         {/* Form */}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          
+
           {/* Email */}
           <div className="relative">
             <label className="text-sm text-gray-600 absolute bg-white left-4 -top-1 px-2">Email Address</label>
@@ -75,7 +109,7 @@ export default function AdminLogin() {
           {/* Button */}
           <button
             type="submit"
-            className="w-full bg-green-700 hover:bg-green-800 text-white py-3 rounded-full font-semibold transition"
+            className="w-full bg-[#03652B] hover:bg-green-700 text-white py-3 rounded-full font-semibold transition"
           >
             Sign in
           </button>
@@ -83,7 +117,7 @@ export default function AdminLogin() {
 
         {/* Demo Info */}
         <p className="text-center text-sm text-gray-500 mt-6">
-          Demo: Use 
+          Demo: Use
           <span className="font-medium">
             admin@example.com / password123
           </span>
