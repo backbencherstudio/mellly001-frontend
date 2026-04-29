@@ -82,8 +82,8 @@ export function DangerDetails({ id }: { id: string }) {
                     </div>
 
                     <div className="gap-4 flex flex-col md:flex-row">
-                        <button className="text-red-500 font-bold text-base py-3.5 border border-red-500 border-2 cursor-pointer text-center px-25 rounded-lg">Reject Application</button>
-                        <button className="text-white bg-green-800 font-bold text-base py-3.5  cursor-pointer text-center px-25 rounded-lg">Approve & Verify</button>
+                        <button className="text-red-500 font-bold text-base py-3.5 border border-red-500 border-2 cursor-pointer whitespace-nowrap text-center md:px-20 lg:px-25 rounded-lg">Reject Application</button>
+                        <button className="text-white bg-green-800 font-bold text-base py-3.5 whitespace-nowrap cursor-pointer text-center md:px-20 lg:px-25 rounded-lg">Approve & Verify</button>
                     </div>
 
 

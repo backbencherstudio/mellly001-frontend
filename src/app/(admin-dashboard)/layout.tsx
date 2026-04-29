@@ -2,8 +2,10 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import DashboardSidebar from "./dashboard/_components/sidebar";
 import DashboardHeader from "./dashboard/_components/dashboard-header";
+import { SidebarAutoClose } from "@/components/SidebarClose/SidebarAutoClose";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Sidebar } from "lucide-react";
 
 export default function DashboardLayout({
   children,
@@ -11,26 +13,28 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
 
-  const [isAuth, setIsAuth] = useState<boolean | null>(null);
   const router = useRouter();
 
+  const [checked, setChecked] = useState(false);
   useEffect(() => {
     const token = localStorage.getItem("token");
-
     if (!token) {
       router.push("/login");
+
     } else {
-      setIsAuth(true);
+      setChecked(true);
     }
-  }, []);
+  }, [router]);
+  if (!checked) return null;
 
 
-  if (isAuth === null) {
-    return <div className="p-6">Loading...</div>;
-  }
+
+
 
   return (
     <SidebarProvider>
+      <SidebarAutoClose />
+
       <div className="flex min-h-screen w-full">
         <DashboardSidebar />
 
@@ -47,6 +51,6 @@ export default function DashboardLayout({
           </main>
         </div>
       </div>
-    </SidebarProvider>
+    </SidebarProvider >
   );
 }

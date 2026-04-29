@@ -24,13 +24,13 @@ export function DialogScrollableContent({ id }: { id: string }) {
                     <Eye size={16} />
                 </button>
             </DialogTrigger>
-            <DialogContent className="max-h-[85vh] overflow-y-auto !max-w-[90vw] !w-[800px]">
+            <DialogContent className="max-h-[85vh] overflow-y-auto !max-w-[90vw] !w-[800px] ">
                 <DialogHeader>
                     <DialogTitle className="text-2xl font-bold ">Maid Details</DialogTitle>
                 </DialogHeader>
                 <p className="text-sm font-normal text-[#6A7282]">Review complete profile information</p>
 
-                <div className="space-y-4 mt-4">
+                <div className="space-y-4 mt-4   ">
 
                     <p className="text-[#03652B] font-bold text-lg">Personal Information</p>
                     <div className="grid grid-cols-2 gap-4">
@@ -79,12 +79,9 @@ export function DialogScrollableContent({ id }: { id: string }) {
                     </div>
 
                     <div className="gap-4 flex flex-col md:flex-row">
-                        <button className="text-red-500 font-bold text-base py-3.5 border border-red-500 border-2 cursor-pointer text-center px-25 rounded-lg">Reject Application</button>
-                        <button className="text-white bg-green-800 font-bold text-base py-3.5  cursor-pointer text-center px-25 rounded-lg">Approve & Verify</button>
+                        <button className="text-red-500 font-bold text-base py-3.5 border border-red-500 border-2 cursor-pointer text-center md:px-20 lg:px-25 rounded-lg whitespace-nowrap ">Reject Application</button>
+                        <button className="text-white bg-green-800 font-bold text-base py-3.5  cursor-pointer text-center md:px-20 lg:px-25 rounded-lg  whitespace-nowrap ">Approve & Verify</button>
                     </div>
-
-
-
                 </div>
             </DialogContent>
         </Dialog>

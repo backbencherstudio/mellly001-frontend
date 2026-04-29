@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { DataTable } from "@/components/reusable/Table";
 import { DialogScrollableContent } from "@/components/dashboard/CleanerRequest/CleanerRequest";
+import Link from "next/link";
 
 /* ================= TYPES ================= */
 type Employee = {
@@ -187,6 +188,7 @@ export default function CleanerRequest() {
     const [pageSize, setPageSize] = React.useState(8);
     const [search, setSearch] = React.useState("");
 
+
     /* search filter */
     const filteredData = React.useMemo(() => {
         if (!search) return employees;
@@ -263,9 +265,9 @@ export default function CleanerRequest() {
                         <button onClick={() => handleEdit(row)} className="p-1 hover:bg-gray-100 rounded">
                             <Check size={16} />
                         </button>
-                        <button onClick={() => handleDelete(row)} className="p-1 hover:bg-red-100 rounded text-red-600">
+                        <Link href={`/dashboard/cleaner-request/${row.id}`} className="p-1 hover:bg-red-100 rounded text-red-600">
                             <X size={16} />
-                        </button>
+                        </Link>
                     </div>
                 )}
             />

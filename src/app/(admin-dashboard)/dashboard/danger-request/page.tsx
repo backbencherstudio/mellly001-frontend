@@ -18,6 +18,7 @@ import {
 import { DataTable } from "@/components/reusable/Table";
 import { DialogScrollableContent } from "@/components/dashboard/CleanerRequest/CleanerRequest";
 import { DangerDetails } from "@/components/dashboard/DangerDetails/DangerDetails";
+import { LineChart } from "../_components/TotalUserGraph";
 
 /* ================= TYPES ================= */
 type Employee = {
@@ -184,6 +185,7 @@ const columns: ColumnDef<Employee>[] = [
 
 /* ================= COMPONENT ================= */
 export default function CleanerRequest() {
+
     const [page, setPage] = React.useState(1);
     const [pageSize, setPageSize] = React.useState(8);
     const [search, setSearch] = React.useState("");
@@ -266,6 +268,8 @@ export default function CleanerRequest() {
                     </div>
                 )}
             />
+
+
         </div>
     );
 }
