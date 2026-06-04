@@ -231,7 +231,7 @@ export default function BookingsList() {
         ))}
       </div>
 
-      {/* 🔽 Pagination */}
+      {/*  Pagination */}
       <Pagination
         page={page}
         pageSize={pageSize}

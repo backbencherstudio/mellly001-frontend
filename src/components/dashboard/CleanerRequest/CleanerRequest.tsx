@@ -1,5 +1,4 @@
 "use client"
-import { employees } from "@/app/(admin-dashboard)/dashboard/cleaner-request/page";
 import { Button } from "@/components/ui/button"
 import {
     Dialog,
@@ -10,9 +9,7 @@ import {
 } from "@/components/ui/dialog"
 import { Eye } from "lucide-react";
 
-export function DialogScrollableContent({ id }: { id: string }) {
-
-    const employee = employees.find(emp => emp.id === id);
+export function DialogScrollableContent({ data: employee }: { data: any }) {
     if (!employee) {
         return <div>No data found</div>;
     }
@@ -44,12 +41,12 @@ export function DialogScrollableContent({ id }: { id: string }) {
                         </div>
                         <div>
                             <p className="text-sm text-gray-500">Phone</p>
-                            <p className="font-medium text-[#101828] text-sm">{employee.phone}</p>
+                            <p className="font-medium text-[#101828] text-sm">{employee.phone_number || "N/A"}</p>
                         </div>
 
                         <div>
                             <p className="text-sm text-gray-500">Applied Date</p>
-                            <p className="font-medium">{employee.data}</p>
+                            <p className="font-medium">{employee.applied_date ? new Date(employee.applied_date).toLocaleDateString("en-GB") : "N/A"}</p>
                         </div>
 
 
@@ -69,9 +66,9 @@ export function DialogScrollableContent({ id }: { id: string }) {
                         </div>
                         <div>
                             <p className="text-sm text-gray-500">Status</p>
-                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${employee.status === "active" ? "bg-green-100 text-green-700" :
-                                employee.status === "busy" ? "bg-yellow-100 text-yellow-700" :
-                                    "bg-gray-100 text-gray-600"
+                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${employee.status === "approved" ? "bg-green-100 text-green-700" :
+                                employee.status === "pending" ? "bg-yellow-100 text-yellow-700" :
+                                    "bg-red-100 text-red-700"
                                 }`}>
                                 {employee.status}
                             </span>

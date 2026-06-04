@@ -1,3 +1,4 @@
+import StoreProviders from "@/redux/StoreProviders";
 
 export default function AuthLayout({
   children,
@@ -6,12 +7,15 @@ export default function AuthLayout({
 }) {
   return (
 
-<div>
+    <div>
       <main className="">
-            {children}
-          </main>
-</div>
-        
-      
+
+        {children}
+
+
+      </main>
+    </div>
+
+
   );
 }

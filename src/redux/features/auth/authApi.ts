@@ -6,7 +6,7 @@ export const adminApi = baseApi.injectEndpoints({
     // 🔹 Get All Merchants
     login: builder.mutation({
       query: (data) => ({
-        url: "/login",
+        url: "auth/login",
         method: "POST",
         body: data,
       }),

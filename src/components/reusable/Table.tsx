@@ -28,6 +28,7 @@ type DataTableProps<TData, TValue> = {
   onPageChange?: (page: number) => void;
   onPageSizeChange?: (size: number) => void;
   renderAction?: (row: TData) => React.ReactNode;
+  loading?: boolean;
 };
 
 export function DataTable<TData, TValue>({
@@ -39,6 +40,7 @@ export function DataTable<TData, TValue>({
   onPageChange,
   onPageSizeChange,
   renderAction,
+  loading,
 }: DataTableProps<TData, TValue>) {
   const totalPages = Math.ceil(total / pageSize);
 
@@ -77,18 +79,38 @@ export function DataTable<TData, TValue>({
           </TableHeader>
 
           <TableBody>
-            {table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id} className="hover:bg-gray-50">
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id} className="px-6 py-4">
-                    {flexRender(
-                      cell.column.columnDef.cell,
-                      cell.getContext()
-                    )}
-                  </TableCell>
-                ))}
+            {loading ? (
+              <TableRow>
+                <TableCell
+                  colSpan={finalColumns.length}
+                  className="h-24 text-center"
+                >
+                  Loading...
+                </TableCell>
               </TableRow>
-            ))}
+            ) : table.getRowModel().rows.length > 0 ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id} className="hover:bg-gray-50">
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id} className="px-6 py-4">
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={finalColumns.length}
+                  className="h-24 text-center"
+                >
+                  No results.
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </div>

@@ -6,6 +6,7 @@ import { SidebarAutoClose } from "@/components/SidebarClose/SidebarAutoClose";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Sidebar } from "lucide-react";
+import StoreProviders from "@/redux/StoreProviders";
 
 export default function DashboardLayout({
   children,
@@ -33,24 +34,27 @@ export default function DashboardLayout({
 
   return (
     <SidebarProvider>
-      <SidebarAutoClose />
+      <StoreProviders>
+        <SidebarAutoClose />
 
-      <div className="flex min-h-screen w-full">
-        <DashboardSidebar />
+        <div className="flex min-h-screen w-full">
+          <DashboardSidebar />
 
-        <div className="flex flex-1 flex-col min-w-0">
-          {/* Header */}
-          <header className="flex h-25 items-center gap-4 border-b pr-5 pl-4">
-            <SidebarTrigger />
-            <DashboardHeader />
-          </header>
+          <div className="flex flex-1 flex-col min-w-0">
+            {/* Header */}
+            <header className="flex h-25 items-center gap-4 border-b pr-5 pl-4">
+              <SidebarTrigger />
+              <DashboardHeader />
+            </header>
 
-          {/* Content */}
-          <main className="flex-1 bg-muted/40 p-6 overflow-auto">
-            {children}
-          </main>
+            {/* Content */}
+            <main className="flex-1 bg-muted/40 p-6 overflow-auto">
+              {children}
+            </main>
+          </div>
         </div>
-      </div>
+      </StoreProviders>
+
     </SidebarProvider >
   );
 }

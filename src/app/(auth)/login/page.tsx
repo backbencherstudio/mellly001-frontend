@@ -1,4 +1,6 @@
 "use client"
+import Cookies from "js-cookie";
+import { useLoginMutation } from "@/redux/features/auth/authApi";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -10,9 +12,7 @@ interface LoginFormInputs {
 }
 
 export default function AdminLogin() {
-
-  const FAKE_EMAIL = "admin@gmail.com";
-  const FAKE_PASSWORD = "123";
+  const [login, { isLoading }] = useLoginMutation();
   const router = useRouter();
   const [token, setToken] = useState<string | null>(null);
 
@@ -22,20 +22,41 @@ export default function AdminLogin() {
     formState: { errors },
   } = useForm<LoginFormInputs>();
 
-  const onSubmit = (data: LoginFormInputs) => {
-    if (data.email === FAKE_EMAIL && data.password === FAKE_PASSWORD) {
+  const onSubmit = async (data: LoginFormInputs) => {
+    try {
+      const res = await login(data).unwrap();
 
-      const fakeToken = "my_fake_jwt_token_123";
+      // Matches your backend response structure
+      const accessToken = res?.authorization?.access_token;
+      const userType = res?.type;
 
-      localStorage.setItem("token", fakeToken);
-      setToken(fakeToken);
+      if (accessToken) {
+        localStorage.setItem("token", accessToken);
+        localStorage.setItem("userType", userType);
 
-      // redirect to dashboard
-      router.push("/dashboard");
+        // Set cookies for Middleware using js-cookie
+        Cookies.set("token", accessToken, { expires: 1, path: "/" });
+        Cookies.set("userType", userType, { expires: 1, path: "/" });
 
-    } else {
-      alert("Invalid email or password");
+        if (userType === "ADMIN") {
+          router.push("/dashboard");
+        } else {
+          router.push("/user/dashboard");
+        }
+      }
+    } catch (error) {
+      console.error("Login failed:", error);
     }
+  };
+
+  const logout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("userType");
+    // Properly clear cookies using js-cookie
+    Cookies.remove("token", { path: "/" });
+    Cookies.remove("userType", { path: "/" });
+    setToken(null);
+    router.push("/login");
   };
 
   useEffect(() => {
@@ -48,10 +69,6 @@ export default function AdminLogin() {
     }
   }, []);
 
-  const logout = () => {
-    localStorage.removeItem("token");
-    setToken(null);
-  };
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F9FEF0]">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8">
@@ -109,9 +126,10 @@ export default function AdminLogin() {
           {/* Button */}
           <button
             type="submit"
-            className="w-full bg-[#03652B] hover:bg-green-700 text-white py-3 rounded-full font-semibold transition"
+            disabled={isLoading}
+            className="w-full bg-[#03652B] hover:bg-green-700 text-white py-3 rounded-full font-semibold transition disabled:opacity-50"
           >
-            Sign in
+            {isLoading ? "Signing in..." : "Sign in"}
           </button>
         </form>
 
