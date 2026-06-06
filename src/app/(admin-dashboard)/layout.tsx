@@ -1,4 +1,5 @@
 "use client"
+import Cookies from "js-cookie";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import DashboardSidebar from "./dashboard/_components/sidebar";
 import DashboardHeader from "./dashboard/_components/dashboard-header";
@@ -18,7 +19,7 @@ export default function DashboardLayout({
 
   const [checked, setChecked] = useState(false);
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token = Cookies.get("token");
     if (!token) {
       router.push("/login");
 

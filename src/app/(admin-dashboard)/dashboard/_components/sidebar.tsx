@@ -2,6 +2,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
+import Cookies from "js-cookie";
 import Link from "next/link";
 import {
   Sidebar,
@@ -22,7 +23,8 @@ export default function DashboardSidebar() {
   const router = useRouter();
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
+    Cookies.remove("token");
+    Cookies.remove("userType");
     router.push("/login");
   };
 

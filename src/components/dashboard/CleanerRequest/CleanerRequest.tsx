@@ -7,13 +7,40 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog"
+import { useUpdateCleanerRequestMutation } from "@/redux/features/dashboardOverView/dashboardOverView";
 import { Eye } from "lucide-react";
+import { toast } from "sonner";
 
 export function DialogScrollableContent({ data: employee }: { data: any }) {
     if (!employee) {
         return <div>No data found</div>;
     }
+    const [updateCleanerRequest, { isLoading }] = useUpdateCleanerRequestMutation();
+    const handleApprove = async () => {
+        try {
+            await updateCleanerRequest({
+                id: employee.id,
+                status: "VERIFIED",
+            }).unwrap();
 
+            toast.success("Cleaner approved successfully");
+        } catch (error) {
+            toast.error("Failed to approve cleaner request");
+        }
+    };
+
+    const handleReject = async () => {
+        try {
+            await updateCleanerRequest({
+                id: employee.id,
+                status: "REJECTED",
+            }).unwrap();
+
+            toast.success("Cleaner rejected successfully");
+        } catch (error) {
+            toast.error("Failed to reject cleaner request");
+        }
+    };
     return (
         <Dialog >
             <DialogTrigger asChild >
@@ -76,8 +103,20 @@ export function DialogScrollableContent({ data: employee }: { data: any }) {
                     </div>
 
                     <div className="gap-4 flex flex-col md:flex-row">
-                        <button className="text-red-500 font-bold text-base py-3.5 border border-red-500 border-2 cursor-pointer text-center md:px-20 lg:px-25 rounded-lg whitespace-nowrap ">Reject Application</button>
-                        <button className="text-white bg-green-800 font-bold text-base py-3.5  cursor-pointer text-center md:px-20 lg:px-25 rounded-lg  whitespace-nowrap ">Approve & Verify</button>
+                        <button
+                            className="text-red-500 font-bold text-base py-3.5 border border-red-500 border-2 cursor-pointer text-center md:px-20 lg:px-25 rounded-lg whitespace-nowrap disabled:opacity-50"
+                            onClick={handleReject}
+                            disabled={isLoading}
+                        >
+                            {isLoading ? "Processing..." : "Reject Application"}
+                        </button>
+                        <button
+                            className="text-white bg-green-800 font-bold text-base py-3.5  cursor-pointer text-center md:px-20 lg:px-25 rounded-lg  whitespace-nowrap disabled:opacity-50"
+                            onClick={handleApprove}
+                            disabled={isLoading}
+                        >
+                            {isLoading ? "Processing..." : "Approve & Verify"}
+                        </button>
                     </div>
                 </div>
             </DialogContent>

@@ -86,12 +86,16 @@ const columns: ColumnDef<Employee>[] = [
 
 export default function EmployeesTable() {
   const [page, setPage] = React.useState(1);
-  const [pageSize, setPageSize] = React.useState(8);
-
+  const [pageSize, setPageSize] = React.useState(10);
   const [search, setSearch] = React.useState("");
   const [sort, setSort] = React.useState("");
 
-  const { data, isLoading } = useGetHomeownersQuery({})
+  const { data, isLoading } = useGetHomeownersQuery({
+    search,
+    orderby: sort, // backend will handle
+    page,
+    perPage: pageSize,
+  });
 
   const homeowners = data?.data?.data || [];
   const filteredEmployees = React.useMemo(() => {
@@ -132,7 +136,10 @@ export default function EmployeesTable() {
           <input
             placeholder="Search employee"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setPage(1);
+              setSearch(e.target.value);
+            }}
             className="w-full rounded-lg border px-10 py-2 focus:outline-none"
           />
 

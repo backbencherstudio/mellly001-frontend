@@ -18,7 +18,8 @@ import {
 import { DataTable } from "@/components/reusable/Table";
 import { DialogScrollableContent } from "@/components/dashboard/CleanerRequest/CleanerRequest";
 import Link from "next/link";
-import { useGetCleanerRequestQuery } from "@/redux/features/dashboardOverView/dashboardOverView";
+import { useGetCleanerRequestQuery, useUpdateCleanerRequestMutation } from "@/redux/features/dashboardOverView/dashboardOverView";
+import { toast } from "sonner";
 
 /* ================= TYPES ================= */
 type Employee = {
@@ -118,7 +119,8 @@ export default function CleanerRequest() {
     const [search, setSearch] = React.useState("");
     const [sort, setSort] = React.useState("");
 
-    const { data, isLoading } = useGetCleanerRequestQuery({});
+    const { data, isLoading } = useGetCleanerRequestQuery(undefined);
+    const [updateCleanerRequest] = useUpdateCleanerRequestMutation();
     const cleaners = data?.data?.data || [];
 
     /* search filter */
@@ -152,8 +154,16 @@ export default function CleanerRequest() {
     }, [filteredData, page, pageSize]);
 
 
-    const handleEdit = (employee: Employee) => {
-        console.log("Edit:", employee);
+    const handleApprove = async (employee: Employee) => {
+        try {
+            await updateCleanerRequest({
+                id: employee.id,
+                status: "approved",
+            }).unwrap();
+            toast.success("Cleaner approved successfully");
+        } catch (error) {
+            toast.error("Failed to approve cleaner request");
+        }
     };
 
     return (
@@ -199,7 +209,7 @@ export default function CleanerRequest() {
                 renderAction={(row) => (
                     <div className="flex gap-2">
                         <DialogScrollableContent data={row} />
-                        <button onClick={() => handleEdit(row)} className="p-1 hover:bg-gray-100 rounded">
+                        <button onClick={() => handleApprove(row)} className="p-1 hover:bg-green-100 rounded text-green-600" title="Approve">
                             <Check size={16} />
                         </button>
                         <Link href={`/dashboard/cleaner-request/${row.id}`} className="p-1 hover:bg-red-100 rounded text-red-600">

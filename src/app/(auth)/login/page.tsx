@@ -26,23 +26,24 @@ export default function AdminLogin() {
     try {
       const res = await login(data).unwrap();
 
-      // Matches your backend response structure
       const accessToken = res?.authorization?.access_token;
       const userType = res?.type;
 
       if (accessToken) {
-        localStorage.setItem("token", accessToken);
-        localStorage.setItem("userType", userType);
+        Cookies.set("token", accessToken, {
+          path: "/",
+          sameSite: "strict",
+        });
 
-        // Set cookies for Middleware using js-cookie
-        Cookies.set("token", accessToken, { expires: 1, path: "/" });
-        Cookies.set("userType", userType, { expires: 1, path: "/" });
+        Cookies.set("userType", userType, {
+          path: "/",
+          sameSite: "strict",
+        });
 
-        if (userType === "ADMIN") {
-          router.push("/dashboard");
-        } else {
-          router.push("/user/dashboard");
-        }
+        const redirectPath =
+          userType === "ADMIN" ? "/dashboard" : "/user/dashboard";
+
+        router.replace(redirectPath);
       }
     } catch (error) {
       console.error("Login failed:", error);
@@ -50,24 +51,39 @@ export default function AdminLogin() {
   };
 
   const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("userType");
-    // Properly clear cookies using js-cookie
     Cookies.remove("token", { path: "/" });
     Cookies.remove("userType", { path: "/" });
+
     setToken(null);
     router.push("/login");
   };
 
-  useEffect(() => {
-    const savedToken = localStorage.getItem("token");
+  // useEffect(() => {
+  //   const savedToken = Cookies.get("token");
+  //   const userType = Cookies.get("userType");
 
-    if (savedToken) {
-      setTimeout(() => {
-        setToken(savedToken);
-      }, 0);
+  //   if (savedToken) {
+  //     if (userType === "ADMIN") {
+  //       router.push("/dashboard");
+  //     } else {
+  //       router.push("/user/dashboard");
+  //     }
+  //   }
+  // }, [router]);
+
+  useEffect(() => {
+    const savedToken = Cookies.get("token");
+    const userType = Cookies.get("userType");
+
+    if (!savedToken) return;
+
+    if (userType === "ADMIN") {
+      router.replace("/dashboard");
+    } else {
+      router.replace("/user/dashboard");
     }
   }, []);
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F9FEF0]">
@@ -134,12 +150,12 @@ export default function AdminLogin() {
         </form>
 
         {/* Demo Info */}
-        <p className="text-center text-sm text-gray-500 mt-6">
+        {/* <p className="text-center text-sm text-gray-500 mt-6">
           Demo: Use
           <span className="font-medium">
             admin@example.com / password123
           </span>
-        </p>
+        </p> */}
       </div>
     </div>
   );

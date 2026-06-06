@@ -16,10 +16,11 @@ export const dashboardOverViewApi = baseApi.injectEndpoints({
             },
         }),
         getHomeowners: builder.query({
-            query: () => {
+            query: (params) => {
                 return {
                     url: "dashboard/homeowners/details",
-                    method: "GET"
+                    method: "GET",
+                    params
                 }
             }
         }),
@@ -35,12 +36,29 @@ export const dashboardOverViewApi = baseApi.injectEndpoints({
             query: () => {
                 return {
                     url: "dashboard/cleaners/request",
-                    method: "GET"
+                    method: "GET",
                 }
-            }
-        })
+            },
+            providesTags: ["CleanerRequest"],
+        }),
+        updateCleanerRequest: builder.mutation({
+            query: ({ id, status }) => ({
+                url: `dashboard/cleaners/request/${id}`,
+                method: "PATCH",
+                body: { status },
+            }),
+            invalidatesTags: ["CleanerRequest"],
+        }),
+
+        getBookingDetaials: builder.query({
+            query: (params) => ({
+                url: "dashboard/bookings/details",
+                method: "GET",
+                params,
+            }),
+        }),
     }),
 });
 
-export const { useGetDashboardOverviewQuery, useGetHomeownersQuery, useGetCleanersQuery, useGetCleanerRequestQuery } = dashboardOverViewApi;
+export const { useGetDashboardOverviewQuery, useGetHomeownersQuery, useGetCleanersQuery, useGetCleanerRequestQuery, useUpdateCleanerRequestMutation, useGetBookingDetaialsQuery, } = dashboardOverViewApi;
 
