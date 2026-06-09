@@ -15,6 +15,6 @@ export const baseApi = createApi({
     },
   }),
 
-  tagTypes: ["CleanerRequest"],
+  tagTypes: ["CleanerRequest", "JobApproval"],
   endpoints: () => ({}),
 });

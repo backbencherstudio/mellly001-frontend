@@ -1,3 +1,4 @@
+import { Toaster } from "@/components/ui/sonner";
 import StoreProviders from "@/redux/StoreProviders";
 
 export default function AuthLayout({
@@ -9,7 +10,7 @@ export default function AuthLayout({
 
     <div>
       <main className="">
-
+        <Toaster />
         {children}
 
 

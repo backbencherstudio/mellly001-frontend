@@ -92,7 +92,7 @@ export default function EmployeesTable() {
 
   const { data, isLoading } = useGetHomeownersQuery({
     search,
-    orderby: sort, // backend will handle
+
     page,
     perPage: pageSize,
   });

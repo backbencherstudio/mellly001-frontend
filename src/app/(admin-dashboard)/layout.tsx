@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Sidebar } from "lucide-react";
 import StoreProviders from "@/redux/StoreProviders";
+import { Toaster } from "sonner";
 
 export default function DashboardLayout({
   children,
@@ -50,6 +51,15 @@ export default function DashboardLayout({
 
             {/* Content */}
             <main className="flex-1 bg-muted/40 p-6 overflow-auto">
+              <Toaster
+                position="top-right"
+                toastOptions={{
+                  style: {
+                    background: "#008000",
+                    color: "#fff",
+                  },
+                }}
+              />
               {children}
             </main>
           </div>

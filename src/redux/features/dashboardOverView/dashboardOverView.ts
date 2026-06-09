@@ -15,6 +15,14 @@ export const dashboardOverViewApi = baseApi.injectEndpoints({
                 };
             },
         }),
+
+        getActivities: builder.query({
+            query: (params) => ({
+                url: "dashboard/activities",
+                params,
+            }),
+        }),
+
         getHomeowners: builder.query({
             query: (params) => {
                 return {
@@ -57,8 +65,35 @@ export const dashboardOverViewApi = baseApi.injectEndpoints({
                 params,
             }),
         }),
+
+        getUsers: builder.query({
+            query: (params) => ({
+                url: "/users",
+                params,
+            }),
+        }),
+
+        getJobApproval: builder.query({
+            query: (params) => ({
+                url: "dashboard/job-approvals",
+                params,
+            }),
+            providesTags: ["JobApproval"],
+        }),
+
+        getJobApprovalUpdate: builder.mutation({
+            query: ({ id, status }) => ({
+                url: `dashboard/job-approvals/${id}`,
+                method: "PATCH",
+                body: { status },
+            }),
+            invalidatesTags: ["JobApproval"],
+        }),
+
+
+
     }),
 });
 
-export const { useGetDashboardOverviewQuery, useGetHomeownersQuery, useGetCleanersQuery, useGetCleanerRequestQuery, useUpdateCleanerRequestMutation, useGetBookingDetaialsQuery, } = dashboardOverViewApi;
+export const { useGetUsersQuery, useGetDashboardOverviewQuery, useGetActivitiesQuery, useGetHomeownersQuery, useGetCleanersQuery, useGetCleanerRequestQuery, useUpdateCleanerRequestMutation, useGetBookingDetaialsQuery, useGetJobApprovalQuery, useGetJobApprovalUpdateMutation } = dashboardOverViewApi;
 
