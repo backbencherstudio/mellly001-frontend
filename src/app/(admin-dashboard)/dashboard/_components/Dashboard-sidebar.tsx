@@ -50,12 +50,12 @@ export const SidebarData: SidebarDataType[] = [
     href: "/dashboard/booking",
     icon: BookingIcon,
   },
-  {
-    id: 4,
-    name: "Payments",
-    href: "/dashboard/payments",
-    icon: PaymentIcon,
-  },
+  // {
+  //   id: 4,
+  //   name: "Payments",
+  //   href: "/dashboard/payments",
+  //   icon: PaymentIcon,
+  // },
   {
     id: 5,
     name: "Job Approvals",
