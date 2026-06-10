@@ -9,6 +9,7 @@ import {
   Clock,
 } from "lucide-react";
 import Pagination from "@/components/reusable/pagination";
+import { useGetBookingDetaialsQuery } from "@/redux/features/dashboardOverView/dashboardOverView";
 
 /* ================= TYPES ================= */
 type BookingStatus =
@@ -34,87 +35,6 @@ type Booking = {
   payment: PaymentStatus;
 };
 
-/* ================= DATA ================= */
-const bookings: Booking[] = [
-  {
-    id: "1",
-    bookingNo: "BK-2024-001",
-    homeowner: "Sarah Johnson",
-    cleaner: "Maria Rodriguez",
-    date: "2024-01-15",
-    time: "09:00 AM",
-    address: "123 Main St, New York",
-    service: "Deep Cleaning · 4 Hours",
-    price: 120,
-    status: "in-progress",
-    payment: "paid",
-  },
-  {
-    id: "2",
-    bookingNo: "BK-2024-002",
-    homeowner: "Michael Chen",
-    cleaner: "Jessica Thompson",
-    date: "2024-01-15",
-    time: "02:00 PM",
-    address: "456 Oak Ave, Los Angeles",
-    service: "Regular Cleaning · 3 Hours",
-    price: 90,
-    status: "confirmed",
-    payment: "paid",
-  },
-  {
-    id: "3",
-    bookingNo: "BK-2024-003",
-    homeowner: "Emma Wilson",
-    cleaner: "Amanda Lee",
-    date: "2024-01-16",
-    time: "10:00 AM",
-    address: "789 Pine Rd, Chicago",
-    service: "Move-in Cleaning · 5 Hours",
-    price: 150,
-    status: "confirmed",
-    payment: "paid",
-  },
-  {
-    id: "4",
-    bookingNo: "BK-2024-004",
-    homeowner: "David Brown",
-    cleaner: "Patricia Garcia",
-    date: "2024-01-16",
-    time: "03:00 PM",
-    address: "321 Elm St, Houston",
-    service: "Regular Cleaning · 2 Hours",
-    price: 60,
-    status: "pending",
-    payment: "pending",
-  },
-  {
-    id: "5",
-    bookingNo: "BK-2024-005",
-    homeowner: "Lisa Anderson",
-    cleaner: "Rachel Kim",
-    date: "2024-01-14",
-    time: "11:00 AM",
-    address: "654 Maple Dr, Phoenix",
-    service: "Deep Cleaning · 4 Hours",
-    price: 120,
-    status: "completed",
-    payment: "paid",
-  },
-  {
-    id: "6",
-    bookingNo: "BK-2024-006",
-    homeowner: "James Wilson",
-    cleaner: "Maria Rodriguez",
-    date: "2024-01-13",
-    time: "01:00 PM",
-    address: "987 Cedar Ln, Seattle",
-    service: "Regular Cleaning · 3 Hours",
-    price: 90,
-    status: "cancelled",
-    payment: "refunded",
-  },
-];
 
 /* ================= HELPERS ================= */
 const statusStyle: Record<BookingStatus, string> = {
@@ -136,26 +56,35 @@ export default function BookingsList() {
   const [page, setPage] = React.useState(1);
   const [pageSize, setPageSize] = React.useState(5);
   const [search, setSearch] = React.useState("");
+  const [orderBy, setOrderBy] = React.useState("maid_id");
 
-  /* search */
-  const filtered = React.useMemo(() => {
-    if (!search) return bookings;
-    return bookings.filter((b) =>
-      `${b.bookingNo} ${b.homeowner} ${b.cleaner}`
-        .toLowerCase()
-        .includes(search.toLowerCase())
-    );
-  }, [search]);
+  const queryParams = React.useMemo(() => {
+    return {
+      search: search || "",
+      bookingorderby: orderBy,
+    };
+  }, [search, orderBy]);
+
+  const { data, isLoading } = useGetBookingDetaialsQuery(queryParams);
+
+  const bookingData = React.useMemo(() => {
+    const raw = data?.data;
+
+    if (Array.isArray(raw)) return raw;
+    if (Array.isArray(raw?.data)) return raw.data;
+
+    return [];
+  }, [data]);
 
   /* pagination */
   const paginated = React.useMemo(() => {
     const start = (page - 1) * pageSize;
-    return filtered.slice(start, start + pageSize);
-  }, [filtered, page, pageSize]);
+    return bookingData.slice(start, start + pageSize);
+  }, [bookingData, page, pageSize]);
 
   return (
     <div className="space-y-6">
-      {/* 🔝 Top bar */}
+      {/*  Top bar */}
       <div className="flex items-center justify-between gap-4">
         <div className="relative w-full max-full">
           <Search className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -170,73 +99,79 @@ export default function BookingsList() {
         <div className="w-40">
           <select className="h-full w-full rounded-lg border px-3 py-2 focus:outline-none text-[12px]">
             <option value="">Sort by</option>
-            {/* <option value="name">Name</option>
-            <option value="date">Date</option> */}
+            <option value="name">Name</option>
+            {/* <option value="date">Date</option> */}
           </select>
         </div>
       </div>
 
       {/* 📦 Booking cards */}
       <div className="space-y-3">
-        {paginated.map((b) => (
-          <div
-            key={b.id}
-            className="rounded-2xl border bg-white p-5 flex justify-between gap-6"
-          >
-            {/* Left */}
-            <div className="space-y-2">
-              <p className="font-semibold">{b.bookingNo}</p>
+        {paginated.map((b: any) => {
+          const statusKey = b.status as BookingStatus;
 
-              <p className="flex items-center gap-2 text-sm text-gray-600">
-                <User size={14} /> Homeowner: {b.homeowner}
-              </p>
-              <p className="flex items-center gap-2 text-sm text-gray-600">
-                <Calendar size={14} /> {b.date}
-              </p>
-              <p className="flex items-center gap-2 text-sm text-gray-600">
-                <MapPin size={14} /> {b.address}
-              </p>
+          return (
+            <div key={b.id} className="rounded-2xl border bg-white p-5">
+              <div className="flex justify-between gap-6">
+                {/* Left */}
+                <div className="space-y-2">
+                  <p className="font-semibold">{b.id}</p>
 
-              <p className="text-xs text-gray-500">{b.service}</p>
-            </div>
+                  <p className="flex items-center gap-2 text-sm text-gray-600">
+                    <User size={14} /> Homeowner: {b.homeowner_name}
+                  </p>
 
-            {/* Middle */}
-            <div className="space-y-2">
-              <p className="flex items-center gap-2 text-sm text-gray-600">
-                <User size={14} /> Cleaner: {b.cleaner}
-              </p>
-              <p className="flex items-center gap-2 text-sm text-gray-600">
-                <Clock size={14} /> {b.time}
-              </p>
-            </div>
+                  <p className="flex items-center gap-2 text-sm text-gray-600">
+                    <Calendar size={14} /> {b.booking_date}
+                  </p>
 
-            {/* Right */}
-            <div className="flex flex-col items-end justify-between">
-              <div className="flex gap-2">
-                <span
-                  className={`px-3 py-1 rounded-full text-xs ${statusStyle[b.status]}`}
-                >
-                  {b.status}
-                </span>
-                <span
-                  className={`px-3 py-1 rounded-full text-xs ${paymentStyle[b.payment]}`}
-                >
-                  {b.payment}
-                </span>
+                  <p className="flex items-center gap-2 text-sm text-gray-600">
+                    <MapPin size={14} /> {b.location}
+                  </p>
+
+                  <p className="text-xs text-gray-500">{b.service}</p>
+                </div>
+
+                {/* Middle */}
+                <div className="space-y-2">
+                  <p className="flex items-center gap-2 text-sm text-gray-600">
+                    <User size={14} /> Cleaner: {b.cleaner_name}
+                  </p>
+
+                  <p className="flex items-center gap-2 text-sm text-gray-600">
+                    <Clock size={14} /> {b.booking_time}
+                  </p>
+                </div>
+
+                {/* Right */}
+                <div className="flex flex-col items-end justify-between">
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs ${statusStyle[statusKey]}`}
+                  >
+                    {b.status}
+                  </span>
+                </div>
               </div>
 
-              <p className="font-semibold">${b.price}</p>
+              <div className="border my-2" />
+
+              <div className="flex justify-between">
+                <div className="text-[14px] text-[#4A5565]">
+                  {b.service_name} - {b.service_duration}
+                </div>
+                <div className="font-semibold">${b.amount}</div>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
-      {/* 🔽 Pagination */}
+      {/*  Pagination */}
       <Pagination
         page={page}
         pageSize={pageSize}
-        total={filtered.length}
-        totalPages={Math.ceil(filtered.length / pageSize)}
+        total={bookingData.length}
+        totalPages={Math.ceil(bookingData.length / pageSize)}
         onPageChange={setPage}
         onPageSizeChange={(size) => {
           setPage(1);

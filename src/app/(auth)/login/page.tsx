@@ -1,4 +1,6 @@
 "use client"
+import Cookies from "js-cookie";
+import { useLoginMutation } from "@/redux/features/auth/authApi";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -10,9 +12,7 @@ interface LoginFormInputs {
 }
 
 export default function AdminLogin() {
-
-  const FAKE_EMAIL = "admin@gmail.com";
-  const FAKE_PASSWORD = "123";
+  const [login, { isLoading }] = useLoginMutation();
   const router = useRouter();
   const [token, setToken] = useState<string | null>(null);
 
@@ -22,36 +22,69 @@ export default function AdminLogin() {
     formState: { errors },
   } = useForm<LoginFormInputs>();
 
-  const onSubmit = (data: LoginFormInputs) => {
-    if (data.email === FAKE_EMAIL && data.password === FAKE_PASSWORD) {
+  const onSubmit = async (data: LoginFormInputs) => {
+    try {
+      const res = await login(data).unwrap();
 
-      const fakeToken = "my_fake_jwt_token_123";
+      const accessToken = res?.authorization?.access_token;
+      const userType = res?.type;
 
-      localStorage.setItem("token", fakeToken);
-      setToken(fakeToken);
+      if (accessToken) {
+        Cookies.set("token", accessToken, {
+          path: "/",
+          sameSite: "strict",
+        });
 
-      // redirect to dashboard
-      router.push("/dashboard");
+        Cookies.set("userType", userType, {
+          path: "/",
+          sameSite: "strict",
+        });
 
-    } else {
-      alert("Invalid email or password");
+        const redirectPath =
+          userType === "ADMIN" ? "/dashboard" : "/user/dashboard";
+
+        router.replace(redirectPath);
+      }
+    } catch (error) {
+      console.error("Login failed:", error);
     }
   };
 
-  useEffect(() => {
-    const savedToken = localStorage.getItem("token");
+  const logout = () => {
+    Cookies.remove("token", { path: "/" });
+    Cookies.remove("userType", { path: "/" });
 
-    if (savedToken) {
-      setTimeout(() => {
-        setToken(savedToken);
-      }, 0);
+    setToken(null);
+    router.push("/login");
+  };
+
+  // useEffect(() => {
+  //   const savedToken = Cookies.get("token");
+  //   const userType = Cookies.get("userType");
+
+  //   if (savedToken) {
+  //     if (userType === "ADMIN") {
+  //       router.push("/dashboard");
+  //     } else {
+  //       router.push("/user/dashboard");
+  //     }
+  //   }
+  // }, [router]);
+
+  useEffect(() => {
+    const savedToken = Cookies.get("token");
+    const userType = Cookies.get("userType");
+
+    if (!savedToken) return;
+
+    if (userType === "ADMIN") {
+      router.replace("/dashboard");
+    } else {
+      router.replace("/user/dashboard");
     }
   }, []);
 
-  const logout = () => {
-    localStorage.removeItem("token");
-    setToken(null);
-  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F9FEF0]">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8">
@@ -109,19 +142,20 @@ export default function AdminLogin() {
           {/* Button */}
           <button
             type="submit"
-            className="w-full bg-[#03652B] hover:bg-green-700 text-white py-3 rounded-full font-semibold transition"
+            disabled={isLoading}
+            className="w-full bg-[#03652B] hover:bg-green-700 text-white py-3 rounded-full font-semibold transition disabled:opacity-50"
           >
-            Sign in
+            {isLoading ? "Signing in..." : "Sign in"}
           </button>
         </form>
 
         {/* Demo Info */}
-        <p className="text-center text-sm text-gray-500 mt-6">
+        {/* <p className="text-center text-sm text-gray-500 mt-6">
           Demo: Use
           <span className="font-medium">
             admin@example.com / password123
           </span>
-        </p>
+        </p> */}
       </div>
     </div>
   );

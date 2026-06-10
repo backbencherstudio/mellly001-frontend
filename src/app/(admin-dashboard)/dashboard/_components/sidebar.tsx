@@ -1,13 +1,14 @@
+// dashboard/_components/sidebar.tsx
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
+import Cookies from "js-cookie";
 import Link from "next/link";
 import {
   Sidebar,
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
@@ -21,20 +22,18 @@ export default function DashboardSidebar() {
   const pathname = usePathname();
   const router = useRouter();
 
-  const handelLogut = () => {
-    localStorage.removeItem("token");
-    router.push("/login")
-  }
+  const handleLogout = () => {
+    Cookies.remove("token");
+    Cookies.remove("userType");
+    router.push("/login");
+  };
 
   return (
-
     <Sidebar collapsible="icon">
       <SidebarContent>
         <SidebarGroup>
-
           <div className="flex items-center gap-3 pb-10">
-            {/* Logo Image – NEVER shrink */}
-            <div className="shrink-1  ">
+            <div className="shrink-1">
               <Image
                 src="/assets/images/logo (2).png"
                 width={47}
@@ -43,15 +42,9 @@ export default function DashboardSidebar() {
                 className="object-contain"
               />
             </div>
-
-            {/* Text – hide when icon mode */}
             <div className="pt-1 group-data-[collapsible=icon]:hidden">
-              <p className="text-[#101828] font-bold text-base">
-                Admin Panel
-              </p>
-              <p className="mt-1 text-[12px] text-[#6A7282]">
-                Maid Service
-              </p>
+              <p className="text-[#101828] font-bold text-base">Admin Panel</p>
+              <p className="mt-1 text-[12px] text-[#6A7282]">Maid Service</p>
             </div>
           </div>
 
@@ -66,25 +59,17 @@ export default function DashboardSidebar() {
                     <SidebarMenuButton
                       asChild
                       isActive={isActive}
-                      className="
-            data-[active=true]:bg-[#F3FFF8]
-            data-[active=true]:text-[#03652B]
-            data-[active=true]:hover:bg-[#F3FFF8]
-          "
+                      className="data-[active=true]:bg-[#F3FFF8] data-[active=true]:text-[#03652B] data-[active=true]:hover:bg-[#F3FFF8]"
                     >
                       <Link href={item.href}>
-                        <Icon
-                          className={`h-4 w-4 ${isActive ? "text-[#03652B] font-semibold " : "text-muted-foreground"
-                            }`}
-                        />
-                        <span className="text-base ">{item.name}</span>
+                        <Icon className={`h-4 w-4 ${isActive ? "text-[#03652B]" : "text-muted-foreground"}`} />
+                        <span className="text-base">{item.name}</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );
               })}
             </SidebarMenu>
-
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
@@ -92,10 +77,7 @@ export default function DashboardSidebar() {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton
-              onClick={handelLogut}
-              className="text-red-600"
-            >
+            <SidebarMenuButton onClick={handleLogout} className="text-red-600">
               <LogOut />
               <span>Logout</span>
             </SidebarMenuButton>

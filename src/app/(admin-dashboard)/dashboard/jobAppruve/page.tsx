@@ -3,71 +3,10 @@
 import * as React from "react";
 import Pagination from "@/components/reusable/pagination";
 import { Search } from "lucide-react";
+import { useGetJobApprovalQuery, useGetJobApprovalUpdateMutation } from "@/redux/features/dashboardOverView/dashboardOverView";
+import Image from "next/image";
+import { toast } from "sonner";
 
-/* ================= TYPES ================= */
-type Job = {
-  id: string;
-  bookingNo: string;
-  completedAt: string;
-  homeowner: string;
-  cleaner: string;
-  package: string;
-  location: string;
-  amount: number;
-  notes: string;
-  beforePhotos: number;
-  afterPhotos: number;
-  status: "pending" | "approved" | "rejected";
-};
-
-/* ================= DATA ================= */
-const jobs: Job[] = [
-  {
-    id: "1",
-    bookingNo: "BK-2024-007",
-    completedAt: "2024-01-16 02:30 PM",
-    homeowner: "Robert Martinez",
-    cleaner: "Maria Rodriguez",
-    package: "Deep Cleaning · 4 Hours",
-    location: "789 Park Ave, New York",
-    amount: 120,
-    notes:
-      "Deep cleaned kitchen, bathrooms, and living room. Removed tough stains from carpet.",
-    beforePhotos: 2,
-    afterPhotos: 2,
-    status: "pending",
-  },
-  {
-    id: "2",
-    bookingNo: "BK-2024-008",
-    completedAt: "2024-01-16 04:15 PM",
-    homeowner: "Jennifer Lee",
-    cleaner: "Jessica Thompson",
-    package: "Regular Cleaning · 3 Hours",
-    location: "456 Broadway, Los Angeles",
-    amount: 90,
-    notes:
-      "Standard cleaning completed. All rooms dusted and vacuumed.",
-    beforePhotos: 1,
-    afterPhotos: 1,
-    status: "pending",
-  },
-  {
-    id: "3",
-    bookingNo: "BK-2024-009",
-    completedAt: "2024-01-16 05:45 PM",
-    homeowner: "Thomas Anderson",
-    cleaner: "Amanda Lee",
-    package: "Move-in Cleaning · 5 Hours",
-    location: "123 Lake Shore, Chicago",
-    amount: 150,
-    notes:
-      "Complete move-in deep cleaning. Cleaned all appliances, windows, and floors.",
-    beforePhotos: 3,
-    afterPhotos: 3,
-    status: "pending",
-  },
-];
 
 /* ================= COMPONENT ================= */
 export default function JobApprovals() {
@@ -76,39 +15,57 @@ export default function JobApprovals() {
   const [search, setSearch] = React.useState("");
   const [sort, setSort] = React.useState("");
 
-  const processedJobs = React.useMemo(() => {
-    let data = jobs;
+  const [approve] = useGetJobApprovalUpdateMutation();
+  const handleCompleted = (id: string) => {
+    toast.success("Job completed successfully");
+    approve({ id, status: "COMPLETED" });
+  };
+  const handleReject = (id: string) => {
+    toast.error("Job rejected successfully");
+    approve({ id, status: "REJECTED" });
+  };
 
-    // 🔍 search (bookingNo / homeowner / cleaner)
+  const { data: jobApproval } = useGetJobApprovalQuery({});
+  console.log(jobApproval, "ooooopp")
+  const rawdd = jobApproval?.data?.data?.[0]?.before_photos?.[0];
+  console.log(rawdd, "rawdd")
+
+  const jobApprovalData = React.useMemo(() => {
+    const raw = jobApproval?.data?.data;
+    return Array.isArray(raw) ? raw : [];
+  }, [jobApproval]);
+
+  const processedJobs = React.useMemo(() => {
+    let data = [...jobApprovalData];
+
     if (search) {
       const lower = search.toLowerCase();
+
       data = data.filter(
         (job) =>
-          job.bookingNo.toLowerCase().includes(lower) ||
-          job.homeowner.toLowerCase().includes(lower) ||
-          job.cleaner.toLowerCase().includes(lower)
+          job.bookingNo?.toLowerCase().includes(lower) ||
+          job.homeowner?.name?.toLowerCase().includes(lower) ||
+          job.maid?.name?.toLowerCase().includes(lower)
       );
     }
 
-    // 🔃 sort
     if (sort === "name-asc") {
-      data = [...data].sort((a, b) =>
-        a.homeowner.localeCompare(b.homeowner)
-      );
+      data.sort((a, b) => a.homeowner.name.localeCompare(b.homeowner.name));
     }
 
     if (sort === "name-desc") {
-      data = [...data].sort((a, b) =>
-        b.homeowner.localeCompare(a.homeowner)
-      );
+      data.sort((a, b) => b.homeowner.name.localeCompare(a.homeowner.name));
     }
 
     return data;
+  }, [search, sort, jobApprovalData]);
+
+
+  React.useEffect(() => {
+    setPage(1);
   }, [search, sort]);
 
-  
-  
-  
+
   const paginatedJobs = React.useMemo(() => {
     const start = (page - 1) * pageSize;
     return processedJobs.slice(start, start + pageSize);
@@ -154,14 +111,15 @@ export default function JobApprovals() {
           {/* Header */}
           <div className="flex items-start justify-between">
             <div>
-              <p className="font-semibold">{job.bookingNo}</p>
+              <p className="font-semibold">{job.slot}  </p>
               <p className="text-xs text-gray-500">
-                Completed at {job.completedAt}
+                Completed at  {" "}
+                {new Date(job.booking_date).toLocaleString("en-GB")}
               </p>
             </div>
 
             <span className="rounded-full bg-yellow-100 px-3 py-1 text-xs text-yellow-700">
-              Pending
+              {job.status}
             </span>
           </div>
 
@@ -169,11 +127,11 @@ export default function JobApprovals() {
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <p className="text-gray-500">Homeowner</p>
-              <p className="font-medium">{job.homeowner}</p>
+              <p className="font-medium">{job?.homeowner?.name}</p>
             </div>
             <div>
               <p className="text-gray-500">Cleaner</p>
-              <p className="font-medium">{job.cleaner}</p>
+              <p className="font-medium">{job.maid.name}</p>
             </div>
             <div>
               <p className="text-gray-500">Package</p>
@@ -185,7 +143,7 @@ export default function JobApprovals() {
             </div>
             <div>
               <p className="text-gray-500">Location</p>
-              <p className="font-medium">{job.location}</p>
+              <p className="font-medium">{job.homeowner_location}</p>
             </div>
           </div>
 
@@ -193,7 +151,7 @@ export default function JobApprovals() {
           <div>
             <p className="text-gray-500 text-sm mb-1">Cleaner Notes</p>
             <p className="rounded-lg bg-gray-50 p-3 text-sm">
-              {job.notes}
+              {job.maid?.maid_note}
             </p>
           </div>
 
@@ -202,16 +160,18 @@ export default function JobApprovals() {
             {/* Before */}
             <div>
               <p className="text-sm text-gray-500 mb-2">
-                Before Photos ({job.beforePhotos})
+                Before Photos ({job.before_photos?.length || 0})
               </p>
+
               <div className="grid grid-cols-2 gap-2">
-                {Array.from({ length: job.beforePhotos }).map((_, i) => (
-                  <div
+                {job.before_photos?.map((img: string, i: number) => (
+                  <img
                     key={i}
-                    className="h-24 rounded-lg bg-gray-200 flex items-center justify-center text-gray-400"
-                  >
-                    IMG
-                  </div>
+                    crossOrigin="anonymous"
+                    src={img}
+                    alt="before"
+                    className="h-40 w-full object-contain rounded-lg"
+                  />
                 ))}
               </div>
             </div>
@@ -222,13 +182,14 @@ export default function JobApprovals() {
                 After Photos ({job.afterPhotos})
               </p>
               <div className="grid grid-cols-2 gap-2">
-                {Array.from({ length: job.afterPhotos }).map((_, i) => (
-                  <div
+                {job.after_photos?.map((img: string, i: number) => (
+                  <img
+                    crossOrigin="anonymous"
                     key={i}
-                    className="h-24 rounded-lg bg-gray-200 flex items-center justify-center text-gray-400"
-                  >
-                    IMG
-                  </div>
+                    src={img}
+                    alt="after"
+                    className="h-40 w-full object-contain rounded-lg"
+                  />
                 ))}
               </div>
             </div>
@@ -236,10 +197,10 @@ export default function JobApprovals() {
 
           {/* Actions */}
           <div className="flex gap-4 pt-2">
-            <button className="flex-1 rounded-lg bg-green-600 py-2 text-white font-medium hover:bg-green-700 cursor-pointer">
+            <button onClick={() => handleCompleted(job.id)} className="flex-1 rounded-lg bg-green-600 py-2 text-white font-medium hover:bg-green-700 cursor-pointer">
               ✓ Approve Job
             </button>
-            <button className="flex-1 rounded-lg bg-red-600 py-2 text-white font-medium hover:bg-red-700 cursor-pointer">
+            <button onClick={() => handleReject(job.id)} className="flex-1 rounded-lg bg-red-600 py-2 text-white font-medium hover:bg-red-700 cursor-pointer">
               ✕ Reject Job
             </button>
           </div>

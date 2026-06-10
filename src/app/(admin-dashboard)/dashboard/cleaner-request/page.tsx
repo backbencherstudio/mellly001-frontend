@@ -17,90 +17,21 @@ import {
 } from "lucide-react";
 import { DataTable } from "@/components/reusable/Table";
 import { DialogScrollableContent } from "@/components/dashboard/CleanerRequest/CleanerRequest";
+import Link from "next/link";
+import { useGetCleanerRequestQuery, useUpdateCleanerRequestMutation } from "@/redux/features/dashboardOverView/dashboardOverView";
+import { toast } from "sonner";
 
 /* ================= TYPES ================= */
 type Employee = {
     id: string;
     name: string;
-    joined: string;
     email: string;
-    phone: string;
+    phone_number: string | null;
     location: string;
-    reviews: number;
-    data: string;
-    totalJobs: number;
-    earnings: number;
-    status: "active" | "busy" | "inactive";
+    applied_date: string | null;
+    avatar: string | null;
+    status: string;
 };
-
-/* ================= DATA ================= */
-export const employees: Employee[] = [
-    {
-        id: "1",
-        name: "Maria Rodriguez",
-        joined: "2023-08-12",
-        email: "maria.r@email.com",
-        phone: "+1 234 567 9001",
-        location: "New York, NY",
-        reviews: 110,
-        data: "2026 - 03 - 15",
-        totalJobs: 156,
-        earnings: 18720,
-        status: "active",
-    },
-    {
-        id: "2",
-        name: "Jessica Thompson",
-        joined: "2023-09-05",
-        email: "jessica.t@email.com",
-        phone: "+1 234 567 9002",
-        location: "New York, NY",
-        reviews: 147,
-        data: "2026-03 - 15",
-        totalJobs: 156,
-        earnings: 16140,
-        status: "busy",
-    },
-    {
-        id: "3",
-        name: "Amanda Lee",
-        joined: "2023-11-20",
-        email: "amanda.lee@email.com",
-        phone: "+1 234 567 9003",
-        location: "New York, NY",
-        reviews: 166,
-        data: "2026-03 - 15",
-        totalJobs: 156,
-        earnings: 11760,
-        status: "active",
-    },
-    {
-        id: "4",
-        name: "Patricia Garcia",
-        joined: "2024-01-08",
-        email: "patricia.g@email.com",
-        phone: "+1 234 567 9004",
-        location: "New York, NY",
-        reviews: 56,
-        data: "2026-03 - 15",
-        status: "active",
-        totalJobs: 156,
-        earnings: 17160,
-    },
-    {
-        id: "5",
-        name: "Rachel Kim",
-        joined: "2023-10-15",
-        email: "rachel.kim@email.com",
-        phone: "+1 234 567 9005",
-        location: "New York, NY",
-        reviews: 156,
-        data: "2026-03 - 15",
-        totalJobs: 156,
-        earnings: 17160,
-        status: "inactive",
-    },
-];
 
 /* ================= COLUMNS ================= */
 const columns: ColumnDef<Employee>[] = [
@@ -121,7 +52,7 @@ const columns: ColumnDef<Employee>[] = [
                     <div>
                         <p className="font-medium leading-none">{name}</p>
                         <p className="text-xs text-gray-500 mt-1">
-                            Joined {row.original.joined}
+                            Applied {row.original.applied_date ? new Date(row.original.applied_date).toLocaleDateString("en-GB") : "N/A"}
                         </p>
                     </div>
                 </div>
@@ -136,18 +67,17 @@ const columns: ColumnDef<Employee>[] = [
                     <Mail size={14} /> {row.original.email}
                 </p>
                 <p className="flex items-center gap-2">
-                    <Phone size={14} /> {row.original.phone}
+                    <Phone size={14} /> {row.original.phone_number || "N/A"}
                 </p>
             </div>
         ),
     },
     {
-        header: "location",
+        header: "Location",
         cell: ({ row }) => (
             <div className="flex items-center gap-1 text-sm">
                 <MapPin className="h-4 w-4 text-[#99A1AF]" />
                 <span className="font-medium">{row.original.location}</span>
-
             </div>
         ),
     },
@@ -155,24 +85,25 @@ const columns: ColumnDef<Employee>[] = [
         header: "Applied Date",
         cell: ({ row }) => (
             <div>
-                <span className="font-medium">{row.original.data}</span>
+                <span className="font-medium">
+                    {row.original.applied_date ? new Date(row.original.applied_date).toLocaleDateString("en-GB") : "N/A"}
+                </span>
             </div>
         ),
     },
-
     {
         header: "Status",
         cell: ({ row }) => {
             const status = row.original.status;
-            const styles = {
-                active: "bg-green-100 text-green-700",
-                busy: "bg-yellow-100 text-yellow-700",
-                inactive: "bg-gray-100 text-gray-600",
+            const styles: Record<string, string> = {
+                pending: "bg-yellow-100 text-yellow-700",
+                approved: "bg-green-100 text-green-700",
+                rejected: "bg-red-100 text-red-700",
             };
 
             return (
                 <span
-                    className={`px-3 py-1 rounded-full text-xs font-medium ${styles[status]}`}
+                    className={`px-3 py-1 rounded-full text-xs font-medium ${styles[status] || "bg-gray-100 text-gray-600"}`}
                 >
                     {status}
                 </span>
@@ -186,17 +117,35 @@ export default function CleanerRequest() {
     const [page, setPage] = React.useState(1);
     const [pageSize, setPageSize] = React.useState(8);
     const [search, setSearch] = React.useState("");
+    const [sort, setSort] = React.useState("");
+
+    const { data, isLoading } = useGetCleanerRequestQuery(undefined);
+    const [updateCleanerRequest] = useUpdateCleanerRequestMutation();
+    const cleaners = data?.data?.data || [];
 
     /* search filter */
     const filteredData = React.useMemo(() => {
-        if (!search) return employees;
+        let result = Array.isArray(cleaners) ? cleaners : [];
 
-        return employees.filter((e) =>
-            `${e.name} ${e.email}`
-                .toLowerCase()
-                .includes(search.toLowerCase())
-        );
-    }, [search]);
+        if (search) {
+            const lower = search.toLowerCase();
+            result = result.filter((e) =>
+                `${e.name} ${e.email}`
+                    .toLowerCase()
+                    .includes(lower)
+            );
+        }
+
+        if (sort === "name-asc") {
+            result = [...result].sort((a, b) => a.name.localeCompare(b.name));
+        }
+
+        if (sort === "name-desc") {
+            result = [...result].sort((a, b) => b.name.localeCompare(a.name));
+        }
+
+        return result;
+    }, [search, cleaners, sort]);
 
     /* pagination */
     const paginatedData = React.useMemo(() => {
@@ -205,17 +154,16 @@ export default function CleanerRequest() {
     }, [filteredData, page, pageSize]);
 
 
-    const handleView = (employee: Employee) => {
-        console.log("View:", employee);
-        // apnar logic
-    };
-
-    const handleEdit = (employee: Employee) => {
-        console.log("Edit:", employee);
-    };
-
-    const handleDelete = (employee: Employee) => {
-        console.log("Delete:", employee);
+    const handleApprove = async (employee: Employee) => {
+        try {
+            await updateCleanerRequest({
+                id: employee.id,
+                status: "approved",
+            }).unwrap();
+            toast.success("Cleaner approved successfully");
+        } catch (error) {
+            toast.error("Failed to approve cleaner request");
+        }
     };
 
     return (
@@ -233,10 +181,14 @@ export default function CleanerRequest() {
                 </div>
 
                 <div className="w-40">
-                    <select className="h-full w-full rounded-lg border px-3 py-2 focus:outline-none text-[12px]">
+                    <select
+                        value={sort}
+                        onChange={(e) => setSort(e.target.value)}
+                        className="h-full w-full rounded-lg border px-3 py-2 focus:outline-none text-[12px]"
+                    >
                         <option value="">Sort by</option>
-                        <option value="name">Name</option>
-                        <option value="date">Date</option>
+                        <option value="name-asc">Name (A-Z)</option>
+                        <option value="name-desc">Name (Z-A)</option>
                     </select>
                 </div>
             </div>
@@ -253,19 +205,16 @@ export default function CleanerRequest() {
                     setPage(1);
                     setPageSize(size);
                 }}
+                loading={isLoading}
                 renderAction={(row) => (
                     <div className="flex gap-2">
-                        {/* <button onClick={() => handleView(row)} className="p-1 hover:bg-gray-100 rounded">
-                            <Eye size={16} />
-                        </button> */}
-
-                        <DialogScrollableContent id={row.id} />
-                        <button onClick={() => handleEdit(row)} className="p-1 hover:bg-gray-100 rounded">
+                        <DialogScrollableContent data={row} />
+                        {/* <button onClick={() => handleApprove(row)} className="p-1 hover:bg-green-100 rounded text-green-600" title="Approve">
                             <Check size={16} />
                         </button>
-                        <button onClick={() => handleDelete(row)} className="p-1 hover:bg-red-100 rounded text-red-600">
+                        <Link href={`/dashboard/cleaner-request/${row.id}`} className="p-1 hover:bg-red-100 rounded text-red-600">
                             <X size={16} />
-                        </button>
+                        </Link> */}
                     </div>
                 )}
             />

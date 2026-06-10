@@ -1,9 +1,5 @@
 "use client"
 
-
-import { Danger } from "@/app/(admin-dashboard)/dashboard/danger-request/page";
-
-
 import {
     Dialog,
     DialogContent,
@@ -11,14 +7,25 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog"
+import { formatDate } from "@/lib/DateFormate";
+import { useUpdateDangerRequestMutation } from "@/redux/features/dashboardOverView/dashboardOverView";
 import { Eye } from "lucide-react";
+import { toast } from "sonner";
 
-export function DangerDetails({ id }: { id: string }) {
-
-    const employee = Danger.find(emp => emp.id === id);
+export function DangerDetails({
+    employee,
+}: {
+    employee: any;
+}) {
     if (!employee) {
         return <div>No data found</div>;
     }
+    const [updateStatus, { isLoading }] = useUpdateDangerRequestMutation();
+
+    const handleUpdateStatus = (status: string) => {
+        updateStatus({ id: employee.id, status });
+        toast.success("Status updated successfully");
+    };
 
     return (
         <Dialog >
@@ -52,7 +59,7 @@ export function DangerDetails({ id }: { id: string }) {
 
                         <div>
                             <p className="text-sm text-gray-500">Applied Date</p>
-                            <p className="font-medium">{employee.data}</p>
+                            <p className="font-medium">{formatDate(employee.applied_date)}</p>
                         </div>
 
 
@@ -81,9 +88,9 @@ export function DangerDetails({ id }: { id: string }) {
                         </div>
                     </div>
 
-                    <div className="gap-4 flex flex-col md:flex-row">
-                        <button className="text-red-500 font-bold text-base py-3.5 border border-red-500 border-2 cursor-pointer text-center px-25 rounded-lg">Reject Application</button>
-                        <button className="text-white bg-green-800 font-bold text-base py-3.5  cursor-pointer text-center px-25 rounded-lg">Approve & Verify</button>
+                    <div className="gap-4 flex flex-col md:flex-row justify-center items-center">
+                        {/* <button className="text-red-500 font-bold text-base py-3.5 border border-red-500 border-2 cursor-pointer whitespace-nowrap text-center md:px-20 lg:px-25 rounded-lg" onClick={() => handleUpdateStatus("REJECTED")}>Reject Application</button> */}
+                        <button className="text-white bg-green-800 font-bold text-base py-3.5 whitespace-nowrap cursor-pointer text-center md:px-20 lg:px-25 rounded-lg" onClick={() => handleUpdateStatus("COMPLETED")}>Approve & Verify</button>
                     </div>
 
 

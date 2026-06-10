@@ -18,93 +18,24 @@ import {
 import { DataTable } from "@/components/reusable/Table";
 import { DialogScrollableContent } from "@/components/dashboard/CleanerRequest/CleanerRequest";
 import { DangerDetails } from "@/components/dashboard/DangerDetails/DangerDetails";
+import { LineChart } from "../_components/TotalUserGraph";
+import { useGetDangerRequestQuery } from "@/redux/features/dashboardOverView/dashboardOverView";
+import { formatDate } from "@/lib/DateFormate";
 
 /* ================= TYPES ================= */
-type Employee = {
+type DangerRequest = {
     id: string;
     name: string;
-    joined: string;
     email: string;
-    phone: string;
+    joined: string;
+    status: string;
+    phone_number: string;
     location: string;
-    reviews: number;
-    data: string;
-    totalJobs: number;
-    earnings: number;
-    status: "active" | "busy" | "inactive";
+    applied_date: string;
 };
 
-/* ================= DATA ================= */
-export const Danger: Employee[] = [
-    {
-        id: "1",
-        name: " Rodriguez",
-        joined: "2023-08-12",
-        email: "maria.r@email.com",
-        phone: "+1 234 567 9001",
-        location: "New York, NY",
-        reviews: 110,
-        data: "2026 - 03 - 15",
-        totalJobs: 156,
-        earnings: 18720,
-        status: "active",
-    },
-    {
-        id: "2",
-        name: "Thompson",
-        joined: "2023-09-05",
-        email: "jessica.t@email.com",
-        phone: "+1 234 567 9002",
-        location: "New York, NY",
-        reviews: 147,
-        data: "2026-03 - 15",
-        totalJobs: 156,
-        earnings: 16140,
-        status: "busy",
-    },
-    {
-        id: "3",
-        name: "Amanda Lee",
-        joined: "2023-11-20",
-        email: "amanda.lee@email.com",
-        phone: "+1 234 567 9003",
-        location: "New York, NY",
-        reviews: 166,
-        data: "2026-03 - 15",
-        totalJobs: 156,
-        earnings: 11760,
-        status: "active",
-    },
-    {
-        id: "4",
-        name: "Patricia Garcia",
-        joined: "2024-01-08",
-        email: "patricia.g@email.com",
-        phone: "+1 234 567 9004",
-        location: "New York, NY",
-        reviews: 56,
-        data: "2026-03 - 15",
-        status: "active",
-        totalJobs: 156,
-        earnings: 17160,
-    },
-    {
-        id: "5",
-        name: "Rachel Kim",
-        joined: "2023-10-15",
-        email: "rachel.kim@email.com",
-        phone: "+1 234 567 9005",
-        location: "New York, NY",
-        reviews: 156,
-        data: "2026-03 - 15",
-        totalJobs: 156,
-        earnings: 17160,
-        status: "inactive",
-    },
-];
-
 /* ================= COLUMNS ================= */
-const columns: ColumnDef<Employee>[] = [
+const columns: ColumnDef<DangerRequest>[] = [
     {
         header: "Cleaner",
         cell: ({ row }) => {
@@ -137,7 +68,7 @@ const columns: ColumnDef<Employee>[] = [
                     <Mail size={14} /> {row.original.email}
                 </p>
                 <p className="flex items-center gap-2">
-                    <Phone size={14} /> {row.original.phone}
+                    <Phone size={14} /> {row.original.phone_number}
                 </p>
             </div>
         ),
@@ -156,7 +87,7 @@ const columns: ColumnDef<Employee>[] = [
         header: "Applied Date",
         cell: ({ row }) => (
             <div>
-                <span className="font-medium">{row.original.data}</span>
+                <span className="font-medium">{formatDate(row.original.applied_date)}</span>
             </div>
         ),
     },
@@ -164,11 +95,15 @@ const columns: ColumnDef<Employee>[] = [
     {
         header: "Status",
         cell: ({ row }) => {
-            const status = row.original.status;
+            const status = row.original.status as
+                | "COMPLETED"
+                | "REJECTED"
+                | "PENDING";
+
             const styles = {
-                active: "bg-green-100 text-green-700",
-                busy: "bg-yellow-100 text-yellow-700",
-                inactive: "bg-gray-100 text-gray-600",
+                COMPLETED: "bg-green-100 text-green-700",
+                REJECTED: "bg-yellow-100 text-yellow-700",
+                PENDING: "bg-gray-100 text-gray-600",
             };
 
             return (
@@ -179,43 +114,67 @@ const columns: ColumnDef<Employee>[] = [
                 </span>
             );
         },
-    },
+    }
 ];
 
 /* ================= COMPONENT ================= */
 export default function CleanerRequest() {
+
     const [page, setPage] = React.useState(1);
     const [pageSize, setPageSize] = React.useState(8);
     const [search, setSearch] = React.useState("");
+    const [sortBy, setSortBy] = React.useState("");
+
+    const { data, isLoading } = useGetDangerRequestQuery({});
+    const dangerRequest = React.useMemo(() => {
+        const res = data?.data;
+
+        if (Array.isArray(res)) return res;
+        if (Array.isArray(res?.data)) return res.data;
+        if (Array.isArray(res?.items)) return res.items;
+
+        return [];
+    }, [data]);
 
     /* search filter */
     const filteredData = React.useMemo(() => {
-        if (!search) return Danger;
+        if (!search) return dangerRequest;
 
-        return Danger.filter((e) =>
+        return dangerRequest.filter((e: any) =>
             `${e.name} ${e.email}`
                 .toLowerCase()
                 .includes(search.toLowerCase())
         );
-    }, [search]);
+    }, [dangerRequest, search]);
+
+    const sortedData = React.useMemo(() => {
+        const data = [...filteredData];
+
+        if (sortBy === "name") {
+            return data.sort((a, b) =>
+                a.name.localeCompare(b.name)
+            );
+        }
+
+        return data;
+    }, [filteredData, sortBy]);
 
     /* pagination */
     const paginatedData = React.useMemo(() => {
         const start = (page - 1) * pageSize;
-        return filteredData.slice(start, start + pageSize);
-    }, [filteredData, page, pageSize]);
+        return sortedData.slice(start, start + pageSize);
+    }, [sortedData, page, pageSize]);
 
-
-    const handleView = (employee: Employee) => {
+    const handleView = (employee: DangerRequest) => {
         console.log("View:", employee);
         // apnar logic
     };
 
-    const handleEdit = (employee: Employee) => {
+    const handleEdit = (employee: DangerRequest) => {
         console.log("Edit:", employee);
     };
 
-    const handleDelete = (employee: Employee) => {
+    const handleDelete = (employee: DangerRequest) => {
         console.log("Delete:", employee);
     };
 
@@ -234,10 +193,14 @@ export default function CleanerRequest() {
                 </div>
 
                 <div className="w-40">
-                    <select className="h-full w-full rounded-lg border px-3 py-2 focus:outline-none text-[12px]">
+                    <select
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value)}
+                        className="h-full w-full rounded-lg border px-3 py-2 text-[12px]"
+                    >
                         <option value="">Sort by</option>
                         <option value="name">Name</option>
-                        <option value="date">Date</option>
+
                     </select>
                 </div>
             </div>
@@ -256,7 +219,7 @@ export default function CleanerRequest() {
                 }}
                 renderAction={(row) => (
                     <div className="flex gap-2 cursor-pointer">
-                        <DangerDetails id={row.id} />
+                        <DangerDetails employee={row} />
                         <button onClick={() => handleEdit(row)} className="p-1 hover:bg-gray-100 rounded cursor-pointer">
                             <Check size={16} />
                         </button>
@@ -266,6 +229,8 @@ export default function CleanerRequest() {
                     </div>
                 )}
             />
+
+
         </div>
     );
 }
