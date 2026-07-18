@@ -10,6 +10,7 @@ import {
   Settings,
   BriefcaseBusiness,
   TriangleAlert,
+  ShieldCheck,
 } from "lucide-react";
 
 export interface SidebarDataType {
@@ -68,5 +69,12 @@ export const SidebarData: SidebarDataType[] = [
     name: "Danger Request",
     href: "/dashboard/danger-request",
     icon: TriangleAlert,
+  },
+
+  {
+    id: 6,
+    name: "Privecy Policy",
+    href: "/dashboard/privecy-policy",
+    icon: ShieldCheck ,
   },
 ];
