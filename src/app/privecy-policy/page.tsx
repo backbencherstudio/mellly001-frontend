@@ -238,16 +238,11 @@ const sections = [
           Privacy Policy or our data practices, please contact us:
         </p>
         <div className="rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] p-4 space-y-3">
-          <div>
-            <p className="text-sm text-[#6A7282]">Email</p>
-            <p className="font-medium text-[#101828] text-sm">
-              privacy@maidservice.com
-            </p>
-          </div>
+        
           <div>
             <p className="text-sm text-[#6A7282]">Support</p>
             <p className="font-medium text-[#101828] text-sm">
-              support@maidservice.com
+            support@cleennconnect.com
             </p>
           </div>
           <div>
