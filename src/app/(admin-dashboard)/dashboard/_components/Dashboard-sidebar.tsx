@@ -71,10 +71,5 @@ export const SidebarData: SidebarDataType[] = [
     icon: TriangleAlert,
   },
 
-  {
-    id: 6,
-    name: "Privecy Policy",
-    href: "/dashboard/privecy-policy",
-    icon: ShieldCheck ,
-  },
+
 ];

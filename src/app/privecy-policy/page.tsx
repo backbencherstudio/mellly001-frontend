@@ -264,7 +264,7 @@ const sections = [
 
 export default function PrivacyPolicyPage() {
   return (
-    <div className="w-full space-y-6">
+    <div className="px-10 max-w-7xl mx-auto space-y-6 py-10">
       {/* Hero Card */}
       <div className="rounded-2xl border border-[#E5E7EB] bg-white p-6 shadow-[0px_4px_33px_8px_rgba(0,0,0,0.04)]">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
