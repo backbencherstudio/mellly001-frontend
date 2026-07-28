@@ -10,6 +10,7 @@ import {
   Settings,
   BriefcaseBusiness,
   TriangleAlert,
+  Headphones,
 } from "lucide-react";
 
 export interface SidebarDataType {
@@ -39,13 +40,13 @@ export const SidebarData: SidebarDataType[] = [
     icon: CleanerIcon,
   },
   {
-    id: 3,
+    id: 4,
     name: "Cleaner Request",
     href: "/dashboard/cleaner-request",
     icon: Users,
   },
   {
-    id: 4,
+    id: 5,
     name: "Bookings",
     href: "/dashboard/booking",
     icon: BookingIcon,
@@ -57,16 +58,22 @@ export const SidebarData: SidebarDataType[] = [
   //   icon: PaymentIcon,
   // },
   {
-    id: 5,
+    id: 6,
     name: "Job Approvals",
     href: "/dashboard/jobAppruve",
     icon: JobAppruvalIcon,
   },
 
   {
-    id: 5,
+    id: 7,
     name: "Danger Request",
     href: "/dashboard/danger-request",
     icon: TriangleAlert,
+  },
+  {
+    id: 8,
+    name: "Support",
+    href: "/dashboard/support",
+    icon: Headphones,
   },
 ];
