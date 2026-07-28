@@ -3,7 +3,7 @@ module.exports = {
     remotePatterns: [
       {
         protocol: "http",
-        hostname: "192.168.7.54",
+        hostname: "backend.cleennconnect.com",
         port: "4000",
         pathname: "/**",
       },

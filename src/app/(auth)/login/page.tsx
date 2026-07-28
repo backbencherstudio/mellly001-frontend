@@ -99,7 +99,7 @@ export default function AdminLogin() {
           Admin Dashboard
         </h2>
         <p className="text-center text-gray-500 mb-6">
-          Maid Service Management System
+          Cleaner Service Management System
         </p>
 
         {/* Form */}
