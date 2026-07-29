@@ -40,11 +40,20 @@ export const Socket = baseApi.injectEndpoints({
             }),
             providesTags: ["Conversation"],
         }),
+
+        GetAllNotification: builder.query({
+            query: () => ({
+                url: "notification/",
+                method: "GET",
+
+            }),
+        }),
     }),
 });
 
 export const { useCreateConversationMutation,
     useAllConversationIdQuery,
     useAllConversationUserQuery,
-    useSendConversationMessageMutation
+    useSendConversationMessageMutation,
+    useGetAllNotificationQuery,
 } = Socket;

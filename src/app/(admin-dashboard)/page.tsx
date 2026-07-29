@@ -34,15 +34,13 @@ type recent = {
 export default function DashboardPage() {
 
   const { data: activity } = useGetActivitiesQuery({})
-  console.log(activity, "activity");
-
 
   const { data } = useGetDashboardOverviewQuery({});
   // console.log(data)
   //  Later: replace this with API data
   const stats: Stat[] = [
     {
-      id: "users",
+      id: "1",
       title: "Total Homeowners",
       value: data?.data?.total_homeowners,
 
@@ -51,7 +49,7 @@ export default function DashboardPage() {
       textcolor: "#155DFC",
     },
     {
-      id: "consults",
+      id: "2",
       title: "Total Cleaners",
       value: data?.data?.total_cleaners,
 
@@ -60,7 +58,7 @@ export default function DashboardPage() {
       textcolor: "#00A63E",
     },
     {
-      id: "simulations",
+      id: "3",
       title: "Active Bookings",
       value: data?.data?.active_bookings,
 
@@ -69,7 +67,7 @@ export default function DashboardPage() {
       textcolor: "#9810FA",
     },
     {
-      id: "patients",
+      id: "4",
       title: "Total Revenue",
       value: data?.data?.total_revenue,
 
@@ -78,7 +76,7 @@ export default function DashboardPage() {
       textcolor: "#F54900",
     },
     {
-      id: "users",
+      id: "5",
       title: "Completed Jobs",
       value: data?.data?.completed_bookings,
 
@@ -87,7 +85,7 @@ export default function DashboardPage() {
       textcolor: "#155DFC",
     },
     {
-      id: "consults",
+      id: "6",
       title: "Pending Approvals",
       value: data?.data?.pending_bookings,
 
@@ -97,7 +95,7 @@ export default function DashboardPage() {
     },
 
   ];
-  const activitys = activity?.data?.data || [];
+  const activitys = activity?.data?.data?.slice(0, 10) || [];
   console.log(activitys, "dfsdfd")
 
   const Activity: recent[] =
@@ -165,8 +163,8 @@ export default function DashboardPage() {
           <h3 className="text-[#032B15] text-[20px] font-bold leading-100% pb-[26px]">Recent Activity</h3>
           <div className="space-y-4">
             {
-              Activity.map((item) => {
-                return <div key={item.id} className="">
+              Activity?.slice(0, 10).map((item) => (
+                <div key={item.id} className="">
                   <div className="">
                     <div className="flex justify-between">
                       <div className="flex gap-3">
@@ -184,7 +182,7 @@ export default function DashboardPage() {
 
                 </div>
 
-              })
+              ))
             }
           </div>
         </div>
