@@ -61,6 +61,6 @@ export default function MessageBubble({
                     {timestamp}
                 </p>
             </div>
-        </div>
+        </div >
     );
 }
