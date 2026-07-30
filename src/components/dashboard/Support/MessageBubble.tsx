@@ -23,8 +23,8 @@ export default function MessageBubble({
         <div className={`flex w-full ${isAdmin ? "justify-end" : "justify-start"}`}>
             <div
                 className={`max-w-[70%] px-4 py-2.5 rounded-2xl text-sm ${isAdmin
-                        ? "bg-[#03652B] text-white rounded-br-md"
-                        : "bg-white text-gray-800 border border-gray-200 rounded-bl-md shadow-sm"
+                    ? "bg-[#E5F1EA] text-black rounded-br-md"
+                    : "bg-white text-gray-800 border border-gray-200 rounded-bl-md shadow-sm"
                     }`}
             >
                 {text && <p className="break-words">{text}</p>}
@@ -57,10 +57,10 @@ export default function MessageBubble({
                     </div>
                 )}
 
-                <p className={`text-[10px] mt-1 ${isAdmin ? "text-green-200" : "text-gray-400"}`}>
+                <p className={`text-[10px] mt-1 ${isAdmin ? "text-black" : "text-gray-400"}`}>
                     {timestamp}
                 </p>
             </div>
-        </div>
+        </div >
     );
 }

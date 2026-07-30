@@ -2,14 +2,12 @@
 "use client";
 
 import NotificationsIcon from "@/components/icon/Notifications";
+import { useGetAllNotificationQuery } from "@/redux/features/chattingAndSocket/socket";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { MdOutlineNotificationsActive } from "react-icons/md";
+import { useState, useEffect, useRef } from "react";
 
-const routeMeta: Record<
-  string,
-  { title: string; desc: string }
-> = {
+const routeMeta: Record<string, { title: string; desc: string }> = {
   "/dashboard": {
     title: "Dashboard Overview",
     desc: "Welcome back! Here's what's happening with your service today.",
@@ -46,33 +44,82 @@ const routeMeta: Record<
 
 const DashboardHeader = () => {
   const pathname = usePathname();
+  const [open, setOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const { data: notificationData }: any = useGetAllNotificationQuery({});
+
+  const allNotifications = notificationData?.data?.results || notificationData?.data || [];
+  const notifications = allNotifications.slice(0, 10);
+  const unReadNotificationCount = allNotifications.filter((item: any) => item.read === false).length;
 
   const meta = routeMeta[pathname] ?? {
     title: "Dashboard",
     desc: "Welcome back",
   };
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+
+    if (open) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [open]);
+
   return (
     <div className="w-full">
       <div className="flex items-center justify-between">
         {/* Left */}
-        <div className="">
-          <h3 className="text-2xl lg:text-3xl font-bold text-[#101828] leading-120% pb-3">{meta.title}</h3>
-          <p className="font-normal text-base text-[#4A5565]">
-            {meta.desc}
-          </p>
+        <div>
+          <h3 className="text-2xl lg:text-3xl font-bold text-[#101828] leading-120% pb-3">
+            {meta.title}
+          </h3>
+          <p className="font-normal text-base text-[#4A5565]">{meta.desc}</p>
         </div>
 
-        {/* Right */}
-        <div className="relative">
-          <div>
-            <Link href="#">
-              <NotificationsIcon />
-            </Link>
+        {/* Right - Notification */}
+        <div className="relative" ref={dropdownRef}>
+          <div onClick={() => setOpen(!open)} className="cursor-pointer relative">
+            <NotificationsIcon />
+            {unReadNotificationCount > 0 && (
+              <div className="absolute -top-1 right-1">
+                <div className="h-3 w-3 bg-red-500 rounded-full"></div>
+              </div>
+            )}
           </div>
-          <div className="absolute -top-1 right-1">
-            <div className="h-3 w-3 bg-red-500 rounded-full"></div>
-          </div>
+
+          {open && (
+            <div className="absolute top-full right-0 mt-2 w-72 bg-white border rounded-lg shadow-lg py-2 z-50 max-h-80 overflow-y-auto">
+              {notifications.length === 0 ? (
+                <div className="px-4 py-6 text-center text-sm text-gray-400">
+                  No notifications
+                </div>
+              ) : (
+                notifications.map((item: any) => (
+                  <div
+                    key={item.id || item._id}
+                    className="px-4 py-2.5 hover:bg-gray-100 cursor-pointer border-b border-gray-50 last:border-0"
+                  >
+                    <Link href="/dashboard/support">
+                      <p className="text-sm font-medium text-gray-900">
+                        {item.sender?.name || item.title || "Notification"}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        {item.type || item.message || item.body}
+                      </p></Link>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

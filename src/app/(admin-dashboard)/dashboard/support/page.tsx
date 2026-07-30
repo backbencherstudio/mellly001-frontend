@@ -48,6 +48,8 @@ const getImageUrl = (urlInput: any) => {
     return encodeURI(decodeURI(cleanUrl));
 };
 
+
+
 export default function SupportPage() {
     const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
     const [newMessage, setNewMessage] = useState("");
@@ -115,18 +117,55 @@ export default function SupportPage() {
     }, [messages, selectedConversationId]);
 
     useEffect(() => {
+        if (!selectedConversationId) return;
+
         const socket = getSocket();
-        const handleNewMessage = (message: any) => {
-            if (message.conversationId === selectedConversationId) {
+
+        const joinRoom = () => {
+            console.log(" Joining room:", selectedConversationId);
+            socket.emit("joinroom", { room_id: selectedConversationId });
+        };
+
+        const handleJoinedRoom = (data: any) => {
+            console.log(" Joined room:", data?.room_id || data);
+        };
+
+        const handleMessage = (response: any) => {
+            console.log(" New Message Received:", response);
+
+            const msgConversationId =
+                response?.data?.conversationId ||
+                response?.conversationId ||
+                response?.data?.conversation_id;
+
+            if (!msgConversationId || msgConversationId === selectedConversationId) {
                 refetchMessages();
             }
         };
-        socket.on("connect", () => console.log("Socket connected:", socket.id));
-        socket.on("newMessage", handleNewMessage);
+
+        const handleConnect = () => {
+            console.log(" Socket reconnected:", socket.id);
+            joinRoom();
+        };
+
+        // Join room immediately if already connected
+        if (socket.connected) {
+            joinRoom();
+        }
+
+        socket.on("connect", handleConnect);
+        socket.on("joinedRoom", handleJoinedRoom);
+        socket.on("message", handleMessage);
+        socket.on("newMessage", handleMessage);
+
         return () => {
-            socket.off("newMessage", handleNewMessage);
+            socket.off("connect", handleConnect);
+            socket.off("joinedRoom", handleJoinedRoom);
+            socket.off("message", handleMessage);
+            socket.off("newMessage", handleMessage);
         };
     }, [selectedConversationId, refetchMessages]);
+
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
@@ -162,11 +201,16 @@ export default function SupportPage() {
 
             await sendMessage(payload).unwrap();
 
+            // Notify other users via socket
             const socket = getSocket();
             socket.emit("sendMessage", {
                 conversationId: selectedConversationId,
                 text: newMessage.trim(),
             });
+            console.log("📤 sendMessage emitted via socket");
+
+            // Refetch to show the sent message immediately
+            refetchMessages();
 
             selectedFiles.forEach((item) => {
                 if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
