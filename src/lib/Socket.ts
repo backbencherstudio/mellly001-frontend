@@ -1,64 +1,65 @@
-// lib/Socket.ts
+"use client"
 import { io, Socket } from "socket.io-client";
+import Cookies from "js-cookie";
 
 let socket: Socket | null = null;
+let currentToken: string = "";
 
 export const getSocket = (): Socket => {
-    if (socket) {
-        console.log("🔄 Using existing socket:", socket.id || "no-id");
+    const token = typeof window !== "undefined"
+        ? Cookies.get("token") || ""
+        : "";
+
+    // If token changed (e.g. after login), force reconnect with new token
+    if (socket && currentToken !== token) {
+        console.log("🔄 Token changed, recreating socket");
+        socket.removeAllListeners();
+        socket.disconnect();
+        socket = null;
+    }
+
+    if (socket && socket.connected) {
         return socket;
     }
 
-    const token = typeof window !== "undefined"
-        ? localStorage.getItem("accessToken") || ""
-        : "";
+    if (socket && !socket.connected) {
+        console.log("🔌 Stale socket detected, creating new connection");
+        socket.removeAllListeners();
+        socket = null;
+    }
 
-    console.log("🔑 Token exists:", !!token);
+    currentToken = token;
+    console.log(" Token exists:", !!token);
 
     const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || "https://backend.cleennconnect.com";
-
-    console.log("🌐 Connecting to:", SOCKET_URL);
+    console.log(" Connecting to:", SOCKET_URL);
 
     socket = io(SOCKET_URL, {
-        auth: {
-            token: token,
-        },
         extraHeaders: {
-            Authorization: `Bearer ${token}`,
+            authorization: token ? `Bearer ${token}` : "",
         },
-        transports: ["websocket", "polling"],
+        transports: ["polling", "websocket"],
         reconnection: true,
-        reconnectionAttempts: 5,
+        reconnectionAttempts: 10,
         reconnectionDelay: 1000,
         timeout: 10000,
     });
 
-    // Connection events with detailed logging
     socket.on("connect", () => {
-        console.log("✅ Socket connected successfully!");
-        console.log("🆔 Socket ID:", socket?.id);
-        console.log("📡 Transport:", socket?.io?.engine?.transport?.name);
+        console.log(" Connected:", socket?.id);
+    });
+
+    socket.onAny((event, data) => {
+        console.log(" Event:", event);
+        console.log(" Data:", data);
     });
 
     socket.on("connect_error", (err) => {
-        console.error("❌ Socket Connection Error:", err.message);
-        console.error("📋 Error details:", err);
+        console.log(" Connect Error:", err.message);
     });
 
     socket.on("disconnect", (reason) => {
-        console.log("🔌 Socket disconnected:", reason);
-    });
-
-    socket.on("reconnect", (attemptNumber) => {
-        console.log("🔄 Socket reconnected after", attemptNumber, "attempts");
-        console.log("🆔 New Socket ID:", socket?.id);
-    });
-
-    // Log all events for debugging
-    socket.onAny((eventName, ...args) => {
-        if (!eventName.startsWith("_")) { // Skip internal events
-            console.log(`📡 Event: ${eventName}`, args);
-        }
+        console.log("🔌 Socket disconnected, reason:", reason);
     });
 
     return socket;
@@ -72,12 +73,11 @@ export const disconnectSocket = () => {
     }
 };
 
-// Helper function to check socket status
 export const getSocketStatus = () => {
-    if (!socket) return { connected: false, id: null, rooms: [] };
+    if (!socket) return { connected: false, id: null, rooms: [] as string[] };
     return {
         connected: socket.connected,
         id: socket.id || null,
-        rooms: Array.from(socket.rooms || []),
+        rooms: Array.from((socket as Socket & { rooms: Set<string> }).rooms || []),
     };
 };
