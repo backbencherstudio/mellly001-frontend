@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+
 import {
     useAllConversationUserQuery,
     useAllConversationIdQuery,
@@ -59,8 +60,12 @@ export default function SupportPage() {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const { data: conversationListData, isLoading: isUsersLoading, isError: isUsersError } =
-        useAllConversationUserQuery(undefined);
+    const {
+        data: conversationListData,
+        isLoading: isUsersLoading,
+        isError: isUsersError,
+        refetch: refetchConversations,
+    } = useAllConversationUserQuery(undefined);
 
     const conversations = Array.isArray(conversationListData?.conversations)
         ? conversationListData.conversations
@@ -116,6 +121,8 @@ export default function SupportPage() {
         scrollToBottom();
     }, [messages, selectedConversationId]);
 
+
+
     useEffect(() => {
         if (!selectedConversationId) return;
 
@@ -133,12 +140,16 @@ export default function SupportPage() {
         const handleMessage = (response: any) => {
             console.log(" New Message Received:", response);
 
-            const msgConversationId =
+            const incomingConversationId =
                 response?.data?.conversationId ||
                 response?.conversationId ||
-                response?.data?.conversation_id;
+                response?.data?.conversation_id ||
+                response?.data?.data?.conversationId ||
+                response?.data?.data?.conversation_id;
 
-            if (!msgConversationId || msgConversationId === selectedConversationId) {
+            refetchConversations();
+
+            if (!incomingConversationId || incomingConversationId === selectedConversationId) {
                 refetchMessages();
             }
         };
@@ -148,7 +159,6 @@ export default function SupportPage() {
             joinRoom();
         };
 
-        // Join room immediately if already connected
         if (socket.connected) {
             joinRoom();
         }
@@ -164,7 +174,7 @@ export default function SupportPage() {
             socket.off("message", handleMessage);
             socket.off("newMessage", handleMessage);
         };
-    }, [selectedConversationId, refetchMessages]);
+    }, [selectedConversationId]);
 
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -201,16 +211,18 @@ export default function SupportPage() {
 
             await sendMessage(payload).unwrap();
 
-            // Notify other users via socket
             const socket = getSocket();
             socket.emit("sendMessage", {
-                conversationId: selectedConversationId,
-                text: newMessage.trim(),
+                to: selectedConversationId,
+                data: {
+                    conversationId: selectedConversationId,
+                    text: newMessage.trim(),
+                },
             });
             console.log("📤 sendMessage emitted via socket");
 
-            // Refetch to show the sent message immediately
             refetchMessages();
+            refetchConversations();
 
             selectedFiles.forEach((item) => {
                 if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
@@ -245,7 +257,7 @@ export default function SupportPage() {
     };
 
     return (
-        <div className="flex h-[calc(100vh-80px)] bg-gray-50 rounded-xl overflow-hidden border border-gray-200 shadow-sm">
+        <div className="flex flex-col lg:flex-row gap-7 lg:gap-0 h-[calc(150vh)] lg:h-[calc(100vh-80px)] bg-gray-50 rounded-xl overflow-hidden lg:border border-gray-200 shadow-sm">
             <ConversationList
                 conversations={conversations}
                 selectedId={selectedConversationId}

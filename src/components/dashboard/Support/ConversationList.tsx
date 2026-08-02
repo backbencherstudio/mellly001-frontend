@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+
 interface ConversationUser {
     conversation_id: string;
     opponent?: {
@@ -38,6 +40,17 @@ export default function ConversationList({
     onSelect,
 }: ConversationListProps) {
     const getUserName = (conv: ConversationUser) => conv.opponent?.name || "Unknown User";
+    const getAvatarUrl = (conv: ConversationUser) => {
+        return (
+            conv.opponent?.avatar_url ||
+            conv.opponent?.avater ||
+            null
+        );
+    };
+
+
+
+
 
     const getLastMessage = (conv: ConversationUser) => {
         if (conv.lastMessage?.text) return conv.lastMessage.text;
@@ -60,7 +73,7 @@ export default function ConversationList({
     );
 
     return (
-        <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
+        <div className="w-full lg:w-80 bg-white border-r border-gray-200 flex flex-col">
             <div className="p-4 border-b border-gray-100">
                 <h2 className="text-lg font-semibold text-gray-800">Support</h2>
                 <p className="text-xs text-gray-500 mt-0.5">User messages from app</p>
@@ -99,9 +112,34 @@ export default function ConversationList({
                             className={`w-full flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors text-left border-b border-gray-50 ${selectedId === conv.conversation_id ? "bg-[#F3FFF8]" : ""
                                 }`}
                         >
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#03652B] to-[#00A63E] flex items-center justify-center text-white font-medium text-sm shrink-0">
+                            {/* <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#03652B] to-[#00A63E] flex items-center justify-center text-white font-medium text-sm shrink-0">
                                 {getUserName(conv).charAt(0).toUpperCase()}
-                            </div>
+                            </div> */}
+
+                            {(() => {
+                                const avatarUrl = getAvatarUrl(conv);
+
+                                if (avatarUrl) {
+                                    return (
+                                        <Image
+                                            src={avatarUrl}
+                                            alt={getUserName(conv)}
+                                            width={40}
+                                            crossOrigin="anonymous"
+                                            height={40}
+                                            className="w-10 h-10 rounded-full object-cover shrink-0"
+                                            unoptimized
+                                        />
+                                    );
+                                }
+
+
+                                return (
+                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#03652B] to-[#00A63E] flex items-center justify-center text-white font-medium text-sm shrink-0">
+                                        {getUserName(conv).charAt(0).toUpperCase()}
+                                    </div>
+                                );
+                            })()}
 
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center justify-between">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef } from "react";
+
 import MessageBubble from "./MessageBubble";
 
 interface Message {
@@ -9,8 +10,10 @@ interface Message {
     sender: "user" | "admin";
     timestamp: string;
     createdAt?: string;
-    attachments?: any[];
+    attachments?: unknown[];
     attachment_urls?: string[];
+    senderName?: string;
+    senderAvatar?: string;
 }
 
 interface FileWithPreview {
@@ -19,7 +22,9 @@ interface FileWithPreview {
 }
 
 interface ChatAreaProps {
-    selectedConversation: any;
+    selectedConversation: {
+        opponent?: { name?: string };
+    } | null;
     messages: Message[];
     isMessagesLoading: boolean;
     newMessage: string;
@@ -69,8 +74,7 @@ export default function ChatArea({
     const userName = selectedConversation.opponent?.name || "Unknown User";
 
     return (
-        <div className="flex-1 flex flex-col bg-gray-50">
-            {/* Header */}
+        <div className="flex-1 flex flex-col  bg-gray-50 overflow-y-auto">
             <div className="bg-white border-b border-gray-200 px-5 py-3 flex items-center gap-3">
                 <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#03652B] to-[#00A63E] flex items-center justify-center text-white font-medium text-sm">
                     {userName.charAt(0).toUpperCase()}
@@ -80,7 +84,6 @@ export default function ChatArea({
                 </div>
             </div>
 
-            {/* Messages */}
             <div className="flex-1 overflow-y-auto p-5 space-y-3 flex flex-col">
                 {isMessagesLoading ? (
                     <div className="text-center text-gray-400 text-sm py-10">Loading messages...</div>
@@ -97,13 +100,14 @@ export default function ChatArea({
                             brokenImages={brokenImages}
                             onImageError={onImageError}
                             onImageLoad={scrollToBottom}
+                            senderName={msg.senderName}
+                            senderAvatar={msg.senderAvatar}
                         />
                     ))
                 )}
                 <div ref={messagesEndRef} />
             </div>
 
-            {/* Input */}
             <div className="bg-white border-t border-gray-200 p-4">
                 {selectedFiles.length > 0 && (
                     <div className="flex flex-wrap gap-2 mb-3">
