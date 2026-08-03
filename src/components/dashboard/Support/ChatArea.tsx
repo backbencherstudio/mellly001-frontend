@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef } from "react";
+import React, { useRef } from "react";
+
 import MessageBubble from "./MessageBubble";
 
 interface Message {
@@ -9,17 +10,30 @@ interface Message {
     sender: "user" | "admin";
     timestamp: string;
     createdAt?: string;
-    attachments?: any[];
+    attachments?: unknown[];
     attachment_urls?: string[];
+    senderName?: string;
+    senderAvatar?: string;
 }
 
 interface FileWithPreview {
     file: File;
     previewUrl?: string;
 }
+interface Opponent {
+    name?: string;
+    isOnline?: boolean;
+    avatar_url?: string;
+    avater?: string;
+}
+interface SelectedConversation {
+    opponent?: Opponent;
+}
 
 interface ChatAreaProps {
-    selectedConversation: any;
+    selectedConversation: {
+        opponent?: Opponent;
+    } | null;
     messages: Message[];
     isMessagesLoading: boolean;
     newMessage: string;
@@ -66,21 +80,50 @@ export default function ChatArea({
         );
     }
 
+    const user = selectedConversation?.opponent;
     const userName = selectedConversation.opponent?.name || "Unknown User";
+    const statusText = user?.isOnline ? "Online" : "Offline";
+
+    const getAvatarUrl = (conv: SelectedConversation) => {
+        return (
+            conv.opponent?.avatar_url ??
+            conv.opponent?.avater ??
+            null
+        );
+    };
+    const avatarUrl = getAvatarUrl(selectedConversation);
 
     return (
-        <div className="flex-1 flex flex-col bg-gray-50">
-            {/* Header */}
+        <div className="flex-1 flex flex-col  bg-gray-50 overflow-y-auto">
             <div className="bg-white border-b border-gray-200 px-5 py-3 flex items-center gap-3">
                 <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#03652B] to-[#00A63E] flex items-center justify-center text-white font-medium text-sm">
-                    {userName.charAt(0).toUpperCase()}
+                    {
+                        <div>
+                            {avatarUrl ? (
+                                <img
+                                    src={avatarUrl}
+                                    alt={userName}
+                                    crossOrigin="anonymous"
+                                    className="w-full h-full rounded-full object-cover"
+                                />
+                            ) : (
+                                userName.charAt(0).toUpperCase()
+                            )}
+                        </div>
+                    }
                 </div>
                 <div>
                     <p className="text-sm font-semibold text-gray-900">{userName}</p>
+                    <div className="flex items-center gap-1">
+                        {/* <div className={`w-2 h-2 rounded-full ${user?.isOnline ? "bg-green-500" : "bg-gray-400"} inline-block mr-1`}></div>
+
+
+                        <p className="text-xs text-gray-500">{statusText}</p> */}
+                    </div>
                 </div>
+
             </div>
 
-            {/* Messages */}
             <div className="flex-1 overflow-y-auto p-5 space-y-3 flex flex-col">
                 {isMessagesLoading ? (
                     <div className="text-center text-gray-400 text-sm py-10">Loading messages...</div>
@@ -97,13 +140,14 @@ export default function ChatArea({
                             brokenImages={brokenImages}
                             onImageError={onImageError}
                             onImageLoad={scrollToBottom}
+                            senderName={msg.senderName}
+                            senderAvatar={msg.senderAvatar}
                         />
                     ))
                 )}
                 <div ref={messagesEndRef} />
             </div>
 
-            {/* Input */}
             <div className="bg-white border-t border-gray-200 p-4">
                 {selectedFiles.length > 0 && (
                     <div className="flex flex-wrap gap-2 mb-3">
@@ -175,6 +219,6 @@ export default function ChatArea({
                     </button>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }
