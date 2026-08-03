@@ -8,6 +8,8 @@ interface MessageBubbleProps {
     brokenImages: Record<string, boolean>;
     onImageError: (url: string) => void;
     onImageLoad: () => void;
+    senderName?: string;
+    senderAvatar?: string;
 }
 
 export default function MessageBubble({
@@ -18,6 +20,8 @@ export default function MessageBubble({
     brokenImages,
     onImageError,
     onImageLoad,
+    senderName,
+    senderAvatar,
 }: MessageBubbleProps) {
     return (
         <div className={`flex w-full ${isAdmin ? "justify-end" : "justify-start"}`}>
@@ -27,6 +31,14 @@ export default function MessageBubble({
                     : "bg-white text-gray-800 border border-gray-200 rounded-bl-md shadow-sm"
                     }`}
             >
+                {!isAdmin && (senderName || senderAvatar) && (
+                    <div className="flex items-center gap-2 mb-1">
+                        {senderAvatar && (
+                            <img src={senderAvatar} alt={senderName || "user"} className="w-5 h-5 rounded-full object-cover" />
+                        )}
+                        <span className="text-[11px] font-medium text-gray-700">{senderName}</span>
+                    </div>
+                )}
                 {text && <p className="break-words">{text}</p>}
 
                 {imageList.length > 0 && (
@@ -49,7 +61,7 @@ export default function MessageBubble({
                                     crossOrigin="anonymous"
                                     className="max-h-48 max-w-full object-center rounded-lg border border-gray-200 bg-gray-100 cursor-pointer"
                                     onLoad={onImageLoad}
-                                    onClick={() => window.open(imgUrl, "_blank")}
+                                    // onClick={() => window.open(imgUrl, "_blank")}
                                     onError={() => onImageError(imgUrl)}
                                 />
                             )

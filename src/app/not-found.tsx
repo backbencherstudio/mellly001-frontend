@@ -6,7 +6,7 @@ export default function NotFound() {
             <h1 className="text-2xl font-medium">404 - Page Not Found</h1>
 
 
-            <Link href="/">
+            <Link href="/login">
                 <button className="mt-5 bg-blue-500 text-white px-4 py-2 rounded-lg  cursor-pointer">Go Home</button>
             </Link>
         </div>
