@@ -48,7 +48,7 @@ export default function DashboardLayout({
 
             <div className="flex flex-1 flex-col min-w-0">
               {/* Header */}
-              <header className="flex h-25 items-center gap-4 border-b pr-5 pl-4">
+              <header className="flex h-25 sticky top-0 z-50 bg-white items-center gap-4 border-b pr-5 pl-4">
                 <SidebarTrigger />
                 <DashboardHeader />
               </header>

@@ -1,11 +1,30 @@
-/** @format */
 "use client";
 
-import NotificationsIcon from "@/components/icon/Notifications";
-import { useGetAllNotificationQuery } from "@/redux/features/chattingAndSocket/socket";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, useEffect, useRef } from "react";
+
+import NotificationsIcon from "@/components/icon/Notifications";
+import { getSocket } from "@/lib/Socket";
+import { useGetAllNotificationQuery } from "@/redux/features/chattingAndSocket/socket";
+
+interface Notification {
+  id: string;
+  _id?: string;
+  read: boolean;
+  title?: string;
+  message?: string;
+  body?: string;
+  type?: string;
+  sender?: {
+    name?: string;
+  };
+}
+interface NotificationResponse {
+  data: {
+    results: Notification[];
+  };
+}
 
 const routeMeta: Record<string, { title: string; desc: string }> = {
   "/dashboard": {
@@ -47,16 +66,44 @@ const DashboardHeader = () => {
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const { data: notificationData }: any = useGetAllNotificationQuery({});
+  const {
+    data: notificationData,
+    refetch,
+  } = useGetAllNotificationQuery(
+    {},
+    {
+      pollingInterval: 5000,
+      refetchOnFocus: true,
+      refetchOnReconnect: true,
+    }
+  );
 
-  const allNotifications = notificationData?.data?.results || notificationData?.data || [];
+  const allNotifications: Notification[] =
+    notificationData?.data?.results ??
+    notificationData?.data ??
+    [];
   const notifications = allNotifications.slice(0, 10);
-  const unReadNotificationCount = allNotifications.filter((item: any) => item.read === false).length;
+  const unReadNotificationCount = allNotifications.filter((item) => item.read === false).length;
 
   const meta = routeMeta[pathname] ?? {
     title: "Dashboard",
     desc: "Welcome back",
   };
+
+  useEffect(() => {
+    const socket = getSocket();
+
+    const handleNewNotification = (data: unknown) => {
+      console.log("New notification:", data);
+      refetch();
+    };
+
+    socket.on("new-notification", handleNewNotification);
+
+    return () => {
+      socket.off("new-notification", handleNewNotification);
+    };
+  }, [refetch]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -75,7 +122,7 @@ const DashboardHeader = () => {
   }, [open]);
 
   return (
-    <div className="w-full">
+    <div className="w-full  sticky top-0 z-10 ">
       <div className="flex items-center justify-between">
         {/* Left */}
         <div>
@@ -103,7 +150,7 @@ const DashboardHeader = () => {
                   No notifications
                 </div>
               ) : (
-                notifications.map((item: any) => (
+                notifications.map((item) => (
                   <div
                     key={item.id || item._id}
                     className="px-4 py-2.5 hover:bg-gray-100 cursor-pointer border-b border-gray-50 last:border-0"

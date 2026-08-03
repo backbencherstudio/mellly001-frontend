@@ -10,6 +10,7 @@ import {
 import { getSocket } from "@/lib/Socket";
 import ConversationList from "@/components/dashboard/Support/ConversationList";
 import ChatArea from "@/components/dashboard/Support/ChatArea";
+
 interface Message {
     id: string;
     text: string;

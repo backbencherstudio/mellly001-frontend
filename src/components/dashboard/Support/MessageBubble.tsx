@@ -61,7 +61,7 @@ export default function MessageBubble({
                                     crossOrigin="anonymous"
                                     className="max-h-48 max-w-full object-center rounded-lg border border-gray-200 bg-gray-100 cursor-pointer"
                                     onLoad={onImageLoad}
-                                    onClick={() => window.open(imgUrl, "_blank")}
+                                    // onClick={() => window.open(imgUrl, "_blank")}
                                     onError={() => onImageError(imgUrl)}
                                 />
                             )
