@@ -1,295 +1,295 @@
-"use client";
+    "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+    import React, { useState, useEffect, useRef } from "react";
 
 import {
-    useAllConversationUserQuery,
-    useAllConversationIdQuery,
-    useSendConversationMessageMutation,
-} from "@/redux/features/chattingAndSocket/socket";
-import { getSocket } from "@/lib/Socket";
-import ConversationList from "@/components/dashboard/Support/ConversationList";
-import ChatArea from "@/components/dashboard/Support/ChatArea";
+        useAllConversationUserQuery,
+        useAllConversationIdQuery,
+        useSendConversationMessageMutation,
+    } from "@/redux/features/chattingAndSocket/socket";
+    import { getSocket } from "@/lib/Socket";
+    import ConversationList from "@/components/dashboard/Support/ConversationList";
+    import ChatArea from "@/components/dashboard/Support/ChatArea";
 
-interface Message {
-    id: string;
-    text: string;
-    sender: "user" | "admin";
-    timestamp: string;
-    createdAt?: string;
-    attachments?: any[];
-    attachment_urls?: string[];
-}
-
-interface FileWithPreview {
-    file: File;
-    previewUrl?: string;
-}
-
-const getImageUrl = (urlInput: any) => {
-    if (!urlInput) return "";
-    let path = "";
-    if (typeof urlInput === "string") path = urlInput;
-    else if (typeof urlInput === "object") {
-        path = urlInput.url || urlInput.path || urlInput.file || urlInput.filename || urlInput.secure_url || "";
+    interface Message {
+        id: string;
+        text: string;
+        sender: "user" | "admin";
+        timestamp: string;
+        createdAt?: string;
+        attachments?: any[];
+        attachment_urls?: string[];
     }
-    if (!path) return "";
-    let cleanUrl = path.trim();
-    if (!cleanUrl.startsWith("http://") && !cleanUrl.startsWith("https://")) {
-        const baseUrl = (process.env.NEXT_PUBLIC_API_URL || "")
-            .replace(/\/api\/?$/, "")
-            .replace(/\/$/, "");
-        if (!cleanUrl.includes("/")) {
-            cleanUrl = `${baseUrl}/public/storage/attachment/${cleanUrl}`;
-        } else {
-            const cleanPath = cleanUrl.startsWith("/") ? cleanUrl : `/${cleanUrl}`;
-            cleanUrl = `${baseUrl}${cleanPath}`;
-        }
+
+    interface FileWithPreview {
+        file: File;
+        previewUrl?: string;
     }
-    cleanUrl = cleanUrl.replace(/([^:]\/)\/+/g, "$1");
-    return encodeURI(decodeURI(cleanUrl));
-};
 
-
-
-export default function SupportPage() {
-    const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
-    const [newMessage, setNewMessage] = useState("");
-    const [search, setSearch] = useState("");
-    const [selectedFiles, setSelectedFiles] = useState<FileWithPreview[]>([]);
-    const [brokenImages, setBrokenImages] = useState<Record<string, boolean>>({});
-    const messagesEndRef = useRef<HTMLDivElement>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
-
-    const {
-        data: conversationListData,
-        isLoading: isUsersLoading,
-        isError: isUsersError,
-        refetch: refetchConversations,
-    } = useAllConversationUserQuery(undefined);
-
-    const conversations = Array.isArray(conversationListData?.conversations)
-        ? conversationListData.conversations
-        : Array.isArray(conversationListData?.data?.conversations)
-            ? conversationListData.data.conversations
-            : Array.isArray(conversationListData)
-                ? conversationListData
-                : [];
-
-    const { data: messagesData, isLoading: isMessagesLoading, refetch: refetchMessages } =
-        useAllConversationIdQuery(selectedConversationId!, { skip: !selectedConversationId });
-
-    const selectedConversation = conversations.find((c: any) => c.conversation_id === selectedConversationId);
-
-    const rawMessages =
-        messagesData?.data?.messages || messagesData?.data || messagesData?.messages || [];
-
-    const oppositeUser = messagesData?.oppositeUser;
-
-    const messages: Message[] = Array.isArray(rawMessages)
-        ? rawMessages
-            .map((msg: any) => {
-                const senderObj = typeof msg.sender === "object" ? msg.sender : null;
-                const senderId = senderObj?._id || senderObj?.id || msg.sender;
-                const oppositeUserId = oppositeUser?.id || selectedConversation?.opponent?.userId;
-                const isUser = oppositeUserId && senderId === oppositeUserId;
-
-                return {
-                    id: msg._id || msg.id,
-                    text: msg.content || msg.text || msg.message || "",
-                    sender: isUser ? ("user" as const) : ("admin" as const),
-                    timestamp: msg.createdAt
-                        ? new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-                        : "",
-                    createdAt: msg.createdAt || msg.created_at,
-                    attachments: msg.attachments || [],
-                    attachment_urls: msg.attachments_url || msg.attachment_urls || [],
-                };
-            })
-            .sort((a, b) => {
-                if (!a.createdAt || !b.createdAt) return 0;
-                return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-            })
-        : [];
-
-    const [sendMessage, { isLoading: isSending }] = useSendConversationMessageMutation();
-
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    };
-
-    useEffect(() => {
-        scrollToBottom();
-    }, [messages, selectedConversationId]);
-
-
-
-    useEffect(() => {
-        if (!selectedConversationId) return;
-
-        const socket = getSocket();
-
-        const joinRoom = () => {
-            console.log(" Joining room:", selectedConversationId);
-            socket.emit("joinroom", { room_id: selectedConversationId });
-        };
-
-        const handleJoinedRoom = (data: any) => {
-            console.log(" Joined room:", data?.room_id || data);
-        };
-
-        const handleMessage = (response: any) => {
-            console.log(" New Message Received:", response);
-
-            const incomingConversationId =
-                response?.data?.conversationId ||
-                response?.conversationId ||
-                response?.data?.conversation_id ||
-                response?.data?.data?.conversationId ||
-                response?.data?.data?.conversation_id;
-
-            refetchConversations();
-
-            if (!incomingConversationId || incomingConversationId === selectedConversationId) {
-                refetchMessages();
-            }
-        };
-
-        const handleConnect = () => {
-            console.log(" Socket reconnected:", socket.id);
-            joinRoom();
-        };
-
-        if (socket.connected) {
-            joinRoom();
+    const getImageUrl = (urlInput: any) => {
+        if (!urlInput) return "";
+        let path = "";
+        if (typeof urlInput === "string") path = urlInput;
+        else if (typeof urlInput === "object") {
+            path = urlInput.url || urlInput.path || urlInput.file || urlInput.filename || urlInput.secure_url || "";
         }
-
-        socket.on("connect", handleConnect);
-        socket.on("joinedRoom", handleJoinedRoom);
-        socket.on("message", handleMessage);
-        socket.on("newMessage", handleMessage);
-
-        return () => {
-            socket.off("connect", handleConnect);
-            socket.off("joinedRoom", handleJoinedRoom);
-            socket.off("message", handleMessage);
-            socket.off("newMessage", handleMessage);
-        };
-    }, [selectedConversationId]);
-
-
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files) {
-            const filesArray = Array.from(e.target.files).map((file) => ({
-                file,
-                previewUrl: file.type.startsWith("image/") ? URL.createObjectURL(file) : undefined,
-            }));
-            setSelectedFiles((prev) => [...prev, ...filesArray]);
-        }
-    };
-
-    const removeFile = (index: number) => {
-        setSelectedFiles((prev) => {
-            const target = prev[index];
-            if (target?.previewUrl) URL.revokeObjectURL(target.previewUrl);
-            return prev.filter((_, i) => i !== index);
-        });
-    };
-
-    const handleSend = async () => {
-        if ((!newMessage.trim() && selectedFiles.length === 0) || !selectedConversationId) return;
-        try {
-            let payload: any;
-            if (selectedFiles.length > 0) {
-                const formData = new FormData();
-                formData.append("conversationId", selectedConversationId);
-                if (newMessage.trim()) formData.append("text", newMessage.trim());
-                selectedFiles.forEach((item) => formData.append("attachments", item.file));
-                payload = formData;
+        if (!path) return "";
+        let cleanUrl = path.trim();
+        if (!cleanUrl.startsWith("http://") && !cleanUrl.startsWith("https://")) {
+            const baseUrl = (process.env.NEXT_PUBLIC_API_URL || "")
+                .replace(/\/api\/?$/, "")
+                .replace(/\/$/, "");
+            if (!cleanUrl.includes("/")) {
+                cleanUrl = `${baseUrl}/public/storage/attachment/${cleanUrl}`;
             } else {
-                payload = { conversationId: selectedConversationId, text: newMessage.trim() };
+                const cleanPath = cleanUrl.startsWith("/") ? cleanUrl : `/${cleanUrl}`;
+                cleanUrl = `${baseUrl}${cleanPath}`;
             }
+        }
+        cleanUrl = cleanUrl.replace(/([^:]\/)\/+/g, "$1");
+        return encodeURI(decodeURI(cleanUrl));
+    };
 
-            await sendMessage(payload).unwrap();
+
+
+    export default function SupportPage() {
+        const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
+        const [newMessage, setNewMessage] = useState("");
+        const [search, setSearch] = useState("");
+        const [selectedFiles, setSelectedFiles] = useState<FileWithPreview[]>([]);
+        const [brokenImages, setBrokenImages] = useState<Record<string, boolean>>({});
+        const messagesEndRef = useRef<HTMLDivElement>(null);
+        const fileInputRef = useRef<HTMLInputElement>(null);
+
+        const {
+            data: conversationListData,
+            isLoading: isUsersLoading,
+            isError: isUsersError,
+            refetch: refetchConversations,
+        } = useAllConversationUserQuery(undefined);
+
+        const conversations = Array.isArray(conversationListData?.conversations)
+            ? conversationListData.conversations
+            : Array.isArray(conversationListData?.data?.conversations)
+                ? conversationListData.data.conversations
+                : Array.isArray(conversationListData)
+                    ? conversationListData
+                    : [];
+
+        const { data: messagesData, isLoading: isMessagesLoading, refetch: refetchMessages } =
+            useAllConversationIdQuery(selectedConversationId!, { skip: !selectedConversationId });
+
+        const selectedConversation = conversations.find((c: any) => c.conversation_id === selectedConversationId);
+
+        const rawMessages =
+            messagesData?.data?.messages || messagesData?.data || messagesData?.messages || [];
+
+        const oppositeUser = messagesData?.oppositeUser;
+
+        const messages: Message[] = Array.isArray(rawMessages)
+            ? rawMessages
+                .map((msg: any) => {
+                    const senderObj = typeof msg.sender === "object" ? msg.sender : null;
+                    const senderId = senderObj?._id || senderObj?.id || msg.sender;
+                    const oppositeUserId = oppositeUser?.id || selectedConversation?.opponent?.userId;
+                    const isUser = oppositeUserId && senderId === oppositeUserId;
+
+                    return {
+                        id: msg._id || msg.id,
+                        text: msg.content || msg.text || msg.message || "",
+                        sender: isUser ? ("user" as const) : ("admin" as const),
+                        timestamp: msg.createdAt
+                            ? new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                            : "",
+                        createdAt: msg.createdAt || msg.created_at,
+                        attachments: msg.attachments || [],
+                        attachment_urls: msg.attachments_url || msg.attachment_urls || [],
+                    };
+                })
+                .sort((a, b) => {
+                    if (!a.createdAt || !b.createdAt) return 0;
+                    return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+                })
+            : [];
+
+        const [sendMessage, { isLoading: isSending }] = useSendConversationMessageMutation();
+
+        const scrollToBottom = () => {
+            messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        };
+
+        useEffect(() => {
+            scrollToBottom();
+        }, [messages, selectedConversationId]);
+
+
+
+        useEffect(() => {
+            if (!selectedConversationId) return;
 
             const socket = getSocket();
-            socket.emit("sendMessage", {
-                to: selectedConversationId,
-                data: {
-                    conversationId: selectedConversationId,
-                    text: newMessage.trim(),
-                },
+
+            const joinRoom = () => {
+                console.log(" Joining room:", selectedConversationId);
+                socket.emit("joinroom", { room_id: selectedConversationId });
+            };
+
+            const handleJoinedRoom = (data: any) => {
+                console.log(" Joined room:", data?.room_id || data);
+            };
+
+            const handleMessage = (response: any) => {
+                console.log(" New Message Received:", response);
+
+                const incomingConversationId =
+                    response?.data?.conversationId ||
+                    response?.conversationId ||
+                    response?.data?.conversation_id ||
+                    response?.data?.data?.conversationId ||
+                    response?.data?.data?.conversation_id;
+
+                refetchConversations();
+
+                if (!incomingConversationId || incomingConversationId === selectedConversationId) {
+                    refetchMessages();
+                }
+            };
+
+            const handleConnect = () => {
+                console.log(" Socket reconnected:", socket.id);
+                joinRoom();
+            };
+
+            if (socket.connected) {
+                joinRoom();
+            }
+
+            socket.on("connect", handleConnect);
+            socket.on("joinedRoom", handleJoinedRoom);
+            socket.on("message", handleMessage);
+            socket.on("newMessage", handleMessage);
+
+            return () => {
+                socket.off("connect", handleConnect);
+                socket.off("joinedRoom", handleJoinedRoom);
+                socket.off("message", handleMessage);
+                socket.off("newMessage", handleMessage);
+            };
+        }, [selectedConversationId]);
+
+
+        const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+            if (e.target.files) {
+                const filesArray = Array.from(e.target.files).map((file) => ({
+                    file,
+                    previewUrl: file.type.startsWith("image/") ? URL.createObjectURL(file) : undefined,
+                }));
+                setSelectedFiles((prev) => [...prev, ...filesArray]);
+            }
+        };
+
+        const removeFile = (index: number) => {
+            setSelectedFiles((prev) => {
+                const target = prev[index];
+                if (target?.previewUrl) URL.revokeObjectURL(target.previewUrl);
+                return prev.filter((_, i) => i !== index);
             });
-            console.log("📤 sendMessage emitted via socket");
+        };
 
-            refetchMessages();
-            refetchConversations();
+        const handleSend = async () => {
+            if ((!newMessage.trim() && selectedFiles.length === 0) || !selectedConversationId) return;
+            try {
+                let payload: any;
+                if (selectedFiles.length > 0) {
+                    const formData = new FormData();
+                    formData.append("conversationId", selectedConversationId);
+                    if (newMessage.trim()) formData.append("text", newMessage.trim());
+                    selectedFiles.forEach((item) => formData.append("attachments", item.file));
+                    payload = formData;
+                } else {
+                    payload = { conversationId: selectedConversationId, text: newMessage.trim() };
+                }
 
-            selectedFiles.forEach((item) => {
-                if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
-            });
-            setNewMessage("");
-            setSelectedFiles([]);
-            if (fileInputRef.current) fileInputRef.current.value = "";
-        } catch (error) {
-            console.error("Message send failed:", error);
-        }
-    };
+                await sendMessage(payload).unwrap();
 
-    const getAllMessageImages = (msg: Message) => {
-        const list: string[] = [];
-        if (msg.attachment_urls?.length) {
-            msg.attachment_urls.forEach((url) => {
-                const resolved = getImageUrl(url);
-                if (resolved && !list.includes(resolved)) list.push(resolved);
-            });
-        }
-        if (list.length === 0 && msg.attachments?.length) {
-            msg.attachments.forEach((item) => {
-                const resolved = getImageUrl(item);
-                if (resolved && !list.includes(resolved)) list.push(resolved);
-            });
-        }
-        return list;
-    };
+                const socket = getSocket();
+                socket.emit("sendMessage", {
+                    to: selectedConversationId,
+                    data: {
+                        conversationId: selectedConversationId,
+                        text: newMessage.trim(),
+                    },
+                });
+                console.log("📤 sendMessage emitted via socket");
 
-    const handleImageError = (imgUrl: string) => {
-        setBrokenImages((prev) => ({ ...prev, [imgUrl]: true }));
-    };
+                refetchMessages();
+                refetchConversations();
 
-    return (
-        <div className="flex flex-col lg:flex-row gap-7 lg:gap-0 h-[calc(150vh)] lg:h-[calc(100vh-80px)] bg-gray-50 rounded-xl overflow-hidden lg:border border-gray-200 shadow-sm">
-            <ConversationList
-                conversations={conversations}
-                selectedId={selectedConversationId}
-                search={search}
-                isLoading={isUsersLoading}
-                isError={isUsersError}
-                onSearchChange={setSearch}
-                onSelect={setSelectedConversationId}
-            />
+                selectedFiles.forEach((item) => {
+                    if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+                });
+                setNewMessage("");
+                setSelectedFiles([]);
+                if (fileInputRef.current) fileInputRef.current.value = "";
+            } catch (error) {
+                console.error("Message send failed:", error);
+            }
+        };
 
-            <ChatArea
-                selectedConversation={selectedConversation}
-                messages={messages}
-                isMessagesLoading={isMessagesLoading}
-                newMessage={newMessage}
-                selectedFiles={selectedFiles}
-                isSending={isSending}
-                brokenImages={brokenImages}
-                onNewMessageChange={setNewMessage}
-                onSend={handleSend}
-                onFileChange={handleFileChange}
-                onRemoveFile={removeFile}
-                onImageError={handleImageError}
-                getAllMessageImages={getAllMessageImages}
-                scrollToBottom={scrollToBottom}
-                messagesEndRef={messagesEndRef}
-                fileInputRef={fileInputRef}
-            />
-        </div>
-    );
-}
+        const getAllMessageImages = (msg: Message) => {
+            const list: string[] = [];
+            if (msg.attachment_urls?.length) {
+                msg.attachment_urls.forEach((url) => {
+                    const resolved = getImageUrl(url);
+                    if (resolved && !list.includes(resolved)) list.push(resolved);
+                });
+            }
+            if (list.length === 0 && msg.attachments?.length) {
+                msg.attachments.forEach((item) => {
+                    const resolved = getImageUrl(item);
+                    if (resolved && !list.includes(resolved)) list.push(resolved);
+                });
+            }
+            return list;
+        };
+
+        const handleImageError = (imgUrl: string) => {
+            setBrokenImages((prev) => ({ ...prev, [imgUrl]: true }));
+        };
+
+        return (
+            <div className="flex flex-col lg:flex-row gap-7 lg:gap-0 h-[calc(150vh)] lg:h-[calc(100vh-80px)] bg-gray-50 rounded-xl overflow-hidden lg:border border-gray-200 shadow-sm">
+                <ConversationList
+                    conversations={conversations}
+                    selectedId={selectedConversationId}
+                    search={search}
+                    isLoading={isUsersLoading}
+                    isError={isUsersError}
+                    onSearchChange={setSearch}
+                    onSelect={setSelectedConversationId}
+                />
+
+                <ChatArea
+                    selectedConversation={selectedConversation}
+                    messages={messages}
+                    isMessagesLoading={isMessagesLoading}
+                    newMessage={newMessage}
+                    selectedFiles={selectedFiles}
+                    isSending={isSending}
+                    brokenImages={brokenImages}
+                    onNewMessageChange={setNewMessage}
+                    onSend={handleSend}
+                    onFileChange={handleFileChange}
+                    onRemoveFile={removeFile}
+                    onImageError={handleImageError}
+                    getAllMessageImages={getAllMessageImages}
+                    scrollToBottom={scrollToBottom}
+                    messagesEndRef={messagesEndRef}
+                    fileInputRef={fileInputRef}
+                />
+            </div>
+        );
+    }
 
 
 
