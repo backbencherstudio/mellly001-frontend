@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { ColumnDef } from "@tanstack/react-table";
+
 import {
     Mail,
     Phone,
@@ -46,8 +47,18 @@ const columns: ColumnDef<Employee>[] = [
 
             return (
                 <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-green-100 text-green-700 flex items-center justify-center text-sm font-semibold">
-                        {initials}
+                    <div className="h-10 w-10 rounded-full overflow-hidden bg-green-100 flex items-center justify-center">
+                        {row.original.avatar ? (
+                            <img
+                                src={row.original.avatar}
+                                alt={row.original.name}
+                                className="w-full h-full object-cover"
+                            />
+                        ) : (
+                            <span className="text-sm font-semibold text-green-700">
+                                {initials}
+                            </span>
+                        )}
                     </div>
                     <div>
                         <p className="font-medium leading-none">{name}</p>
