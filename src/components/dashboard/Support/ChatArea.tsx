@@ -114,12 +114,12 @@ export default function ChatArea({
                 </div>
                 <div>
                     <p className="text-sm font-semibold text-gray-900">{userName}</p>
-                    <div className="flex items-center gap-1">
+                    {/* <div className="flex items-center gap-1">
                         <div className={`w-2 h-2 rounded-full ${user?.isOnline ? "bg-green-500" : "bg-gray-400"} inline-block mr-1`}></div>
 
 
                         <p className="text-xs text-gray-500">{statusText}</p>
-                    </div>
+                    </div> */}
                 </div>
 
             </div>
