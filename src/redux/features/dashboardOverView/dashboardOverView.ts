@@ -49,6 +49,17 @@ export const dashboardOverViewApi = baseApi.injectEndpoints({
             },
             providesTags: ["CleanerRequest"],
         }),
+
+        getClearnerRequestById: builder.query({
+            query: (id)=> {
+                return {
+                    url: `dashboard/cleaners/request/${id}`,
+                    method: "GET"    
+                }
+             
+            },
+        }),
+         
         updateCleanerRequest: builder.mutation({
             query: ({ id, status }) => ({
                 url: `dashboard/cleaners/request/${id}`,
@@ -117,5 +128,18 @@ export const dashboardOverViewApi = baseApi.injectEndpoints({
     }),
 });
 
-export const { useGetUsersQuery, useGetDashboardOverviewQuery, useGetActivitiesQuery, useGetHomeownersQuery, useGetCleanersQuery, useGetCleanerRequestQuery, useUpdateCleanerRequestMutation, useGetBookingDetaialsQuery, useGetJobApprovalQuery, useGetJobApprovalUpdateMutation, useGetDangerRequestQuery, useUpdateDangerRequestMutation } = dashboardOverViewApi;
+export const {
+     useGetUsersQuery,
+      useGetDashboardOverviewQuery,
+       useGetActivitiesQuery,
+        useGetHomeownersQuery,
+         useGetCleanersQuery, 
+         useGetClearnerRequestByIdQuery,
+         useGetCleanerRequestQuery,
+          useUpdateCleanerRequestMutation,
+           useGetBookingDetaialsQuery, 
+           useGetJobApprovalQuery, 
+           useGetJobApprovalUpdateMutation,
+            useGetDangerRequestQuery,
+             useUpdateDangerRequestMutation } = dashboardOverViewApi;
 
