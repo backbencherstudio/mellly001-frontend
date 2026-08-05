@@ -13,6 +13,8 @@ interface Notification {
   _id?: string;
   read: boolean;
   title?: string;
+  text: string;
+  created_at: string;
   message?: string;
   body?: string;
   type?: string;
@@ -41,7 +43,7 @@ const routeMeta: Record<string, { title: string; desc: string }> = {
   },
   "/dashboard/cleaner-request": {
     title: "Cleaners Request",
-    desc: "Manage all homeowner accounts and their activities.",
+    desc: "Review and manage cleaner applications, documents, and verification status",
   },
   "/dashboard/booking": {
     title: "Bookings",
@@ -69,14 +71,10 @@ const DashboardHeader = () => {
   const {
     data: notificationData,
     refetch,
-  } = useGetAllNotificationQuery(
-    {},
-    {
-      pollingInterval: 5000,
-      refetchOnFocus: true,
-      refetchOnReconnect: true,
-    }
-  );
+  } = useGetAllNotificationQuery(undefined, {
+    refetchOnFocus: true,
+    refetchOnReconnect: true,
+  });
 
   const allNotifications: Notification[] =
     notificationData?.data?.results ??

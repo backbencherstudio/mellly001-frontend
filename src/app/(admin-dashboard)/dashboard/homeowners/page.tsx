@@ -1,10 +1,12 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { ColumnDef } from "@tanstack/react-table";
 import { Mail, Phone, MapPin, MoreVertical, Search } from "lucide-react";
+
 import { DataTable } from "@/components/reusable/Table";
-import Link from "next/link";
+import { formatDate } from "@/lib/DateFormate";
 import { useGetHomeownersQuery } from "@/redux/features/dashboardOverView/dashboardOverView";
 
 type Employee = {
@@ -44,7 +46,7 @@ const columns: ColumnDef<Employee>[] = [
             <p className="font-normal text-base">{user.name}</p>
 
             <p className="text-sm text-[#6A7282]">
-              Joined {new Date(user.joined_at).toLocaleDateString("en-GB")}
+              Joined {formatDate(user.joined_at)}
             </p>
           </div>
         </div>
@@ -103,7 +105,7 @@ export default function EmployeesTable() {
 
     if (search) {
       const lower = search.toLowerCase();
-      data = data.filter((emp: any) =>
+      data = data.filter((emp) =>
         emp.name.toLowerCase().includes(lower)
       );
     }
@@ -171,10 +173,12 @@ export default function EmployeesTable() {
           setPage(1);
           setPageSize(size);
         }}
-        renderAction={() => (
-          <Link href="#"><MoreVertical className="cursor-pointer text-gray-400" /></Link>
-        )}
-        loading={isLoading}
+      // renderAction={() => (
+      //   <Link href="#">
+      //     <MoreVertical className="cursor-pointer text-gray-400" />
+      //   </Link>
+      // )}
+      // loading={isLoading}
       />
     </div>
   );

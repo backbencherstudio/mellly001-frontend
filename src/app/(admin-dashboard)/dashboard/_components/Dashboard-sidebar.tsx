@@ -41,7 +41,7 @@ export const SidebarData: SidebarDataType[] = [
   },
   {
     id: 4,
-    name: "Cleaner Request",
+    name: "Cleaner Applications",
     href: "/dashboard/cleaner-request",
     icon: Users,
   },

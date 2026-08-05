@@ -1,5 +1,7 @@
 "use client"
 
+import { DangerRequest } from "@/app/(admin-dashboard)/dashboard/danger-request/page";
+
 import {
     Dialog,
     DialogContent,
@@ -15,16 +17,26 @@ import { toast } from "sonner";
 export function DangerDetails({
     employee,
 }: {
-    employee: any;
+    employee: DangerRequest;
 }) {
+    const [updateStatus, { isLoading }] =
+        useUpdateDangerRequestMutation();
+
     if (!employee) {
         return <div>No data found</div>;
     }
-    const [updateStatus, { isLoading }] = useUpdateDangerRequestMutation();
 
-    const handleUpdateStatus = (status: string) => {
-        updateStatus({ id: employee.id, status });
-        toast.success("Status updated successfully");
+    const handleUpdateStatus = async (status: string) => {
+        try {
+            await updateStatus({
+                id: employee.id,
+                status,
+            }).unwrap();
+
+            toast.success("Status updated successfully");
+        } catch {
+            toast.error("Failed to update status");
+        }
     };
 
     return (
@@ -36,7 +48,7 @@ export function DangerDetails({
             </DialogTrigger>
             <DialogContent className="max-h-[85vh] overflow-y-auto !max-w-[90vw] !w-[800px]">
                 <DialogHeader>
-                    <DialogTitle className="text-2xl font-bold ">Maid Details</DialogTitle>
+                    <DialogTitle className="text-2xl font-bold ">Cleaner Details</DialogTitle>
                 </DialogHeader>
                 <p className="text-sm font-normal text-[#6A7282]">Review complete profile information</p>
 

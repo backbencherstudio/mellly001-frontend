@@ -207,9 +207,9 @@ export default function EmployeesTable() {
           setPageSize(size);
         }}
         loading={isLoading}
-        renderAction={() => (
-          <MoreVertical className="cursor-pointer text-gray-400" />
-        )}
+      // renderAction={() => (
+      //   <MoreVertical className="cursor-pointer text-gray-400" />
+      // )}
       />
     </div>
   );

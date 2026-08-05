@@ -1,5 +1,6 @@
 "use client"
 
+import { Employee } from "@/app/(admin-dashboard)/dashboard/cleaner-request/page";
 import { Button } from "@/components/ui/button"
 
 import {
@@ -13,11 +14,15 @@ import { useGetClearnerRequestByIdQuery, useUpdateCleanerRequestMutation } from 
 import { Eye } from "lucide-react";
 import Image from "next/image";
 import { useParams } from "next/navigation";
+import { useState } from "react";
 import { toast } from "sonner";
 
 
 
-export function DialogScrollableContent({ data: employee }: { data: any }) {
+export function DialogScrollableContent({ data: employee }: { data: Employee }) {
+
+    const [rejectOpen, setRejectOpen] = useState(false);
+    const [rejectReason, setRejectReason] = useState("");
     const { data } = useGetClearnerRequestByIdQuery(employee?.id, {
         skip: !employee?.id,
     });
@@ -46,6 +51,25 @@ export function DialogScrollableContent({ data: employee }: { data: any }) {
         }
     };
 
+    const requiredFields = [
+        cleaner?.name,
+        // cleaner?.email,
+        // cleaner?.phone_number,
+        // cleaner?.location,
+        // cleaner?.resume_url,
+        cleaner?.id_card_front_url,
+        cleaner?.id_card_back_url,
+    ];
+
+    const isProfileComplete = requiredFields.every(
+        (field) => field !== null && field !== undefined && String(field).trim() !== ""
+    );
+
+    const seconPopup = () => {
+        const popup = window.open("", "_blank", "width=800,height=600");
+    }
+
+
 
     const handleReject = async () => {
         try {
@@ -68,7 +92,7 @@ export function DialogScrollableContent({ data: employee }: { data: any }) {
             </DialogTrigger>
             <DialogContent className="max-h-[85vh] overflow-y-auto !max-w-[90vw] !w-[800px] ">
                 <DialogHeader>
-                    <DialogTitle className="text-2xl font-bold ">Maid Details</DialogTitle>
+                    <DialogTitle className="text-2xl font-bold ">Cleaner Details</DialogTitle>
                 </DialogHeader>
                 <p className="text-sm font-normal text-[#6A7282]">Review complete profile information</p>
 
@@ -116,7 +140,7 @@ export function DialogScrollableContent({ data: employee }: { data: any }) {
                         <div>
                             <p className="text-sm text-gray-500">Status</p>
                             <span className={`px-3 py-1 rounded-full text-xs font-medium ${cleaner?.status === "approved" ? "bg-green-100 text-green-700" :
-                                cleaner?.status === "pending" ? "bg-yellow-100 text-yellow-700" :
+                                cleaner?.status === "verified" ? "bg-green-100 text-green-700" :
                                     "bg-red-100 text-red-700"
                                 }`}>
                                 {cleaner?.status}
@@ -171,23 +195,60 @@ export function DialogScrollableContent({ data: employee }: { data: any }) {
                     </div>
 
                     <div className="gap-4 flex flex-col md:flex-row w-full">
+
+
                         <button
                             className="text-red-500 font-bold text-base py-3.5 border border-red-500 border-2 cursor-pointer text-center w-full md:px-20 lg:px-25 rounded-lg whitespace-nowrap disabled:opacity-50"
-                            onClick={handleReject}
+                            onClick={() => setRejectOpen(true)}
                             disabled={isLoading}
                         >
                             {isLoading ? "Processing..." : "Reject Application"}
                         </button>
                         <button
-                            className="text-white bg-green-800 font-bold text-base py-3.5  cursor-pointer text-center md:px-20 lg:px-25 w-full rounded-lg  whitespace-nowrap disabled:opacity-50"
+                            className="text-white bg-green-800 font-bold text-base py-3.5 cursor-pointer text-center md:px-20 lg:px-25 w-full rounded-lg whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
                             onClick={handleApprove}
-                            disabled={isLoading}
+                            disabled={isLoading || !isProfileComplete}
                         >
                             {isLoading ? "Processing..." : "Approve & Verify"}
                         </button>
+
+
                     </div>
                 </div>
             </DialogContent>
+
+            <Dialog open={rejectOpen} onOpenChange={setRejectOpen}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Reject Application</DialogTitle>
+                    </DialogHeader>
+
+                    <textarea
+                        value={rejectReason}
+                        onChange={(e) => setRejectReason(e.target.value)}
+                        placeholder="Enter rejection reason..."
+                        className="w-full h-32 border rounded-lg p-3 outline-none"
+                    />
+
+                    <div className="flex justify-end gap-3 mt-4">
+                        <Button
+                            variant="outline"
+                            onClick={() => setRejectOpen(false)}
+                        >
+                            Cancel
+                        </Button>
+
+                        <Button
+                            variant="destructive"
+                            onClick={handleReject}
+                            disabled={!rejectReason.trim() || isLoading}
+                        >
+                            {isLoading ? "Processing..." : "Confirm Reject"}
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </Dialog>
+
     )
 }

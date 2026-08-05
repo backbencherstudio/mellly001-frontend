@@ -56,8 +56,10 @@ export const dashboardOverViewApi = baseApi.injectEndpoints({
                     url: `dashboard/cleaners/request/${id}`,
                     method: "GET"    
                 }
+                
              
             },
+            providesTags: ["CleanerRequest"],
         }),
          
         updateCleanerRequest: builder.mutation({

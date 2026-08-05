@@ -1,9 +1,9 @@
-// dashboard/_components/sidebar.tsx
 "use client";
 
+import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import Cookies from "js-cookie";
-import Link from "next/link";
+
 import {
   Sidebar,
   SidebarContent,
@@ -44,7 +44,7 @@ export default function DashboardSidebar() {
             </div>
             <div className="pt-1 group-data-[collapsible=icon]:hidden">
               <p className="text-[#101828] font-bold text-base">Admin Panel</p>
-              <p className="mt-1 text-[12px] text-[#6A7282]">Maid Service</p>
+              <p className="mt-1 text-[12px] text-[#6A7282]">Cleaner Service</p>
             </div>
           </div>
 

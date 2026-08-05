@@ -24,13 +24,15 @@ import { useGetDangerRequestQuery } from "@/redux/features/dashboardOverView/das
 import { formatDate } from "@/lib/DateFormate";
 
 /* ================= TYPES ================= */
-type DangerRequest = {
+export type DangerRequest = {
     id: string;
     name: string;
     email: string;
     joined: string;
     status: string;
     phone_number: string;
+    phone: string;
+    avatar: string | null;
     location: string;
     applied_date: string;
 };
@@ -141,7 +143,7 @@ export default function CleanerRequest() {
     const filteredData = React.useMemo(() => {
         if (!search) return dangerRequest;
 
-        return dangerRequest.filter((e: any) =>
+        return dangerRequest.filter((e: DangerRequest) =>
             `${e.name} ${e.email}`
                 .toLowerCase()
                 .includes(search.toLowerCase())

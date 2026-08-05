@@ -21,7 +21,7 @@ const sections = [
     content: (
       <>
         <p>
-          Welcome to our Maid Service Management System. We are committed to
+          Welcome to our Cleaner Service Management System. We are committed to
           protecting your privacy and ensuring the security of your personal
           information. This Privacy Policy explains how we collect, use,
           disclose, and safeguard your information when you use our platform as
@@ -103,7 +103,7 @@ const sections = [
       <>
         <p className="mb-4">We use the information we collect to:</p>
         <ul className="list-disc pl-5 space-y-1.5 text-[#4A5565]">
-          <li>Provide, operate, and maintain our maid service platform</li>
+          <li>Provide, operate, and maintain our Cleaner service platform</li>
           <li>Process bookings, payments, and service transactions</li>
           <li>Verify cleaner identities and approve service requests</li>
           <li>Send notifications about bookings, payments, and account activity</li>
@@ -238,11 +238,11 @@ const sections = [
           Privacy Policy or our data practices, please contact us:
         </p>
         <div className="rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] p-4 space-y-3">
-        
+
           <div>
             <p className="text-sm text-[#6A7282]">Support</p>
             <p className="font-medium text-[#101828] text-sm">
-            support@cleennconnect.com
+              support@cleennconnect.com
             </p>
           </div>
           <div>
@@ -273,7 +273,7 @@ export default function PrivacyPolicyPage() {
               </h1>
               <p className="mt-2 text-sm font-normal text-[#4A5565] leading-140%">
                 Learn how we collect, use, and protect your personal information
-                on our Maid Service Management System.
+                on our Cleaner Service Management System.
               </p>
             </div>
           </div>
@@ -331,7 +331,7 @@ export default function PrivacyPolicyPage() {
           {/* Footer Note */}
           <div className="rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] p-5 text-center">
             <p className="text-sm text-[#6A7282]">
-              By continuing to use our Maid Service Management System, you
+              By continuing to use our Cleaner Service Management System, you
               acknowledge that you have read and understood this Privacy Policy.
             </p>
           </div>
