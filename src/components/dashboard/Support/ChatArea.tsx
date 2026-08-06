@@ -69,6 +69,7 @@ export default function ChatArea({
     messagesEndRef,
     fileInputRef,
 }: ChatAreaProps) {
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
     if (!selectedConversation) {
         return (
             <div className="flex-1 flex flex-col items-center justify-center text-gray-400">
@@ -79,6 +80,8 @@ export default function ChatArea({
             </div>
         );
     }
+
+
 
     const user = selectedConversation?.opponent;
     const userName = selectedConversation.opponent?.name || "Unknown User";
@@ -92,6 +95,14 @@ export default function ChatArea({
         );
     };
     const avatarUrl = getAvatarUrl(selectedConversation);
+
+    const handleSend = async () => {
+        await onSend();
+
+        setTimeout(() => {
+            textareaRef.current?.focus();
+        }, 0);
+    };
 
     return (
         <div className="flex-1 flex flex-col  bg-gray-50 overflow-y-auto">
@@ -191,18 +202,23 @@ export default function ChatArea({
                         </svg>
                     </label>
 
-                    <input
-                        type="text"
+                    <textarea
+                        ref={textareaRef}
                         placeholder="Type your reply..."
                         value={newMessage}
                         onChange={(e) => onNewMessageChange(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && !isSending && onSend()}
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter" && !e.shiftKey && !isSending) {
+                                e.preventDefault();
+                                handleSend();
+                            }
+                        }}
                         disabled={isSending}
-                        className="flex-1 px-4 py-2.5 text-sm border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-[#03652B] focus:border-transparent disabled:bg-gray-100"
+                        className="flex-1 px-4 py-2.5 text-sm border border-gray-200 rounded-2xl resize-none focus:outline-none focus:ring-2 focus:ring-[#03652B] focus:border-transparent disabled:bg-gray-100"
                     />
 
                     <button
-                        onClick={onSend}
+                        onClick={handleSend}
                         disabled={(!newMessage.trim() && selectedFiles.length === 0) || isSending}
                         className="bg-[#03652B] hover:bg-[#025022] disabled:bg-gray-300 text-white p-2.5 rounded-full transition-colors cursor-pointer shrink-0"
                     >
