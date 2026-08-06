@@ -28,6 +28,10 @@ type recent = {
   title: string;
   name: string;
   time: string;
+  sender: {
+    name: string;
+  }
+  created_at: string;
   bg: string;
 }
 
@@ -99,7 +103,7 @@ export default function DashboardPage() {
   // console.log(activitys, "dfsdfd")
 
   const Activity: recent[] =
-    activitys?.map((item: any, index: number) => ({
+    activitys?.map((item: recent, index: number) => ({
       id: index + 1,
       bg: [
         "#AD46FF",

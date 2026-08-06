@@ -9,16 +9,32 @@ import {
 } from "@/redux/features/chattingAndSocket/socket";
 import { getSocket } from "@/lib/Socket";
 import ConversationList from "@/components/dashboard/Support/ConversationList";
-import ChatArea from "@/components/dashboard/Support/ChatArea";
+import ChatArea, { Message } from "@/components/dashboard/Support/ChatArea";
 
-interface Message {
-    id: string;
-    text: string;
-    sender: "user" | "admin";
-    timestamp: string;
-    createdAt?: string;
-    attachments?: any[];
-    attachment_urls?: string[];
+interface Attachment {
+    url?: string;
+    path?: string;
+    file?: string;
+    filename?: string;
+    secure_url?: string;
+}
+
+interface Conversation {
+    conversation_id: string;
+    opponent?: {
+        userId: string;
+        name: string;
+        avatar_url?: string;
+        avater?: string;
+        isOnline?: boolean;
+    };
+    lastMessage?: {
+        text?: string;
+        createdAt?: string;
+        attachments?: string[];
+        attachment_urls?: string[];
+    };
+    unreadCount?: number;
 }
 
 interface FileWithPreview {
@@ -26,7 +42,24 @@ interface FileWithPreview {
     previewUrl?: string;
 }
 
-const getImageUrl = (urlInput: any) => {
+interface JoinRoomResponse {
+    room_id?: string;
+}
+
+interface MessageResponse {
+    conversationId?: string;
+    conversation_id?: string;
+    data?: {
+        conversationId?: string;
+        conversation_id?: string;
+        data?: {
+            conversationId?: string;
+            conversation_id?: string;
+        };
+    };
+}
+
+const getImageUrl = (urlInput: string | Attachment | null | undefined): string => {
     if (!urlInput) return "";
     let path = "";
     if (typeof urlInput === "string") path = urlInput;
@@ -81,7 +114,9 @@ export default function SupportPage() {
 
 
 
-    const selectedConversation = conversations.find((c: any) => c.conversation_id === selectedConversationId);
+    const selectedConversation = conversations.find(
+        (c: Conversation) => c.conversation_id === selectedConversationId
+    );
 
     const rawMessages =
         messagesData?.data?.messages || messagesData?.data || messagesData?.messages || [];
@@ -90,22 +125,22 @@ export default function SupportPage() {
 
     const messages: Message[] = Array.isArray(rawMessages)
         ? rawMessages
-            .map((msg: any) => {
-                const senderObj = typeof msg.sender === "object" ? msg.sender : null;
-                const senderId = senderObj?._id || senderObj?.id || msg.sender;
+            .map((msg: Record<string, unknown>): Message => {
+                const senderObj = typeof msg.sender === "object" ? (msg.sender as Record<string, unknown>) : null;
+                const senderId = senderObj?._id || senderObj?.id || (msg.sender as string);
                 const oppositeUserId = oppositeUser?.id || selectedConversation?.opponent?.userId;
                 const isUser = oppositeUserId && senderId === oppositeUserId;
 
                 return {
-                    id: msg._id || msg.id,
-                    text: msg.content || msg.text || msg.message || "",
+                    id: (msg._id || msg.id) as string,
+                    text: (msg.content || msg.text || msg.message || "") as string,
                     sender: isUser ? ("user" as const) : ("admin" as const),
                     timestamp: msg.createdAt
-                        ? new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                        ? new Date(msg.createdAt as string | number | Date).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
                         : "",
-                    createdAt: msg.createdAt || msg.created_at,
-                    attachments: msg.attachments || [],
-                    attachment_urls: msg.attachments_url || msg.attachment_urls || [],
+                    createdAt: (msg.createdAt || msg.created_at) as string | undefined,
+                    attachments: (msg.attachments || []) as Attachment[],
+                    attachment_urls: (msg.attachments_url || msg.attachment_urls || []) as string[],
                 };
             })
             .sort((a, b) => {
@@ -136,11 +171,11 @@ export default function SupportPage() {
             socket.emit("joinroom", { room_id: selectedConversationId });
         };
 
-        const handleJoinedRoom = (data: any) => {
-            console.log(" Joined room:", data?.room_id || data);
+        const handleJoinedRoom = (data: JoinRoomResponse | string) => {
+            console.log(" Joined room:", typeof data === "string" ? data : data?.room_id);
         };
 
-        const handleMessage = (response: any) => {
+        const handleMessage = (response: MessageResponse) => {
             console.log(" New Message Received:", response);
 
             const incomingConversationId =
@@ -201,7 +236,7 @@ export default function SupportPage() {
     const handleSend = async () => {
         if ((!newMessage.trim() && selectedFiles.length === 0) || !selectedConversationId) return;
         try {
-            let payload: any;
+            let payload: FormData | { conversationId: string; text: string };
             if (selectedFiles.length > 0) {
                 const formData = new FormData();
                 formData.append("conversationId", selectedConversationId);
@@ -238,7 +273,7 @@ export default function SupportPage() {
         }
     };
 
-    const getAllMessageImages = (msg: Message) => {
+    const getAllMessageImages = (msg: Message): string[] => {
         const list: string[] = [];
         if (msg.attachment_urls?.length) {
             msg.attachment_urls.forEach((url) => {
@@ -248,7 +283,7 @@ export default function SupportPage() {
         }
         if (list.length === 0 && msg.attachments?.length) {
             msg.attachments.forEach((item) => {
-                const resolved = getImageUrl(item);
+                const resolved = getImageUrl(item as string | Attachment | null | undefined);
                 if (resolved && !list.includes(resolved)) list.push(resolved);
             });
         }
@@ -311,7 +346,7 @@ export default function SupportPage() {
 //     sender: "user" | "admin";
 //     timestamp: string;
 //     createdAt?: string;
-//     attachments?: any[];
+//     attachments?: Attachment[];
 //     attachment_urls?: string[];
 // }
 
@@ -338,7 +373,7 @@ export default function SupportPage() {
 //     previewUrl?: string;
 // }
 
-// const getImageUrl = (urlInput: any) => {
+// const getImageUrl = (urlInput: string | Attachment | null | undefined): string => {
 //     if (!urlInput) return "";
 
 //     let path = "";
@@ -425,7 +460,7 @@ export default function SupportPage() {
 //     // 🛠️ FIX 2: Correct Sender Identification logic
 //     const messages: Message[] = Array.isArray(rawMessages)
 //         ? rawMessages
-//             .map((msg: any) => {
+//             .map((msg: Record<string, unknown>): Message => {
 //                 const senderObj = typeof msg.sender === "object" ? msg.sender : null;
 //                 const senderId = senderObj?._id || senderObj?.id || msg.sender;
 //                 const oppositeUserId = oppositeUser?.id || selectedConversation?.opponent?.userId;
@@ -472,7 +507,7 @@ export default function SupportPage() {
 //             console.log("Socket connected:", socket.id);
 //         };
 
-//         const handleNewMessage = (message: any) => {
+//         const handleNewMessage = (message: MessageResponse) => {
 //             if (message.conversationId === selectedConversationId) {
 //                 refetchMessages();
 //             }
@@ -511,7 +546,7 @@ export default function SupportPage() {
 //         if ((!newMessage.trim() && selectedFiles.length === 0) || !selectedConversationId) return;
 
 //         try {
-//             let payload: any;
+//             let payload: FormData | { conversationId: string; text: string };
 //             if (selectedFiles.length > 0) {
 //                 const formData = new FormData();
 //                 formData.append("conversationId", selectedConversationId);
