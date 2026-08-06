@@ -1,6 +1,26 @@
 import { baseApi } from "../../api/baseApi";
 
+interface NotificationItem {
+  id: string;
+  created_at: string;
+  type: string;
+  text: string;
+  sender?: { name?: string } | null;
+}
 
+interface NotificationResponse {
+  success: boolean;
+  message: string;
+  data: NotificationItem[];
+  pagination: {
+    total: number;
+    page: number;
+    perPage: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
+}
 export const Socket = baseApi.injectEndpoints({
     endpoints: (builder) => ({
         createConversation: builder.mutation({
@@ -41,13 +61,14 @@ export const Socket = baseApi.injectEndpoints({
             providesTags: ["Conversation"],
         }),
 
-        GetAllNotification: builder.query({
-            query: () => ({
-                url: "notification/",
-                method: "GET",
+  GetAllNotification: builder.query<NotificationResponse, { page?: number; perPage?: number }>({
+  query: ({ page = 1, perPage = 10 }) => ({
+    url: `notification/?page=${page}&perPage=${perPage}`,
+    method: "GET",
+  }),
+}),
 
-            }),
-        }),
+
     }),
 });
 
@@ -56,4 +77,5 @@ export const { useCreateConversationMutation,
     useAllConversationUserQuery,
     useSendConversationMessageMutation,
     useGetAllNotificationQuery,
+    useLazyGetAllNotificationQuery
 } = Socket;
