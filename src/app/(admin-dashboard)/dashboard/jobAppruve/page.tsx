@@ -1,12 +1,12 @@
 "use client";
 
 import * as React from "react";
-import Pagination from "@/components/reusable/pagination";
-import { Search } from "lucide-react";
-import { useGetJobApprovalQuery, useGetJobApprovalUpdateMutation } from "@/redux/features/dashboardOverView/dashboardOverView";
 import Image from "next/image";
+import { Search } from "lucide-react";
 import { toast } from "sonner";
 
+import Pagination from "@/components/reusable/pagination";
+import { useGetJobApprovalQuery, useGetJobApprovalUpdateMutation } from "@/redux/features/dashboardOverView/dashboardOverView";
 
 /* ================= COMPONENT ================= */
 export default function JobApprovals() {
@@ -26,9 +26,9 @@ export default function JobApprovals() {
   };
 
   const { data: jobApproval } = useGetJobApprovalQuery({});
-  console.log(jobApproval, "ooooopp")
+  // console.log(jobApproval, "ooooopp")
   const rawdd = jobApproval?.data?.data?.[0]?.before_photos?.[0];
-  console.log(rawdd, "rawdd")
+
 
   const jobApprovalData = React.useMemo(() => {
     const raw = jobApproval?.data?.data;

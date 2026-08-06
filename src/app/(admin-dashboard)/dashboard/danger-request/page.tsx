@@ -169,16 +169,16 @@ export default function CleanerRequest() {
     }, [sortedData, page, pageSize]);
 
     const handleView = (employee: DangerRequest) => {
-        console.log("View:", employee);
+
         // apnar logic
     };
 
     const handleEdit = (employee: DangerRequest) => {
-        console.log("Edit:", employee);
+
     };
 
     const handleDelete = (employee: DangerRequest) => {
-        console.log("Delete:", employee);
+
     };
 
     return (

@@ -41,7 +41,7 @@ const createSocket = (token: string): Socket => {
         console.log("Connected:", newSocket.id);
     });
     newSocket.on("message", () => {
-        console.log("message recuve:", newSocket.id);
+      
     });
 
     newSocket.on("reconnect", (attempt) => {
@@ -49,7 +49,7 @@ const createSocket = (token: string): Socket => {
     });
 
     newSocket.on("connect_error", (err) => {
-        console.log("Connect Error:", err.message);
+       
     });
 
     // newSocket.on("disconnect", (reason) => {
@@ -61,7 +61,7 @@ const createSocket = (token: string): Socket => {
     });
 
     newSocket.on("reconnect_failed", () => {
-        console.log("Socket reconnect failed after all attempts");
+      
     });
 
     return newSocket;
@@ -73,7 +73,7 @@ export const getSocket = (): Socket => {
         : "";
 
     if (socket && currentToken !== token) {
-        console.log("Token changed, recreating socket");
+       
         socket.removeAllListeners();
         socket.disconnect();
         socket = null;
@@ -84,7 +84,7 @@ export const getSocket = (): Socket => {
             return socket;
         }
 
-        console.log("Socket exists but disconnected, reconnecting socket");
+      
         socket.connect();
         return socket;
     }

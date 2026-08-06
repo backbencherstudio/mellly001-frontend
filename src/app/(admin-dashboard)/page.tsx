@@ -1,7 +1,7 @@
-/** @format */
 "use client";
 
 import React from "react";
+
 import {
   Calendar,
   Users,
@@ -96,7 +96,7 @@ export default function DashboardPage() {
 
   ];
   const activitys = activity?.data?.data?.slice(0, 10) || [];
-  console.log(activitys, "dfsdfd")
+  // console.log(activitys, "dfsdfd")
 
   const Activity: recent[] =
     activitys?.map((item: any, index: number) => ({
