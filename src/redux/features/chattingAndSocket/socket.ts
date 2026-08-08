@@ -33,11 +33,15 @@ export const Socket = baseApi.injectEndpoints({
         }),
 
         AllConversationId: builder.query({
-            query: (conversationId) => ({
-                url: `chat/message/all-message/${conversationId}`,
-                method: "GET",
-
-            }),
+            query: (args: string | { conversationId: string; page?: number; perPage?: number }) => {
+                const conversationId = typeof args === "string" ? args : args?.conversationId;
+                const page = typeof args === "object" ? args?.page || 1 : 1;
+                const perPage = typeof args === "object" ? args?.perPage || 1000000 : 1000000;
+                return {
+                    url: `chat/message/all-message/${conversationId}?page=${page}&perPage=${perPage}`,
+                    method: "GET",
+                };
+            },
             providesTags: ["Conversation"],
         }),
 
@@ -53,11 +57,14 @@ export const Socket = baseApi.injectEndpoints({
 
 
         AllConversationUser: builder.query({
-            query: () => ({
-                url: "chat/conversation/conversation-list",
-                method: "GET",
-
-            }),
+            query: (params?: { page?: number; perPage?: number }) => {
+                const page = params?.page || 1;
+                const perPage = params?.perPage || 1000000;
+                return {
+                    url: `chat/conversation/conversation-list?page=${page}&perPage=${perPage}`,
+                    method: "GET",
+                };
+            },
             providesTags: ["Conversation"],
         }),
 

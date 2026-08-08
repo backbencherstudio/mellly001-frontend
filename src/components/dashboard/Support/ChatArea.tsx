@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef } from "react";
+import React, { useRef, useEffect } from "react";
 
 import MessageBubble from "./MessageBubble";
 
@@ -81,6 +81,12 @@ export default function ChatArea({
 }: ChatAreaProps) {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     
+    useEffect(() => {
+        if (selectedConversation) {
+            textareaRef.current?.focus();
+        }
+    }, [selectedConversation]);
+
     if (!selectedConversation) {
         return (
             <div className="flex-1 flex flex-col items-center justify-center text-gray-400">

@@ -152,7 +152,14 @@ export default function SupportPage() {
     const [sendMessage, { isLoading: isSending }] = useSendConversationMessageMutation();
 
     const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        if (messagesEndRef.current) {
+            const parent = messagesEndRef.current.parentElement;
+            if (parent) {
+                parent.scrollTop = parent.scrollHeight;
+            } else {
+                messagesEndRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
+            }
+        }
     };
 
     useEffect(() => {
