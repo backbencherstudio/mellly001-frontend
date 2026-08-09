@@ -27,7 +27,7 @@ type Stat = {
   id: string;
   title: string;
   value: string;
-  revinew:string;
+  revinew: string;
   bg: string;
   textcolor: string;
   icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
@@ -47,39 +47,39 @@ type Payment = {
   status: PaymentStatus;
 };
 
- const stats: Stat[] = [
-    {
-      id: "users",
-      title: "Total Homeowners",
-     value: "$480",
-     revinew:"Total Revenue",
-     icon: DollarSignIcon   ,
-     bg: "#00C950",
-      textcolor: "#155DFC",
-    },
-    {
-      id: "consults",
-      title: "10% commission earned",
-      value: "$48",
-      revinew: "Platform Fees",
+const stats: Stat[] = [
+  {
+    id: "users",
+    title: "Total Homeowners",
+    value: "$480",
+    revinew: "Total Revenue",
+    icon: DollarSignIcon,
+    bg: "#00C950",
+    textcolor: "#155DFC",
+  },
+  {
+    id: "consults",
+    title: "10% commission earned",
+    value: "$48",
+    revinew: "Platform Fees",
 
-      icon: DollarSignIcon,
-      bg: "#2B7FFF",
-      textcolor: "#00A63E",
-    },
-    {
-      id: "simulations",
-      title: "Total payment records",
-      value: "86",
-      revinew: "Transactions",
+    icon: DollarSignIcon,
+    bg: "#2B7FFF",
+    textcolor: "#00A63E",
+  },
+  {
+    id: "simulations",
+    title: "Total payment records",
+    value: "86",
+    revinew: "Transactions",
 
-      icon: CreditCardIcon  ,
-      bg: "#AD46FF",
-      textcolor: "#9810FA",
-    },
- 
-  
-  ];
+    icon: CreditCardIcon,
+    bg: "#AD46FF",
+    textcolor: "#9810FA",
+  },
+
+
+];
 
 /* ================= DATA ================= */
 const payments: Payment[] = [
@@ -317,7 +317,7 @@ export default function PaymentsTable() {
         })}
       </div>
       <div className="space-y-6">
-        {/* 🔝 Top bar */}
+        {/*  Top bar */}
         <div className="flex items-center justify-between gap-4">
           <div className="relative w-full ">
             <Search className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />

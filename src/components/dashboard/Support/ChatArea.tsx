@@ -80,7 +80,7 @@ export default function ChatArea({
     fileInputRef,
 }: ChatAreaProps) {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
-    
+
     useEffect(() => {
         if (selectedConversation) {
             textareaRef.current?.focus();
@@ -109,7 +109,7 @@ export default function ChatArea({
             null
         );
     };
-    
+
     const avatarUrl = getAvatarUrl(selectedConversation);
 
     const handleSend = async () => {
@@ -121,7 +121,7 @@ export default function ChatArea({
     };
 
     return (
-        <div className="flex-1 flex flex-col bg-gray-50 overflow-y-auto">
+        <div className="flex-1 flex flex-col bg-gray-50  overflow-y-auto">
             <div className="bg-white border-b border-gray-200 px-5 py-3 flex items-center gap-3">
                 <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#03652B] to-[#00A63E] flex items-center justify-center text-white font-medium text-sm">
                     {avatarUrl ? (
@@ -144,7 +144,7 @@ export default function ChatArea({
                 </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-5 space-y-3 flex flex-col">
+            <div className="flex-1 overflow-y-auto  p-5 space-y-3 flex flex-col">
                 {isMessagesLoading ? (
                     <div className="text-center text-gray-400 text-sm py-10">Loading messages...</div>
                 ) : messages.length === 0 ? (
@@ -168,7 +168,7 @@ export default function ChatArea({
                 <div ref={messagesEndRef} />
             </div>
 
-            <div className="bg-white border-t border-gray-200 p-4">
+            <div className="bg-white border-t border-gray-200 p-4  ">
                 {selectedFiles.length > 0 && (
                     <div className="flex flex-wrap gap-2 mb-3">
                         {selectedFiles.map((item, idx) => (
@@ -195,7 +195,7 @@ export default function ChatArea({
                     </div>
                 )}
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 `">
                     <label className="cursor-pointer p-2.5 text-gray-500 hover:text-[#03652B] hover:bg-gray-100 rounded-full transition-colors shrink-0">
                         <input
                             ref={fileInputRef}
