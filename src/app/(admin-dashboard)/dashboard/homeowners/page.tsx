@@ -72,7 +72,7 @@ const columns: ColumnDef<Employee>[] = [
     minSize: 200,
     maxSize: 300,
     cell: ({ row }) => (
-      <div className="w-[450px] line-clamp-3 whitespace-normal break-words">
+      <div className="w-[300px] line-clamp-3 whitespace-normal break-words">
         {row.original.location || "N/A"}
       </div>
     ),
