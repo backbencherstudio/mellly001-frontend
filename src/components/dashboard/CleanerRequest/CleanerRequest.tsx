@@ -237,7 +237,6 @@ export function DialogScrollableContent({ data: employee }: { data: Employee }) 
                             {isLoading ? "Processing..." : "Approve & Verify"}
                         </button>
 
-
                     </div>
                 </div>
             </DialogContent>

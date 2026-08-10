@@ -33,16 +33,24 @@ export default function AdminLogin() {
 
     if (!savedToken) return;
 
-    router.replace(userType === "ADMIN" ? "/dashboard" : "/user/dashboard");
+    router.replace(userType === "ADMIN" ? "/dashboard" : "/login");
   }, [router]);
+
+
 
   const onSubmit = async (data: LoginFormInputs) => {
     setErrorMsg("");
+
     try {
       const res = await login(data).unwrap();
 
       const accessToken = res?.authorization?.access_token;
       const userType = res?.type;
+
+      if (userType !== "ADMIN") {
+        setErrorMsg("Only admin users can access this dashboard.");
+        return;
+      }
 
       if (!accessToken) {
         setErrorMsg("Login failed. No token received.");
@@ -55,13 +63,13 @@ export default function AdminLogin() {
         expires: 3650,
       });
 
-      Cookies.set("userType", userType || "", {
+      Cookies.set("userType", userType, {
         path: "/",
         sameSite: "strict",
         expires: 3650,
       });
 
-      router.replace(userType === "ADMIN" ? "/dashboard" : "/dashboard");
+      router.replace("/dashboard");
     } catch (error: unknown) {
       console.error("Login failed:", error);
 
@@ -72,13 +80,13 @@ export default function AdminLogin() {
           data?: { message?: string };
           message?: string;
         };
+
         message = err?.data?.message || err?.message || message;
       }
 
       setErrorMsg(message);
     }
   };
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F9FEF0]">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8">

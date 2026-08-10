@@ -32,7 +32,7 @@ const columns: ColumnDef<Employee>[] = [
       const user = row.original;
 
       const initials = user.name
-        .split(" ")
+        .split("  ")
         .map((n) => n[0])
         .join("");
 
