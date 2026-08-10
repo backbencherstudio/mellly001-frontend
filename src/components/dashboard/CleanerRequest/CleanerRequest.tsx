@@ -79,23 +79,50 @@ export function DialogScrollableContent({ data: employee }: { data: Employee }) 
     }
 
 
-
     const handleReject = async () => {
         try {
-            await updateCleanerRequest({
+            const response = await updateCleanerRequest({
                 id: employee.id,
                 status: "REJECTED",
                 rejected_reason: rejectReason,
             }).unwrap();
 
-            toast.success("Cleaner rejected successfully");
+            if (response?.success) {
+                toast.success(
+                    response?.message || "Cleaner rejected successfully"
+                );
 
-            setRejectReason("");
-            setRejectOpen(false);
-        } catch (error) {
-            toast.error("Failed to reject cleaner request");
+                setRejectReason("");
+                setRejectOpen(false);
+            } else {
+                toast.error(
+                    response?.message || "Cleaner rejection failed"
+                );
+            }
+        } catch (error: any) {
+            toast.error(
+                error?.data?.message || "Failed to reject cleaner request"
+            );
         }
     };
+
+
+    // const handleReject = async () => {
+    //     try {
+    //         const response = await updateCleanerRequest({
+    //             id: employee.id,
+    //             status: "REJECTED",
+    //             rejected_reason: rejectReason,
+    //         }).unwrap();
+
+    //         toast.success(response?.message || "Cleaner rejected successfully");
+
+    //         setRejectReason("");
+    //         setRejectOpen(false);
+    //     } catch (error) {
+    //         toast.error("Failed to reject cleaner request");
+    //     }
+    // };
 
 
 
