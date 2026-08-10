@@ -242,7 +242,7 @@ export function DialogScrollableContent({ data: employee }: { data: Employee }) 
             </DialogContent>
 
             <Dialog open={rejectOpen} onOpenChange={setRejectOpen}>
-                <DialogContent className="max-w-md">
+                <DialogContent className="w-[350px] md:w-[700px]">
                     <DialogHeader>
                         <DialogTitle>Reject Application</DialogTitle>
                     </DialogHeader>
