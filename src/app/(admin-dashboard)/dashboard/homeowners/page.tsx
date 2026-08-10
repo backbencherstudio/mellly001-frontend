@@ -32,9 +32,12 @@ const columns: ColumnDef<Employee>[] = [
       const user = row.original;
 
       const initials = user.name
-        .split("  ")
+        .trim()
+        .split(/\s+/)
+        .slice(0, 2)
         .map((n) => n[0])
-        .join("");
+        .join("")
+        .toUpperCase();
 
       return (
         <div className="flex items-center gap-3">
