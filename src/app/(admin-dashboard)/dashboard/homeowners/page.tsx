@@ -63,9 +63,15 @@ const columns: ColumnDef<Employee>[] = [
     ),
   },
   {
+    accessorKey: "location",
     header: "Location",
+    size: 250,
+    minSize: 200,
+    maxSize: 300,
     cell: ({ row }) => (
-      <div className="flex gap-2 text-[#101828]"><MapPin size={14} className="text-[#6A7282]" />{row.original.location}</div>
+      <div className="w-[450px] line-clamp-3 whitespace-normal break-words">
+        {row.original.location || "N/A"}
+      </div>
     ),
   },
   { accessorKey: "bookings", header: "Bookings" },

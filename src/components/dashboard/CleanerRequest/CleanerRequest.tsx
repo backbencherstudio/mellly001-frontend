@@ -34,10 +34,19 @@ export function DialogScrollableContent({ data: employee }: { data: Employee }) 
         return <div>No data found</div>;
     }
 
+
+
     const cleaner = data?.data;
+
+    const status = cleaner?.status?.toUpperCase();
+
+
+
+
 
     const resumeUrl = cleaner?.resume_url;
     const isPdf = resumeUrl?.toLowerCase().endsWith(".pdf");
+
     const handleApprove = async () => {
         try {
             await updateCleanerRequest({
@@ -57,8 +66,8 @@ export function DialogScrollableContent({ data: employee }: { data: Employee }) 
         // cleaner?.phone_number,
         // cleaner?.location,
         // cleaner?.resume_url,
-        cleaner?.id_card_front_url,
-        cleaner?.id_card_back_url,
+        // cleaner?.id_card_front_url,
+        // cleaner?.id_card_back_url,
     ];
 
     const isProfileComplete = requiredFields.every(
@@ -76,13 +85,20 @@ export function DialogScrollableContent({ data: employee }: { data: Employee }) 
             await updateCleanerRequest({
                 id: employee.id,
                 status: "REJECTED",
+                rejected_reason: rejectReason,
             }).unwrap();
 
             toast.success("Cleaner rejected successfully");
+
+            setRejectReason("");
+            setRejectOpen(false);
         } catch (error) {
             toast.error("Failed to reject cleaner request");
         }
     };
+
+
+
     return (
         <Dialog >
             <DialogTrigger asChild >
@@ -139,12 +155,20 @@ export function DialogScrollableContent({ data: employee }: { data: Employee }) 
 
                         <div>
                             <p className="text-sm text-gray-500">Status</p>
-                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${cleaner?.status === "approved" ? "bg-green-100 text-green-700" :
-                                cleaner?.status === "verified" ? "bg-green-100 text-green-700" :
-                                    "bg-red-100 text-red-700"
-                                }`}>
-                                {cleaner?.status}
-                            </span>
+                            <div>
+                                <p className="text-sm text-gray-500">Status</p>
+
+                                <span
+                                    className={`px-3 py-1 rounded-full text-xs font-medium ${status === "VERIFIED"
+                                        ? "bg-green-100 text-green-700"
+                                        : status === "REJECTED"
+                                            ? "bg-red-100 text-red-700"
+                                            : "bg-yellow-100 text-yellow-700"
+                                        }`}
+                                >
+                                    {status || "PENDING"}
+                                </span>
+                            </div>
                         </div>
                         <div>
                             {/* <a

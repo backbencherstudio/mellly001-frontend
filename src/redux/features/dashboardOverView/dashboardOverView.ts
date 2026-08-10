@@ -51,22 +51,25 @@ export const dashboardOverViewApi = baseApi.injectEndpoints({
         }),
 
         getClearnerRequestById: builder.query({
-            query: (id)=> {
+            query: (id) => {
                 return {
                     url: `dashboard/cleaners/request/${id}`,
-                    method: "GET"    
+                    method: "GET"
                 }
-                
-             
+
+
             },
             providesTags: ["CleanerRequest"],
         }),
-         
+
         updateCleanerRequest: builder.mutation({
-            query: ({ id, status }) => ({
+            query: ({ id, status, rejected_reason }) => ({
                 url: `dashboard/cleaners/request/${id}`,
                 method: "PATCH",
-                body: { status },
+                body: {
+                    status,
+                    rejected_reason,
+                },
             }),
             invalidatesTags: ["CleanerRequest"],
         }),
@@ -131,17 +134,17 @@ export const dashboardOverViewApi = baseApi.injectEndpoints({
 });
 
 export const {
-     useGetUsersQuery,
-      useGetDashboardOverviewQuery,
-       useGetActivitiesQuery,
-        useGetHomeownersQuery,
-         useGetCleanersQuery, 
-         useGetClearnerRequestByIdQuery,
-         useGetCleanerRequestQuery,
-          useUpdateCleanerRequestMutation,
-           useGetBookingDetaialsQuery, 
-           useGetJobApprovalQuery, 
-           useGetJobApprovalUpdateMutation,
-            useGetDangerRequestQuery,
-             useUpdateDangerRequestMutation } = dashboardOverViewApi;
+    useGetUsersQuery,
+    useGetDashboardOverviewQuery,
+    useGetActivitiesQuery,
+    useGetHomeownersQuery,
+    useGetCleanersQuery,
+    useGetClearnerRequestByIdQuery,
+    useGetCleanerRequestQuery,
+    useUpdateCleanerRequestMutation,
+    useGetBookingDetaialsQuery,
+    useGetJobApprovalQuery,
+    useGetJobApprovalUpdateMutation,
+    useGetDangerRequestQuery,
+    useUpdateDangerRequestMutation } = dashboardOverViewApi;
 
