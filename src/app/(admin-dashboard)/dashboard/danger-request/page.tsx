@@ -83,7 +83,7 @@ const columns: ColumnDef<DangerRequest>[] = [
         maxSize: 300,
         cell: ({ row }) => (
             <div className="flex items-center gap-1 text-sm w-[450px] line-clamp-3 whitespace-normal break-words">
-                <MapPin className="h-4 w-4 text-[#99A1AF]" />
+                <MapPin className="h-4 w-4 shrink-0 text-[#99A1AF]" />
                 <span className="font-medium">{row.original.location}</span>
 
             </div>

@@ -105,7 +105,7 @@ export default function BookingsList() {
         </div>
       </div>
 
-      {/* 📦 Booking cards */}
+      {/*  Booking cards */}
       <div className="space-y-3">
         {paginated.map((b: any) => {
           const statusKey = b.status as BookingStatus;
