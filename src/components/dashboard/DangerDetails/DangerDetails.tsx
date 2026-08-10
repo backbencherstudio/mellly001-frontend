@@ -53,8 +53,8 @@ export function DangerDetails({
                 <p className="text-sm font-normal text-[#6A7282]">Review complete profile information</p>
 
                 <div className="space-y-4 mt-4">
-
-                    <p className="text-[#03652B] font-bold text-lg">Personal Information</p>
+                    `
+                    <p className="text-[#03652B] font-bold text-lg">Personal Information</p>`
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <p className="text-sm text-[#6A7282]">Full Name</p>
