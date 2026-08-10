@@ -29,6 +29,7 @@ export type Employee = {
     email: string;
     phone_number: string | null;
     location: string;
+    rejected_reason: string;
     applied_date: string | null;
     avatar: string | null;
     status: string;
@@ -89,9 +90,23 @@ const columns: ColumnDef<Employee>[] = [
         minSize: 200,
         maxSize: 300,
         cell: ({ row }) => (
-            <div className="flex items-center gap-1 text-sm w-[500px] line-clamp-3 whitespace-normal break-words">
+            <div className="flex items-center gap-1 text-sm w-[300px] line-clamp-3 whitespace-normal break-words">
                 <MapPin className="h-4 w-4 shrink-0 text-[#99A1AF]" />
                 <span className="font-medium">{row.original.location}</span>
+            </div>
+        ),
+    },
+
+    {
+        header: "Reason",
+        size: 250,
+        minSize: 200,
+        maxSize: 300,
+        cell: ({ row }) => (
+            <div className="w-[300px] line-clamp-3 whitespace-normal break-words">
+                <span className="font-medium">
+                    {row.original.rejected_reason || "N/A"}
+                </span>
             </div>
         ),
     },
