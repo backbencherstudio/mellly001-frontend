@@ -114,6 +114,7 @@ export function DialogScrollableContent({ data: employee }: { data: Employee }) 
 
                 <div className="space-y-4 mt-4   ">
 
+
                     <p className="text-[#03652B] font-bold text-lg">Personal Information</p>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
