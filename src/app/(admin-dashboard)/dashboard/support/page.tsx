@@ -302,7 +302,7 @@ export default function SupportPage() {
     };
 
     return (
-        <div className="flex flex-col lg:flex-row gap-7 lg:gap-0 h-[calc(15 0vh)] lg:h-[calc(100vh-80px)] bg-gray-50 rounded-xl overflow-hidden lg:border border-gray-200 shadow-sm">
+        <div className="flex flex-col lg:flex-row gap-0 h-[calc(100dvh-80px)] lg:h-[calc(100vh-80px)] bg-gray-50 rounded-xl overflow-hidden lg:border border-gray-200 shadow-sm">
             <ConversationList
                 conversations={conversations}
                 selectedId={selectedConversationId}

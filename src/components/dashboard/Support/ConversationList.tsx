@@ -73,7 +73,7 @@ export default function ConversationList({
     );
 
     return (
-        <div className="w-full lg:w-80 bg-white border-r border-gray-200 flex flex-col">
+        <div className="w-full lg:w-80 bg-white border-r border-gray-200 flex flex-col h-[40vh] lg:h-full shrink-0">
             <div className="p-4 border-b border-gray-100">
                 <h2 className="text-lg font-semibold text-gray-800">Support</h2>
                 <p className="text-xs text-gray-500 mt-0.5">User messages from app</p>
