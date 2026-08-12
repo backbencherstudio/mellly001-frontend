@@ -176,7 +176,7 @@ const DashboardHeader = () => {
                       key={item.id}
                       className="px-4 py-2.5 hover:bg-gray-100 cursor-pointer border-b border-gray-50 last:border-0"
                     >
-                      <Link href="/dashboard/support">
+                      <Link href="#">
                         <p className="text-sm font-medium text-gray-900 capitalize">
                           {item.sender?.name ||
                             item.type?.replaceAll("_", " ") ||

@@ -33,9 +33,108 @@ export type DangerRequest = {
     phone_number: string;
     phone: string;
     avatar: string | null;
-    location: string;
+
+    location?: string | null;
+    latitude?: number;
+    longitude?: number;
+
     applied_date: string;
 };
+
+function LocationCell({
+    latitude,
+    longitude,
+    location,
+}: {
+    latitude?: number;
+    longitude?: number;
+    location?: string | null;
+}) {
+    const [locationName, setLocationName] = React.useState(
+        location || ""
+    );
+
+    const [loading, setLoading] = React.useState(false);
+
+    React.useEffect(() => {
+        // Backend থেকে location থাকলে সেটাই ব্যবহার করবে
+        if (location) {
+            setLocationName(location);
+            return;
+        }
+
+        // latitude / longitude না থাকলে
+        if (latitude === undefined || longitude === undefined) {
+            setLocationName("N/A");
+            return;
+        }
+
+        const getLocation = async () => {
+            try {
+                setLoading(true);
+
+                const response = await fetch(
+                    `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`
+                );
+
+                if (!response.ok) {
+                    throw new Error("Failed to get location");
+                }
+
+                const data = await response.json();
+
+                const address = data?.address;
+
+                const location =
+                    address?.city ||
+                    address?.town ||
+                    address?.village ||
+                    address?.municipality ||
+                    address?.county ||
+                    "Unknown location";
+
+                const country = address?.country;
+
+                setLocationName(
+                    country ? `${location}, ${country}` : location
+                );
+            } catch (error) {
+                console.error("Location error:", error);
+                setLocationName("Location unavailable");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        getLocation();
+    }, [latitude, longitude, location]);
+
+    const mapUrl =
+        latitude !== undefined && longitude !== undefined
+            ? `https://www.google.com/maps?q=${latitude},${longitude}`
+            : null;
+
+    return (
+        <div className="flex items-center gap-2 text-sm">
+            <MapPin className="h-4 w-4 shrink-0 text-[#99A1AF]" />
+
+            {mapUrl ? (
+                <a
+                    href={mapUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium text-[#003C80] hover:underline"
+                >
+                    {loading ? "Loading..." : locationName || "View Location"}
+                </a>
+            ) : (
+                <span className="font-medium">
+                    {locationName || "N/A"}
+                </span>
+            )}
+        </div>
+    );
+}
 
 /* ================= COLUMNS ================= */
 const columns: ColumnDef<DangerRequest>[] = [
@@ -76,19 +175,46 @@ const columns: ColumnDef<DangerRequest>[] = [
             </div>
         ),
     },
+
+
+
     {
-        header: "location",
+        header: "Location",
         size: 250,
         minSize: 200,
         maxSize: 300,
-        cell: ({ row }) => (
-            <div className="flex items-center gap-1 text-sm w-[450px] line-clamp-3 whitespace-normal break-words">
-                <MapPin className="h-4 w-4 shrink-0 text-[#99A1AF]" />
-                <span className="font-medium">{row.original.location}</span>
 
-            </div>
-        ),
+        cell: ({ row }) => {
+            const { latitude, longitude, location } = row.original;
+
+            const mapUrl =
+                latitude !== undefined && longitude !== undefined
+                    ? `https://www.google.com/maps?q=${latitude},${longitude}`
+                    : null;
+
+            return (
+                <div className="flex items-center gap-2 text-sm">
+                    <MapPin className="h-4 w-4 shrink-0 text-[#99A1AF]" />
+
+                    {mapUrl ? (
+                        <a
+                            href={mapUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-medium text-[] hover:underline"
+                        >
+                            View Location
+                        </a>
+                    ) : (
+                        <span className="font-medium">
+                            {location || "N/A"}
+                        </span>
+                    )}
+                </div>
+            );
+        },
     },
+
     {
         header: "Applied Date",
         cell: ({ row }) => (

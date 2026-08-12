@@ -209,7 +209,8 @@ export default function JobApprovals() {
             {/* After */}
             <div>
               <p className="text-sm text-gray-500 mb-2">
-                After Photos ({job.afterPhotos})
+                {/* After Photos ({job.afterPhotos}) */}
+                After Photos ({job.after_photos?.length || 0})
               </p>
               <div className="grid grid-cols-2 gap-2">
                 {job.after_photos?.map((img: string, i: number) => (

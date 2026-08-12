@@ -28,14 +28,16 @@ export function DangerDetails({
 
     const handleUpdateStatus = async (status: string) => {
         try {
-            await updateStatus({
+            const response = await updateStatus({
                 id: employee.id,
                 status,
             }).unwrap();
 
-            toast.success("Status updated successfully");
-        } catch {
-            toast.error("Failed to update status");
+            toast.success(response.message);
+        } catch (error: any) {
+            toast.error(
+                error?.data?.message || "Failed to update status"
+            );
         }
     };
 
@@ -53,8 +55,8 @@ export function DangerDetails({
                 <p className="text-sm font-normal text-[#6A7282]">Review complete profile information</p>
 
                 <div className="space-y-4 mt-4">
-                    `
-                    <p className="text-[#03652B] font-bold text-lg">Personal Information</p>`
+
+                    <p className="text-[#03652B] font-bold text-lg">Personal Information</p>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <p className="text-sm text-[#6A7282]">Full Name</p>
@@ -66,7 +68,7 @@ export function DangerDetails({
                         </div>
                         <div>
                             <p className="text-sm text-gray-500">Phone</p>
-                            <p className="font-medium text-[#101828] text-sm">{employee.phone}</p>
+                            <p className="font-medium text-[#101828] text-sm">{employee.phone_number}</p>
                         </div>
 
                         <div>
@@ -76,7 +78,7 @@ export function DangerDetails({
 
 
 
-                        <div>
+                        {/* <div>
 
                             <div className="text-[#03652B] font-bold text-lg w-full ">Address</div>
 
@@ -88,14 +90,14 @@ export function DangerDetails({
                         <div>
                             <p className="text-sm text-gray-500">Location</p>
                             <p className="font-medium text-[#101828] text-sm">{employee.location}</p>
-                        </div>
+                        </div> */}
                         <div>
                             <p className="text-sm text-gray-500">Status</p>
-                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${employee.status === "active" ? "bg-green-100 text-green-700" :
-                                employee.status === "busy" ? "bg-yellow-100 text-yellow-700" :
+                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${employee?.status === "COMPLETED" ? "bg-green-100 text-green-700" :
+                                employee?.status === "PENDING" ? "bg-yellow-100 text-yellow-700" :
                                     "bg-gray-100 text-gray-600"
                                 }`}>
-                                {employee.status}
+                                {employee?.status}
                             </span>
                         </div>
                     </div>
