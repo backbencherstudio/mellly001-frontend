@@ -97,7 +97,11 @@ export const getSocket = (): Socket => {
 };
 
 export const disconnectSocket = () => {
-    socket = null;
+    if (socket) {
+        socket.removeAllListeners();
+        socket.disconnect();
+        socket = null;
+    }
     currentToken = "";
 };
 

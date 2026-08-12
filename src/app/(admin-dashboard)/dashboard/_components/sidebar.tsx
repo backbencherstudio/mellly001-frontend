@@ -3,6 +3,16 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import Cookies from "js-cookie";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 import {
   Sidebar,
@@ -16,13 +26,17 @@ import {
 } from "@/components/ui/sidebar";
 import { SidebarData } from "./Dashboard-sidebar";
 import { LogOut } from "lucide-react";
+import { disconnectSocket } from "@/lib/Socket";
 import Image from "next/image";
+import React from "react";
 
 export default function DashboardSidebar() {
+  const [open, setOpen] = React.useState(false);
   const pathname = usePathname();
   const router = useRouter();
 
   const handleLogout = () => {
+    disconnectSocket();
     Cookies.remove("token");
     Cookies.remove("userType");
     router.push("/login");
@@ -77,10 +91,40 @@ export default function DashboardSidebar() {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton onClick={handleLogout} className="text-red-600">
+            <SidebarMenuButton
+              onClick={() => setOpen(true)}
+              className="text-red-600"
+            >
               <LogOut />
               <span>Logout</span>
             </SidebarMenuButton>
+
+            <AlertDialog open={open} onOpenChange={setOpen}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>
+                    Are you sure you want to logout?
+                  </AlertDialogTitle>
+
+                  <AlertDialogDescription>
+                    You will be signed out from your account.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+
+                <AlertDialogFooter>
+                  <AlertDialogCancel>
+                    Cancel
+                  </AlertDialogCancel>
+
+                  <AlertDialogAction
+                    onClick={handleLogout}
+                    className="bg-red-600 hover:bg-red-700"
+                  >
+                    Logout
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
