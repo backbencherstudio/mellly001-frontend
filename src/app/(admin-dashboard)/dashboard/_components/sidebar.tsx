@@ -111,14 +111,14 @@ export default function DashboardSidebar() {
                   </AlertDialogDescription>
                 </AlertDialogHeader>
 
-                <AlertDialogFooter>
-                  <AlertDialogCancel>
+                <AlertDialogFooter className="w-full flex flex-col md:flex-row items-center justify-center gap-4 md:-ml-9 ml-0">
+                  <AlertDialogCancel className="md:w-[180px] w-full">
                     Cancel
                   </AlertDialogCancel>
 
                   <AlertDialogAction
                     onClick={handleLogout}
-                    className="bg-red-600 hover:bg-red-700"
+                    className=" w-full md:w-[180px] bg-red-600 hover:bg-red-700"
                   >
                     Logout
                   </AlertDialogAction>
