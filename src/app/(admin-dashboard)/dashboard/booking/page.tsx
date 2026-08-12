@@ -17,7 +17,8 @@ type BookingStatus =
   | "confirmed"
   | "pending"
   | "completed"
-  | "cancelled";
+  | "cancelled"
+  | "rejected";
 
 type PaymentStatus = "paid" | "pending" | "refunded";
 
@@ -43,6 +44,7 @@ const statusStyle: Record<BookingStatus, string> = {
   pending: "bg-yellow-100 text-yellow-700",
   completed: "bg-green-100 text-green-700",
   cancelled: "bg-red-100 text-red-700",
+  rejected: "bg-red-100 text-red-700",
 };
 
 const paymentStyle: Record<PaymentStatus, string> = {
@@ -118,7 +120,7 @@ export default function BookingsList() {
                   <p className="font-semibold">{b.id}</p>
 
                   <p className="flex items-center gap-2 text-sm text-gray-600">
-                    <User size={14} /> Homeowner: {b.homeowner_name}
+                    <User size={14} className="" /> Homeowner: {b.homeowner_name}
                   </p>
 
                   <p className="flex items-center gap-2 text-sm text-gray-600">
@@ -126,7 +128,7 @@ export default function BookingsList() {
                   </p>
 
                   <p className="flex items-center gap-2 text-sm text-gray-600">
-                    <MapPin size={14} /> {b.location}
+                    <MapPin size={14} className="shrink-0" /> {b.location}
                   </p>
 
                   <p className="text-xs text-gray-500">{b.service}</p>
@@ -134,22 +136,31 @@ export default function BookingsList() {
 
                 {/* Middle */}
                 <div className="space-y-2">
-                  <p className="flex items-center gap-2 text-sm text-gray-600">
-                    <User size={14} /> Cleaner: {b.cleaner_name}
+                  <p className="flex items-start lg:items-center gap-2 text-sm text-gray-600">
+                    <User size={14} className="shrink-0" /> Cleaner: {b.cleaner_name}
                   </p>
 
                   <p className="flex items-center gap-2 text-sm text-gray-600">
                     <Clock size={14} /> {b.booking_time}
                   </p>
+                  <div className="block md:hidden ">
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs ${statusStyle[statusKey]}`}
+                    >
+                      {b.status}
+                    </span>
+                  </div>
                 </div>
 
                 {/* Right */}
-                <div className="flex flex-col items-end justify-between">
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs ${statusStyle[statusKey]}`}
-                  >
-                    {b.status}
-                  </span>
+                <div className="flex flex-col w-full items-end justify-between">
+                  <div className="hidden md:block">
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs ${statusStyle[statusKey]}`}
+                    >
+                      {b.status}
+                    </span>
+                  </div>
                 </div>
               </div>
 

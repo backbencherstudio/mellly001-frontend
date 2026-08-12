@@ -16,13 +16,43 @@ export default function JobApprovals() {
   const [sort, setSort] = React.useState("");
 
   const [approve] = useGetJobApprovalUpdateMutation();
-  const handleCompleted = (id: string) => {
-    toast.success("Job completed successfully");
-    approve({ id, status: "COMPLETED" });
+
+  const handleCompleted = async (id: string) => {
+    try {
+      const response = await approve({
+        id,
+        status: "COMPLETED",
+      }).unwrap();
+
+      if (response?.success === false) {
+        toast.error(response.message);
+        return;
+      }
+
+      toast.success(
+        response?.message || "Job completed successfully"
+      );
+    } catch (error: any) {
+      toast.error(
+        error?.data?.message || "Something went wrong"
+      );
+    }
   };
-  const handleReject = (id: string) => {
-    toast.error("Job rejected successfully");
-    approve({ id, status: "REJECTED" });
+
+
+
+
+  const handleReject = async (id: string) => {
+    try {
+      await approve({
+        id,
+        status: "REJECTED",
+      }).unwrap();
+
+      toast.error("Job rejected successfully");
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Something went wrong");
+    }
   };
 
   const { data: jobApproval } = useGetJobApprovalQuery({});
@@ -163,14 +193,14 @@ export default function JobApprovals() {
                 Before Photos ({job.before_photos?.length || 0})
               </p>
 
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-2  ">
                 {job.before_photos?.map((img: string, i: number) => (
                   <img
                     key={i}
                     crossOrigin="anonymous"
                     src={img}
                     alt="before"
-                    className="h-40 w-full object-contain rounded-lg"
+                    className="h-40 w-full object-center rounded-lg"
                   />
                 ))}
               </div>
@@ -188,7 +218,7 @@ export default function JobApprovals() {
                     key={i}
                     src={img}
                     alt="after"
-                    className="h-40 w-full object-contain rounded-lg"
+                    className="h-40 w-full object-center rounded-lg"
                   />
                 ))}
               </div>

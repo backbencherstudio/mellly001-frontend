@@ -80,6 +80,7 @@ export const dashboardOverViewApi = baseApi.injectEndpoints({
                 method: "GET",
                 params,
             }),
+
         }),
 
         getUsers: builder.query({
@@ -96,6 +97,15 @@ export const dashboardOverViewApi = baseApi.injectEndpoints({
             }),
             providesTags: ["JobApproval"],
         }),
+
+        // getJobApprovalUpdate: builder.mutation({
+        //     query: ({ id, status }) => ({
+        //         url: `dashboard/job-approvals/${id}`,
+        //         method: "PATCH",
+        //         body: { status },
+        //     }),
+        //     invalidatesTags: ["JobApproval"],
+        // }),
 
         getJobApprovalUpdate: builder.mutation({
             query: ({ id, status }) => ({
