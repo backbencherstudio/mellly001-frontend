@@ -235,7 +235,7 @@ const columns: ColumnDef<DangerRequest>[] = [
             const styles = {
                 COMPLETED: "bg-green-100 text-green-700",
                 REJECTED: "bg-yellow-100 text-yellow-700",
-                PENDING: "bg-gray-100 text-gray-600",
+                PENDING: "bg-yellow-100 text-yellow-600",
             };
 
             return (
@@ -352,12 +352,12 @@ export default function CleanerRequest() {
                 renderAction={(row) => (
                     <div className="flex gap-2 cursor-pointer">
                         <DangerDetails employee={row} />
-                        <button onClick={() => handleEdit(row)} className="p-1 hover:bg-gray-100 rounded cursor-pointer">
+                        {/* <button onClick={() => handleEdit(row)} className="p-1 hover:bg-gray-100 rounded cursor-pointer">
                             <Check size={16} />
                         </button>
                         <button onClick={() => handleDelete(row)} className="p-1 hover:bg-red-100 rounded cursor-pointer text-red-600">
                             <X size={16} />
-                        </button>
+                        </button> */}
                     </div>
                 )}
             />
