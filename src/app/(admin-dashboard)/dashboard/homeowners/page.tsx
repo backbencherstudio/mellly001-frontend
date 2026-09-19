@@ -1,13 +1,15 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { ColumnDef } from "@tanstack/react-table";
 import { Mail, Phone, MapPin, MoreVertical, Search } from "lucide-react";
 
 import { DataTable } from "@/components/reusable/Table";
-import { formatDate } from "@/lib/DateFormate";
 import { useGetHomeownersQuery } from "@/redux/features/dashboardOverView/dashboardOverView";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import dayjs from "dayjs";
+import CustomModal from "@/components/reusable/CustomModal";
+import HomeownerDetails from "@/components/dashboard/Homeowner/HomeownerDetails";
 
 type Employee = {
   id: string;
@@ -49,7 +51,7 @@ const columns: ColumnDef<Employee>[] = [
             <p className="font-normal text-base">{user.name}</p>
 
             <p className="text-sm text-[#6A7282]">
-              Joined {formatDate(user.joined_at)}
+              Joined {dayjs(user.joined_at).format("MMM D, YYYY")}
             </p>
           </div>
         </div>
@@ -72,7 +74,7 @@ const columns: ColumnDef<Employee>[] = [
     minSize: 200,
     maxSize: 300,
     cell: ({ row }) => (
-      <div className="w-[300px] line-clamp-3 whitespace-normal break-words">
+      <div className="w-75 line-clamp-3 whitespace-normal wrap-break">
         {row.original.location || "N/A"}
       </div>
     ),
@@ -100,6 +102,8 @@ export default function EmployeesTable() {
   const [pageSize, setPageSize] = React.useState(10);
   const [search, setSearch] = React.useState("");
   const [sort, setSort] = React.useState("");
+  const [open, setOpen] = React.useState(false);
+  const [selectedHomeowner, setSelectedHomeowner] = React.useState<Employee | null>(null);
 
   const { data, isLoading } = useGetHomeownersQuery({
     search,
@@ -139,13 +143,14 @@ export default function EmployeesTable() {
 
 
   return (
-    <div className="space-y-6">
+  <div>
+      <div className="space-y-6">
       <div className="relative flex w-full items-center gap-3">
         {/* Search */}
         <div className="relative flex-1">
           <Search className="absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <input
-            placeholder="Search employee"
+            placeholder="Search homeowners by name, email, or phone"
             value={search}
             onChange={(e) => {
               setPage(1);
@@ -161,7 +166,7 @@ export default function EmployeesTable() {
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value)}
-            className="h-full w-full rounded-lg border px-3 py-2 focus:outline-none text-[12px]"
+            className="h-full w-full rounded-lg border px-3 py-2.5 focus:outline-none text-[12px]"
           >
             <option value="">Sort by</option>
             <option value="name-asc">Name (A-Z)</option>
@@ -182,14 +187,44 @@ export default function EmployeesTable() {
           setPage(1);
           setPageSize(size);
         }}
-      // renderAction={() => (
-      //   <Link href="#">
-      //     <MoreVertical className="cursor-pointer text-gray-400" />
-      //   </Link>
-      // )}
-      // loading={isLoading}
+        renderAction={(row) => (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button aria-label={`Actions for ${row.name}`}>
+                <MoreVertical />
+              </button>
+            </DropdownMenuTrigger>
+
+            <DropdownMenuContent>
+              <DropdownMenuItem
+                onClick={() => {
+                  setSelectedHomeowner(row);
+                  setOpen(true);
+                }}
+              >
+                View Details
+              </DropdownMenuItem>
+
+              <DropdownMenuItem>Activate</DropdownMenuItem>
+              <DropdownMenuItem>Deactivate</DropdownMenuItem>
+              <DropdownMenuItem>Suspend</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      loading={isLoading}
       />
     </div>
+
+    <div>
+      <CustomModal title="text"
+      size="mmd"
+      open={open}
+      onOpenChange={setOpen}
+      >
+        <HomeownerDetails homeowner={selectedHomeowner} />
+      </CustomModal>
+    </div>
+  </div>
   );
 }
 

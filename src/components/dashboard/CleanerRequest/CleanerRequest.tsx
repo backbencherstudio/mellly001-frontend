@@ -62,12 +62,12 @@ export function DialogScrollableContent({ data: employee }: { data: Employee }) 
 
     const requiredFields = [
         cleaner?.name,
-        // cleaner?.email,
-        // cleaner?.phone_number,
-        // cleaner?.location,
-        // cleaner?.resume_url,
-        // cleaner?.id_card_front_url,
-        // cleaner?.id_card_back_url,
+        cleaner?.email,
+        cleaner?.phone_number,
+        cleaner?.location,
+        cleaner?.resume_url,
+        cleaner?.id_card_front_url,
+        cleaner?.id_card_back_url,
     ];
 
     const isProfileComplete = requiredFields.every(
@@ -182,9 +182,9 @@ export function DialogScrollableContent({ data: employee }: { data: Employee }) 
 
 
                         <div>
-                            <p className="text-sm text-gray-500">Status</p>
+                            <p className="text-sm text-gray-500 mb-1">Status</p>
                             <div>
-                                <p className="text-sm text-gray-500">Status</p>
+                              
 
                                 <span
                                     className={`px-3 py-1 rounded-full text-xs font-medium ${status === "VERIFIED"

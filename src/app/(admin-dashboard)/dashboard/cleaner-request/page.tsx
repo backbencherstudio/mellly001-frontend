@@ -21,6 +21,7 @@ import { DialogScrollableContent } from "@/components/dashboard/CleanerRequest/C
 import Link from "next/link";
 import { useGetCleanerRequestQuery, useUpdateCleanerRequestMutation } from "@/redux/features/dashboardOverView/dashboardOverView";
 import { toast } from "sonner";
+import dayjs from "dayjs";
 
 /* ================= TYPES ================= */
 export type Employee = {
@@ -64,7 +65,7 @@ const columns: ColumnDef<Employee>[] = [
                     <div>
                         <p className="font-medium leading-none">{name}</p>
                         <p className="text-xs text-gray-500 mt-1">
-                            Applied {row.original.applied_date ? new Date(row.original.applied_date).toLocaleDateString("en-GB") : "N/A"}
+                            Applied {row.original.applied_date ? dayjs(row.original.applied_date).format("MMM D, YYYY") : "N/A"}
                         </p>
                     </div>
                 </div>
@@ -90,7 +91,7 @@ const columns: ColumnDef<Employee>[] = [
         minSize: 200,
         maxSize: 300,
         cell: ({ row }) => (
-            <div className="flex items-center gap-1 text-sm w-[300px] line-clamp-3 whitespace-normal break-words">
+            <div className="flex items-center gap-1 text-sm w-75 line-clamp-3 whitespace-normal wrap-break">
                 <MapPin className="h-4 w-4 shrink-0 text-[#99A1AF]" />
                 <span className="font-medium">{row.original.location}</span>
             </div>
@@ -103,7 +104,7 @@ const columns: ColumnDef<Employee>[] = [
         minSize: 200,
         maxSize: 300,
         cell: ({ row }) => (
-            <div className="w-[300px] line-clamp-3 whitespace-normal break-words">
+            <div className="w-75 line-clamp-3 whitespace-normal wrap-break">
                 <span className="font-medium">
                     {row.original.rejected_reason || "N/A"}
                 </span>
@@ -215,7 +216,7 @@ export default function CleanerRequest() {
                     <select
                         value={sort}
                         onChange={(e) => setSort(e.target.value)}
-                        className="h-full w-full rounded-lg border px-3 py-2 focus:outline-none text-[12px]"
+                        className="h-full w-full rounded-lg border px-3 py-2.5 focus:outline-none text-[12px]"
                     >
                         <option value="">Sort by</option>
                         <option value="name-asc">Name (A-Z)</option>

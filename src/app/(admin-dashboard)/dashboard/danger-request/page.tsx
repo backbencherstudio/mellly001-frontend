@@ -22,6 +22,7 @@ import { DangerDetails } from "@/components/dashboard/DangerDetails/DangerDetail
 import { LineChart } from "../_components/TotalUserGraph";
 import { useGetDangerRequestQuery } from "@/redux/features/dashboardOverView/dashboardOverView";
 import { formatDate } from "@/lib/DateFormate";
+import dayjs from "dayjs";
 
 /* ================= TYPES ================= */
 export type DangerRequest = {
@@ -57,13 +58,13 @@ function LocationCell({
     const [loading, setLoading] = React.useState(false);
 
     React.useEffect(() => {
-        // Backend থেকে location থাকলে সেটাই ব্যবহার করবে
+        
         if (location) {
             setLocationName(location);
             return;
         }
 
-        // latitude / longitude না থাকলে
+     
         if (latitude === undefined || longitude === undefined) {
             setLocationName("N/A");
             return;
@@ -155,7 +156,7 @@ const columns: ColumnDef<DangerRequest>[] = [
                     <div>
                         <p className="font-medium leading-none">{name}</p>
                         <p className="text-xs text-gray-500 mt-1">
-                            Joined {row.original.joined}
+                            Joined {dayjs(row.original.joined).format("MMM D, YYYY")}
                         </p>
                     </div>
                 </div>
@@ -328,7 +329,7 @@ export default function CleanerRequest() {
                     <select
                         value={sortBy}
                         onChange={(e) => setSortBy(e.target.value)}
-                        className="h-full w-full rounded-lg border px-3 py-2 text-[12px]"
+                        className="h-full w-full rounded-lg border px-3 py-2.5 text-[12px]"
                     >
                         <option value="">Sort by</option>
                         <option value="name">Name</option>

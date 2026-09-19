@@ -10,7 +10,9 @@ import {
 } from "lucide-react";
 import Pagination from "@/components/reusable/pagination";
 import { useGetBookingDetaialsQuery } from "@/redux/features/dashboardOverView/dashboardOverView";
-
+import dayjs from "dayjs";
+import CustomModal from "@/components/reusable/CustomModal";
+import BookingDetails from "@/components/dashboard/Booking/BookingDetails";
 /* ================= TYPES ================= */
 type BookingStatus =
   | "in-progress"
@@ -58,6 +60,8 @@ export default function BookingsList() {
   const [page, setPage] = React.useState(1);
   const [pageSize, setPageSize] = React.useState(5);
   const [search, setSearch] = React.useState("");
+  const [open, setOpen] = React.useState(false);
+  const [selectedBooking, setSelectedBooking] = React.useState<Booking | null>(null);
   const [orderBy, setOrderBy] = React.useState("maid_id");
 
   const queryParams = React.useMemo(() => {
@@ -85,7 +89,8 @@ export default function BookingsList() {
   }, [bookingData, page, pageSize]);
 
   return (
-    <div className="space-y-6">
+   <div>
+     <div className="space-y-6">
       {/*  Top bar */}
       <div className="flex items-center justify-between gap-4">
         <div className="relative w-full max-full">
@@ -99,7 +104,7 @@ export default function BookingsList() {
         </div>
 
         <div className="w-40">
-          <select className="h-full w-full rounded-lg border px-3 py-2 focus:outline-none text-[12px]">
+          <select className="h-full w-full rounded-lg border px-3 py-2.5 focus:outline-none text-[12px]">
             <option value="">Sort by</option>
             <option value="name">Name</option>
             {/* <option value="date">Date</option> */}
@@ -113,7 +118,14 @@ export default function BookingsList() {
           const statusKey = b.status as BookingStatus;
 
           return (
-            <div key={b.id} className="rounded-2xl border bg-white p-5">
+           <div
+        key={b.id}
+        className="rounded-2xl border bg-white p-5 cursor-pointer"
+        onClick={() => {
+          setSelectedBooking(b);
+          setOpen(true);
+        }}
+      >
               <div className="flex justify-between gap-6">
                 {/* Left */}
                 <div className="space-y-2">
@@ -123,9 +135,9 @@ export default function BookingsList() {
                     <User size={14} className="" /> Homeowner: {b.homeowner_name}
                   </p>
 
-                  <p className="flex items-center gap-2 text-sm text-gray-600">
-                    <Calendar size={14} /> {b.booking_date}
-                  </p>
+                <p className="flex items-center gap-2 text-sm text-gray-600">
+  <Calendar size={14} /> {dayjs(b.booking_date).format("MMM D, YYYY")}
+</p>
 
                   <p className="flex items-center gap-2 text-sm text-gray-600">
                     <MapPin size={14} className="shrink-0" /> {b.location}
@@ -190,5 +202,15 @@ export default function BookingsList() {
         }}
       />
     </div>
+    <div>
+      <CustomModal
+     open={open}
+      title="Booking Details"
+      size="mmd"
+      onOpenChange={setOpen}>
+        <BookingDetails bookingData={selectedBooking}/>
+      </CustomModal>
+    </div>
+   </div>
   );
 }

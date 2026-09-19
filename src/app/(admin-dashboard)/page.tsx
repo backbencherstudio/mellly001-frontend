@@ -144,9 +144,9 @@ export default function DashboardPage() {
                   {item.title}
                 </p>
 
-                <p className="text-3xl font-bold text-[#101828] leading-100%">
-                  {item.value}
-                </p>
+               <p className="text-3xl font-bold text-[#101828] leading-100%">
+  {item.id === "4" && "$"} {item.value}
+</p>
 
 
               </div>
@@ -164,7 +164,7 @@ export default function DashboardPage() {
       <div className=" border border-[#E5E7EB] rounded-2xl">
 
         <div className="p-6">
-          <h3 className="text-[#032B15] text-[20px] font-bold leading-100% pb-[26px]">Recent Activity</h3>
+          <h3 className="text-[#032B15] text-[20px] font-bold leading-100% pb-6.5">Recent Activity</h3>
           <div className="space-y-4">
             {
               Activity?.slice(0, 10).map((item) => (

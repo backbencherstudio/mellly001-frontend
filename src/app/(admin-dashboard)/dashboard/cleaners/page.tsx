@@ -12,6 +12,11 @@ import {
 } from "lucide-react";
 import { DataTable } from "@/components/reusable/Table";
 import { useGetCleanersQuery } from "@/redux/features/dashboardOverView/dashboardOverView";
+import dayjs from "dayjs";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import CustomModal from "@/components/reusable/CustomModal";
+import CleanerDetails from "@/components/dashboard/CleanerRequest/CleanerDetails";
+import { set } from "react-hook-form";
 
 /* ================= TYPES ================= */
 type Employee = {
@@ -51,7 +56,7 @@ const columns: ColumnDef<Employee>[] = [
           <div>
             <p className="font-medium leading-none">{name}</p>
             <p className="text-xs text-gray-500 mt-1">
-              Joined {new Date(row.original.joined_at).toLocaleDateString("en-GB")}
+              Joined {dayjs(row.original.joined_at).format("MMM D, YYYY")}
             </p>
           </div>
         </div>
@@ -133,6 +138,8 @@ export default function EmployeesTable() {
   const [pageSize, setPageSize] = React.useState(8);
   const [search, setSearch] = React.useState("");
   const [sort, setSort] = React.useState("");
+  const [open, setOpen] = React.useState(false);
+  const [selectedCleaner, setSelectedCleaner] = React.useState<Employee | null>(null);
 
   const { data, isLoading } = useGetCleanersQuery({})
   const cleaners = data?.data?.data || [];
@@ -168,7 +175,8 @@ export default function EmployeesTable() {
   }, [filteredData, page, pageSize]);
 
   return (
-    <div className="space-y-6">
+    <div>
+      <div className="space-y-6">
       {/* Top bar */}
       <div className="flex items-center justify-between gap-4">
         <div className="relative w-full ">
@@ -185,7 +193,7 @@ export default function EmployeesTable() {
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value)}
-            className="h-full w-full rounded-lg border px-3 py-2 focus:outline-none text-[12px]"
+            className="h-full w-full rounded-lg border px-3 py-2.5 focus:outline-none text-[12px]"
           >
             <option value="">Sort by</option>
             <option value="name-asc">Name (A-Z)</option>
@@ -207,10 +215,52 @@ export default function EmployeesTable() {
           setPageSize(size);
         }}
         loading={isLoading}
-      // renderAction={() => (
-      //   <MoreVertical className="cursor-pointer text-gray-400" />
-      // )}
+      renderAction={(row) => (
+        <DropdownMenu>
+    <DropdownMenuTrigger asChild>
+      <button>
+        <MoreVertical />
+      </button>
+    </DropdownMenuTrigger>
+
+          <DropdownMenuContent>
+            <DropdownMenuItem
+              onClick={() => {
+                setSelectedCleaner(row);
+                setOpen(true);
+              }}
+            >
+              View Details
+            </DropdownMenuItem>
+
+            <DropdownMenuItem>
+              Activate
+            </DropdownMenuItem>
+
+            <DropdownMenuItem>
+              Deactivate
+            </DropdownMenuItem>
+
+            <DropdownMenuItem>
+              Suspend
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+  </DropdownMenu>
+
+
+      )}
       />
+    </div>
+
+    <div>
+      <CustomModal title="Cleaner Details"
+      size="mmd"
+      open={open}
+      onOpenChange={setOpen}
+      >
+        <CleanerDetails cleaner={selectedCleaner}/>
+      </CustomModal>
+    </div>
     </div>
   );
 }

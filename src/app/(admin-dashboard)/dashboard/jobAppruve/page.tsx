@@ -7,6 +7,7 @@ import { toast } from "sonner";
 
 import Pagination from "@/components/reusable/pagination";
 import { useGetJobApprovalQuery, useGetJobApprovalUpdateMutation } from "@/redux/features/dashboardOverView/dashboardOverView";
+import dayjs from "dayjs";
 
 /* ================= COMPONENT ================= */
 export default function JobApprovals() {
@@ -123,7 +124,7 @@ export default function JobApprovals() {
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value)}
-            className="h-full w-full rounded-lg border px-3 py-2 text-[12px]"
+            className="h-full w-full rounded-lg border px-3 py-2.5 text-[12px]"
           >
             <option value="">Sort by</option>
             <option value="name-asc">Homeowner (A–Z)</option>
@@ -144,7 +145,7 @@ export default function JobApprovals() {
               <p className="font-semibold">{job.slot}  </p>
               <p className="text-xs text-gray-500">
                 Completed at  {" "}
-                {new Date(job.booking_date).toLocaleString("en-GB")}
+               {dayjs(job.booking_date).format("MMM D, YYYY")}
               </p>
             </div>
 
