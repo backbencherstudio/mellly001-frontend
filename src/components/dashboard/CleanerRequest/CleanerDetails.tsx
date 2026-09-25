@@ -47,7 +47,7 @@ export default function CleanerDetails({ cleaner }: { cleaner: any }) {
               "bg-gray-100 text-gray-700 border-gray-200"
             }`}
           >
-            {cleaner?.status || "Active"}
+              <span>{cleaner.status}</span>
           </span>
         </div>
       </div>

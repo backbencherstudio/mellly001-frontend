@@ -50,13 +50,13 @@ export function DangerDetails({
             </DialogTrigger>
             <DialogContent className="max-h-[85vh] overflow-y-auto !max-w-[90vw] !w-[800px]">
                 <DialogHeader>
-                    <DialogTitle className="text-2xl font-bold ">Cleaner Details</DialogTitle>
+                    <DialogTitle className="text-2xl font-bold ">Danger Request Details</DialogTitle>
                 </DialogHeader>
-                <p className="text-sm font-normal text-[#6A7282]">Review complete profile information</p>
+                <p className="text-sm font-normal text-[#6A7282]">Review incident details, location, booking, and response status.</p>
 
                 <div className="space-y-4 mt-4">
 
-                    <p className="text-[#03652B] font-bold text-lg">Personal Information</p>
+                    <p className="text-[#03652B] font-bold text-lg">Incident Information</p>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <p className="text-sm text-[#6A7282]">Full Name</p>

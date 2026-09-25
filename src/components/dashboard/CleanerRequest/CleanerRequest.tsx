@@ -12,8 +12,6 @@ import {
 } from "@/components/ui/dialog"
 import { useGetClearnerRequestByIdQuery, useUpdateCleanerRequestMutation } from "@/redux/features/dashboardOverView/dashboardOverView";
 import { Eye } from "lucide-react";
-import Image from "next/image";
-import { useParams } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -45,8 +43,6 @@ export function DialogScrollableContent({ data: employee }: { data: Employee }) 
 
 
     const resumeUrl = cleaner?.resume_url;
-    const isPdf = resumeUrl?.toLowerCase().endsWith(".pdf");
-
     const handleApprove = async () => {
         try {
             await updateCleanerRequest({
@@ -73,11 +69,6 @@ export function DialogScrollableContent({ data: employee }: { data: Employee }) 
     const isProfileComplete = requiredFields.every(
         (field) => field !== null && field !== undefined && String(field).trim() !== ""
     );
-
-    const seconPopup = () => {
-        const popup = window.open("", "_blank", "width=800,height=600");
-    }
-
 
     const handleReject = async () => {
         try {
@@ -107,25 +98,6 @@ export function DialogScrollableContent({ data: employee }: { data: Employee }) 
     };
 
 
-    // const handleReject = async () => {
-    //     try {
-    //         const response = await updateCleanerRequest({
-    //             id: employee.id,
-    //             status: "REJECTED",
-    //             rejected_reason: rejectReason,
-    //         }).unwrap();
-
-    //         toast.success(response?.message || "Cleaner rejected successfully");
-
-    //         setRejectReason("");
-    //         setRejectOpen(false);
-    //     } catch (error) {
-    //         toast.error("Failed to reject cleaner request");
-    //     }
-    // };
-
-
-
     return (
         <Dialog >
             <DialogTrigger asChild >
@@ -133,9 +105,9 @@ export function DialogScrollableContent({ data: employee }: { data: Employee }) 
                     <Eye size={16} />
                 </button>
             </DialogTrigger>
-            <DialogContent className="max-h-[85vh] overflow-y-auto !max-w-[90vw] !w-[800px] ">
+            <DialogContent className="max-h-[85vh] max-w-[90vw]! w-200! overflow-y-auto rounded">
                 <DialogHeader>
-                    <DialogTitle className="text-2xl font-bold ">Cleaner Details</DialogTitle>
+                    <DialogTitle className="text-2xl font-bold ">Cleaner Application Details</DialogTitle>
                 </DialogHeader>
                 <p className="text-sm font-normal text-[#6A7282]">Review complete profile information</p>
 
@@ -143,25 +115,25 @@ export function DialogScrollableContent({ data: employee }: { data: Employee }) 
 
 
                     <p className="text-[#03652B] font-bold text-lg">Personal Information</p>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div>
                             <p className="text-sm text-[#6A7282]">Full Name</p>
-                            <p className="font-medium text-[#101828] text-sm">{cleaner?.name}</p>
+                            <p className="font-medium text-[#101828] text-sm">{cleaner?.name || "Not Provided"}</p>
                         </div>
                         <div>
                             <p className="text-sm text-gray-500">Email</p>
-                            <p className="font-medium text-[#101828] text-sm">{cleaner?.email}</p>
+                            <p className="font-medium text-[#101828] text-sm">{cleaner?.email || "Not Provided"}</p>
                         </div>
 
 
                         <div>
                             <p className="text-sm text-gray-500">Phone</p>
-                            <p className="font-medium text-[#101828] text-sm">{cleaner?.phone_number || "N/A"}</p>
+                            <p className="font-medium text-[#101828] text-sm">{cleaner?.phone_number || "Not Provided"}</p>
                         </div>
 
                         <div>
                             <p className="text-sm text-gray-500">Location</p>
-                            <p className="font-medium text-[#101828] text-sm">{cleaner?.location}</p>
+                            <p className="font-medium text-[#101828] text-sm">{cleaner?.location || "Not Provided"}</p>
                         </div>
 
                         {/* <div>
@@ -176,7 +148,7 @@ export function DialogScrollableContent({ data: employee }: { data: Employee }) 
                             <div className="text-[#03652B] font-bold text-lg w-full ">Address</div>
 
                             <p className="text-sm text-gray-500">Street Address</p>
-                            <p className="font-medium">{cleaner?.location}</p>
+                            <p className="font-medium">{cleaner?.location || "Not Provided"}</p>
 
                         </div>
 
@@ -224,22 +196,34 @@ export function DialogScrollableContent({ data: employee }: { data: Employee }) 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <p className="text-sm text-[#6A7282] mb-2">Front Image</p>
-                                <img
-                                    src={cleaner?.id_card_front_url}
-                                    crossOrigin="anonymous"
-                                    alt="Front ID"
-                                    className="w-full h-64 rounded-lg border object-center"
-                                />
+                                {cleaner?.id_card_front_url ? (
+                                    <img
+                                        src={cleaner.id_card_front_url}
+                                        crossOrigin="anonymous"
+                                        alt="Front ID"
+                                        className="w-full h-64 rounded-lg border object-center"
+                                    />
+                                ) : (
+                                    <div className="flex h-64 items-center justify-center rounded-lg border text-sm text-gray-500">
+                                        Not Provided
+                                    </div>
+                                )}
                             </div>
 
                             <div>
                                 <p className="text-sm text-[#6A7282] mb-2">Back Image</p>
-                                <img
-                                    src={cleaner?.id_card_back_url}
-                                    crossOrigin="anonymous"
-                                    alt="Back ID"
-                                    className="w-full h-64 rounded-lg border object-center"
-                                />
+                                {cleaner?.id_card_back_url ? (
+                                    <img
+                                        src={cleaner.id_card_back_url}
+                                        crossOrigin="anonymous"
+                                        alt=""
+                                        className="w-full h-64 rounded-lg border object-center"
+                                    />
+                                ) : (
+                                    <div className="flex h-64 items-center justify-center rounded-lg border text-sm text-gray-500">
+                                        Not Provided
+                                    </div>
+                                )}
                             </div>
                         </div>
 
@@ -250,7 +234,7 @@ export function DialogScrollableContent({ data: employee }: { data: Employee }) 
 
 
                         <button
-                            className="text-red-500 font-bold text-base py-3.5 border border-red-500 border-2 cursor-pointer text-center w-full md:px-20 lg:px-25 rounded-lg whitespace-nowrap disabled:opacity-50"
+                            className="text-red-500 font-bold text-base py-3.5 border-2 border-red-500 cursor-pointer text-center w-full md:px-20 lg:px-25 rounded-lg whitespace-nowrap disabled:opacity-50"
                             onClick={() => setRejectOpen(true)}
                             disabled={isLoading}
                         >
@@ -269,7 +253,7 @@ export function DialogScrollableContent({ data: employee }: { data: Employee }) 
             </DialogContent>
 
             <Dialog open={rejectOpen} onOpenChange={setRejectOpen}>
-                <DialogContent className="w-[350px] md:w-[700px]">
+                <DialogContent className="w-87.5 md:w-175">
                     <DialogHeader>
                         <DialogTitle>Reject Application</DialogTitle>
                     </DialogHeader>

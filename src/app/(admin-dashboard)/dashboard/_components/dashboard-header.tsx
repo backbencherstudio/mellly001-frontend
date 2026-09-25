@@ -35,12 +35,12 @@ const routeMeta: Record<string, { title: string; desc: string }> = {
     desc: "Manage all cleaner accounts and their activities.",
   },
   "/dashboard/cleaner-request": {
-    title: "Cleaners Request",
+    title: "Cleaner Applications ",
     desc: "Review and manage cleaner applications, documents, and verification status",
   },
   "/dashboard/booking": {
     title: "Bookings",
-    desc: "Manage all Bookings accounts and their activities.",
+    desc: "Manage and monitor all service bookings",
   },
   "/dashboard/payments": {
     title: "Payments",
@@ -52,7 +52,7 @@ const routeMeta: Record<string, { title: string; desc: string }> = {
   },
   "/dashboard/danger-request": {
     title: "Danger Request",
-    desc: "Manage all homeowner accounts and their activities.",
+    desc: "Review, acknowledge, and resolve urgent safety incidents.",
   },
 };
 
