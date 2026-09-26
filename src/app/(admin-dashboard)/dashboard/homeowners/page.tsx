@@ -5,8 +5,16 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Mail, Phone, MapPin, MoreVertical, Search } from "lucide-react";
 
 import { DataTable } from "@/components/reusable/Table";
-import { useGetHomeownersQuery } from "@/redux/features/dashboardOverView/dashboardOverView";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  useGetHomeownersQuery,
+  useUpdateHomeownersMutation,
+} from "@/redux/features/dashboardOverView/dashboardOverView";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import dayjs from "dayjs";
 import CustomModal from "@/components/reusable/CustomModal";
 import HomeownerDetails from "@/components/dashboard/Homeowner/HomeownerDetails";
@@ -21,11 +29,8 @@ type Employee = {
   bookings: number;
   total_spent: number;
   joined_at: string;
-  status: "active" | "inactive";
+  status: "ACTIVE" | "INACTIVE" | "SUSPENDED";
 };
-
-
-
 
 const columns: ColumnDef<Employee>[] = [
   {
@@ -62,8 +67,14 @@ const columns: ColumnDef<Employee>[] = [
     header: "Contact",
     cell: ({ row }) => (
       <div className="space-y-1">
-        <p className="flex gap-2 text-sm text-[#101828]"><Mail className="text-[#6A7282] mt-1" size={12} />{row.original.email}</p>
-        <p className="flex gap-2 text-[#6A7282]"><Phone size={12} className="text-[#6A7282] mt-1" />{row.original.phone_number}</p>
+        <p className="flex gap-2 text-sm text-[#101828]">
+          <Mail className="text-[#6A7282] mt-1" size={12} />
+          {row.original.email}
+        </p>
+        <p className="flex gap-2 text-[#6A7282]">
+          <Phone size={12} className="text-[#6A7282] mt-1" />
+          {row.original.phone_number}
+        </p>
       </div>
     ),
   },
@@ -87,11 +98,17 @@ const columns: ColumnDef<Employee>[] = [
   {
     header: "Status",
     cell: ({ row }) => (
-      <span className={`px-3 py-1 rounded-full text-xs
-        ${row.original.status === "active"
-          ? "bg-green-100 text-green-700"
-          : "bg-gray-100 text-gray-600"}`}>
-        {row.original.status}
+      <span
+        className={`px-3 py-1 rounded-full text-xs
+        ${
+          row.original.status === "ACTIVE"
+            ? "bg-green-100 text-green-700"
+            : row.original.status === "INACTIVE"
+              ? "bg-gray-100 text-gray-600"
+              : "bg-red-100 text-red-600"
+        }`}
+      >
+        <span className="uppercase font-medium"> {row.original.status}</span>
       </span>
     ),
   },
@@ -103,7 +120,8 @@ export default function EmployeesTable() {
   const [search, setSearch] = React.useState("");
   const [sort, setSort] = React.useState("");
   const [open, setOpen] = React.useState(false);
-  const [selectedHomeowner, setSelectedHomeowner] = React.useState<Employee | null>(null);
+  const [selectedHomeowner, setSelectedHomeowner] =
+    React.useState<Employee | null>(null);
 
   const { data, isLoading } = useGetHomeownersQuery({
     search,
@@ -112,15 +130,18 @@ export default function EmployeesTable() {
     perPage: pageSize,
   });
 
+  const [updateHomeowners] = useUpdateHomeownersMutation();
+  const updateHomeownerStatus = (id: string, status: string) => {
+    updateHomeowners({ id, status });
+  };
+
   const homeowners = data?.data?.data || [];
   const filteredEmployees = React.useMemo(() => {
     let data = Array.isArray(homeowners) ? homeowners : [];
 
     if (search) {
       const lower = search.toLowerCase();
-      data = data.filter((emp) =>
-        emp.name.toLowerCase().includes(lower)
-      );
+      data = data.filter((emp) => emp.name.toLowerCase().includes(lower));
     }
 
     if (sort === "name-asc") {
@@ -134,98 +155,106 @@ export default function EmployeesTable() {
     return data;
   }, [search, sort, homeowners]);
 
-
-
   const paginatedData = React.useMemo(() => {
     const start = (page - 1) * pageSize;
     return (filteredEmployees || []).slice(start, start + pageSize);
   }, [page, pageSize, filteredEmployees]);
 
-
   return (
-  <div>
+    <div>
       <div className="space-y-6">
-      <div className="relative flex w-full items-center gap-3">
-        {/* Search */}
-        <div className="relative flex-1">
-          <Search className="absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-          <input
-            placeholder="Search homeowners by name, email, or phone"
-            value={search}
-            onChange={(e) => {
-              setPage(1);
-              setSearch(e.target.value);
-            }}
-            className="w-full rounded-lg border px-10 py-2 focus:outline-none"
-          />
+        <div className="relative flex w-full items-center gap-3">
+          {/* Search */}
+          <div className="relative flex-1">
+            <Search className="absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <input
+              placeholder="Search homeowners by name, email, or phone"
+              value={search}
+              onChange={(e) => {
+                setPage(1);
+                setSearch(e.target.value);
+              }}
+              className="w-full rounded-lg border px-10 py-2 focus:outline-none"
+            />
+          </div>
 
+          {/* Sort */}
+          <div className="w-40">
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value)}
+              className="h-full w-full rounded-lg border px-3 py-2.5 focus:outline-none text-[12px]"
+            >
+              <option value="">Sort by</option>
+              <option value="name-asc">Name (A-Z)</option>
+              <option value="name-desc">Name (Z-A)</option>
+            </select>
+          </div>
         </div>
 
-        {/* Sort */}
-        <div className="w-40">
-          <select
-            value={sort}
-            onChange={(e) => setSort(e.target.value)}
-            className="h-full w-full rounded-lg border px-3 py-2.5 focus:outline-none text-[12px]"
-          >
-            <option value="">Sort by</option>
-            <option value="name-asc">Name (A-Z)</option>
-            <option value="name-desc">Name (Z-A)</option>
-          </select>
-        </div>
+        <DataTable
+          columns={columns}
+          data={paginatedData}
+          page={page}
+          pageSize={pageSize}
+          total={filteredEmployees.length}
+          onPageChange={setPage}
+          onPageSizeChange={(size) => {
+            setPage(1);
+            setPageSize(size);
+          }}
+          renderAction={(row) => (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  aria-label={`Actions for ${row.name}`}
+                  className="cursor-pointer"
+                >
+                  <MoreVertical />
+                </button>
+              </DropdownMenuTrigger>
+
+              <DropdownMenuContent>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setSelectedHomeowner(row);
+                    setOpen(true);
+                  }}
+                  className="cursor-pointer"
+                >
+                  View Details
+                </DropdownMenuItem>
+
+                <DropdownMenuItem
+                  onClick={() => updateHomeownerStatus(row.id, "ACTIVE")}
+                  className="cursor-pointer"
+                >
+                  Activate
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => updateHomeownerStatus(row.id, "INACTIVE")}
+                  className="cursor-pointer"
+                >
+                  Inactive
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => updateHomeownerStatus(row.id, "SUSPENDED")}
+                  className="cursor-pointer"
+                >
+                  Suspend
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+          loading={isLoading}
+        />
       </div>
 
-
-      <DataTable
-        columns={columns}
-        data={paginatedData}
-        page={page}
-        pageSize={pageSize}
-        total={filteredEmployees.length}
-        onPageChange={setPage}
-        onPageSizeChange={(size) => {
-          setPage(1);
-          setPageSize(size);
-        }}
-        renderAction={(row) => (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button aria-label={`Actions for ${row.name}`}>
-                <MoreVertical />
-              </button>
-            </DropdownMenuTrigger>
-
-            <DropdownMenuContent>
-              <DropdownMenuItem
-                onClick={() => {
-                  setSelectedHomeowner(row);
-                  setOpen(true);
-                }}
-              >
-                View Details
-              </DropdownMenuItem>
-
-              <DropdownMenuItem>Activate</DropdownMenuItem>
-              <DropdownMenuItem>Deactivate</DropdownMenuItem>
-              <DropdownMenuItem>Suspend</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-      loading={isLoading}
-      />
+      <div>
+        <CustomModal title="text" size="mmd" open={open} onOpenChange={setOpen}>
+          <HomeownerDetails homeowner={selectedHomeowner} />
+        </CustomModal>
+      </div>
     </div>
-
-    <div>
-      <CustomModal title="text"
-      size="mmd"
-      open={open}
-      onOpenChange={setOpen}
-      >
-        <HomeownerDetails homeowner={selectedHomeowner} />
-      </CustomModal>
-    </div>
-  </div>
   );
 }
-
-

@@ -43,6 +43,10 @@ export function DataTable<TData, TValue>({
   loading,
 }: DataTableProps<TData, TValue>) {
   const totalPages = Math.ceil(total / pageSize);
+  const tableContainerRef = React.useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = React.useState(false);
+  const [startX, setStartX] = React.useState(0);
+  const [scrollLeft, setScrollLeft] = React.useState(0);
 
   const finalColumns = React.useMemo(() => {
     if (!renderAction) return columns;
@@ -62,9 +66,66 @@ export function DataTable<TData, TValue>({
     getCoreRowModel: getCoreRowModel(),
   });
 
+  // Mouse drag handlers
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    // Don't drag if interacting with buttons, links, dropdowns, inputs
+    if (target.closest("button, a, input, select, textarea, [role='menuitem']")) {
+      return;
+    }
+
+    if (!tableContainerRef.current) return;
+    setIsDragging(true);
+    setStartX(e.pageX - tableContainerRef.current.offsetLeft);
+    setScrollLeft(tableContainerRef.current.scrollLeft);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isDragging || !tableContainerRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - tableContainerRef.current.offsetLeft;
+    const walk = (x - startX) * 1.5;
+    tableContainerRef.current.scrollLeft = scrollLeft - walk;
+  };
+
+  const handleMouseUpOrLeave = () => {
+    setIsDragging(false);
+  };
+
+  // Horizontal wheel scroll support
+  React.useEffect(() => {
+    const el = tableContainerRef.current;
+    if (!el) return;
+
+    const onWheel = (e: WheelEvent) => {
+      if (el.scrollWidth > el.clientWidth && Math.abs(e.deltaX) < Math.abs(e.deltaY)) {
+        if (e.shiftKey) return; // Shift + wheel natively scrolls horizontally
+        const canScrollLeft = el.scrollLeft > 0 && e.deltaY < 0;
+        const canScrollRight =
+          el.scrollLeft < el.scrollWidth - el.clientWidth && e.deltaY > 0;
+
+        if (canScrollLeft || canScrollRight) {
+          el.scrollLeft += e.deltaY;
+        }
+      }
+    };
+
+    el.addEventListener("wheel", onWheel, { passive: true });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, []);
+
   return (
     <div className="w-full">
-      <div className="overflow-x-auto rounded-xl border bg-white">
+      <div
+        ref={tableContainerRef}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUpOrLeave}
+        onMouseLeave={handleMouseUpOrLeave}
+        className={`overflow-x-auto rounded-xl border bg-white [&>[data-slot=table-container]]:overflow-visible ${
+          isDragging ? "cursor-grabbing select-none" : ""
+        }`}
+      >
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((hg) => (

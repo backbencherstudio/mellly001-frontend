@@ -36,18 +36,25 @@ export default function Pagination({
   };
 
   const pages = getPages();
-  const start = (page - 1) * pageSize + 1;
+  const start = total === 0 ? 0 : (page - 1) * pageSize + 1;
   const end = Math.min(page * pageSize, total);
+  const isPrevDisabled = page <= 1 || totalPages <= 1;
+  const isNextDisabled = page >= totalPages || totalPages <= 1;
 
   return (
     <div className="flex w-full items-center justify-between text-sm text-gray-600">
       {/* Left */}
       <div className="flex items-center gap-2">
         <button
-          disabled={page === 1}
+          disabled={isPrevDisabled}
           onClick={() => onPageChange(page - 1)}
-          className={`h-8 w-8 rounded-md border flex items-center justify-center
-            ${page === 1 ? "opacity-40" : "hover:bg-gray-50"}`}
+          aria-label="Previous page"
+          className={`h-8 w-8 rounded-md border flex items-center justify-center transition
+            ${
+              isPrevDisabled
+                ? "opacity-40 cursor-not-allowed bg-gray-50"
+                : "cursor-pointer hover:bg-gray-100"
+            }`}
         >
           <ChevronLeft size={16} />
         </button>
@@ -62,11 +69,11 @@ export default function Pagination({
               key={i}
               onClick={() => onPageChange(Number(p))}
               disabled={page === p}
-              className={`h-8 min-w-[32px] rounded-md px-2 font-medium
+              className={`h-8 min-w-[32px] rounded-md px-2 font-medium transition
                 ${
                   page === p
-                    ? "bg-gray-900 text-white"
-                    : "hover:bg-gray-100"
+                    ? "bg-gray-900 text-white cursor-default"
+                    : "cursor-pointer hover:bg-gray-100"
                 }`}
             >
               {p}
@@ -75,10 +82,15 @@ export default function Pagination({
         )}
 
         <button
-          disabled={page === totalPages}
+          disabled={isNextDisabled}
           onClick={() => onPageChange(page + 1)}
-          className={`h-8 w-8 rounded-md border flex items-center justify-center
-            ${page === totalPages ? "opacity-40" : "hover:bg-gray-50"}`}
+          aria-label="Next page"
+          className={`h-8 w-8 rounded-md border flex items-center justify-center transition
+            ${
+              isNextDisabled
+                ? "opacity-40 cursor-not-allowed bg-gray-50"
+                : "cursor-pointer hover:bg-gray-100"
+            }`}
         >
           <ChevronRight size={16} />
         </button>
@@ -94,7 +106,7 @@ export default function Pagination({
         <div className="relative">
           <button
             onClick={() => setOpen(!open)}
-            className="flex items-center gap-1 rounded-md border px-3 py-1.5 hover:bg-gray-50"
+            className="flex items-center gap-1 rounded-md border px-3 py-1.5 hover:bg-gray-50 cursor-pointer"
           >
             Show {pageSize === total ? "All" : pageSize}
             <ChevronRight
@@ -114,7 +126,7 @@ export default function Pagination({
                     onPageSizeChange(size === "all" ? total : size);
                     setOpen(false);
                   }}
-                  className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100"
+                  className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 cursor-pointer"
                 >
                   {size === "all" ? "All" : size}
                 </button>

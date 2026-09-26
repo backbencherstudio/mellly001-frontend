@@ -2,17 +2,46 @@
 
 import React from "react";
 
-import {
-  Calendar,
-  Users,
-  UserCheck,
-  DollarSign,
-  Clock4,
-} from "lucide-react";
+import { Calendar, Users, UserCheck, DollarSign, Clock4 } from "lucide-react";
 import { LuUserPlus } from "react-icons/lu";
 import ArrowIcon from "@/components/icon/ArrowIcon";
-import { useGetActivitiesQuery, useGetDashboardOverviewQuery, useGetUsersQuery, } from "@/redux/features/dashboardOverView/dashboardOverView";
+import {
+  useGetActivitiesQuery,
+  useGetDashboardOverviewQuery,
+  useGetUsersQuery,
+} from "@/redux/features/dashboardOverView/dashboardOverView";
 import { formatTime } from "@/lib/FormateTime";
+
+// Standard Currency Formatter: $0.00 / $149.00 / $1,644.00
+const formatCurrency = (amount: number | string | undefined | null): string => {
+  const numericValue = Number(amount) || 0;
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(numericValue);
+};
+
+// Title-er protita shobder prothom letter capital korar helper function
+const formatActivityTitle = (title: string): string => {
+  if (!title) return "";
+
+  const customMap: Record<string, string> = {
+    approve_job_submission: "Job Submission Approved",
+  };
+
+  if (customMap[title]) {
+    return customMap[title];
+  }
+
+  return title
+    .replace(/_/g, " ")
+    .split(" ")
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+};
 
 type Stat = {
   id: string;
@@ -30,14 +59,13 @@ type recent = {
   time: string;
   sender: {
     name: string;
-  }
+  };
   created_at: string;
   bg: string;
-}
+};
 
 export default function DashboardPage() {
-
-  const { data: activity } = useGetActivitiesQuery({})
+  const { data: activity } = useGetActivitiesQuery({});
 
   const { data } = useGetDashboardOverviewQuery({});
   // console.log(data)
@@ -73,7 +101,8 @@ export default function DashboardPage() {
     {
       id: "4",
       title: "Total Revenue",
-      value: data?.data?.total_revenue,
+      // Shudhu 4 no item-er jonno currency format kora hoyeche
+      value: formatCurrency(data?.data?.total_revenue),
 
       icon: DollarSign,
       bg: "#F0B100",
@@ -97,7 +126,6 @@ export default function DashboardPage() {
       bg: "#FF6900",
       textcolor: "#00A63E",
     },
-
   ];
   const activitys = activity?.data?.data?.slice(0, 10) || [];
   // console.log(activitys, "dfsdfd")
@@ -105,16 +133,12 @@ export default function DashboardPage() {
   const Activity: recent[] =
     activitys?.map((item: recent, index: number) => ({
       id: index + 1,
-      bg: [
-        "#AD46FF",
-        "#00C950",
-        "#2B7FFF",
-        "#615FFF",
-        "#F0B100",
-      ][index % 5],
-      title: item.title,
+      bg: ["#AD46FF", "#00C950", "#2B7FFF", "#615FFF", "#F0B100"][index % 5],
+      title: formatActivityTitle(item.title),
       name: item.sender?.name,
       time: item.created_at,
+      sender: item.sender,
+      created_at: item.created_at,
     })) || [];
 
   return (
@@ -135,20 +159,15 @@ export default function DashboardPage() {
                   className="flex h-12 w-12 items-center justify-center rounded-xl"
                   style={{ backgroundColor: item.bg }}
                 >
-                  <Icon
-                    className="h-5 w-5 text-white"
-
-                  />
+                  <Icon className="h-5 w-5 text-white" />
                 </div>
                 <p className="text-sm font-normal text-[#4A5565]">
                   {item.title}
                 </p>
 
-               <p className="text-3xl font-bold text-[#101828] leading-100%">
-  {item.id === "4" && "$"} {item.value}
-</p>
-
-
+                <p className="text-3xl font-bold text-[#101828] leading-100%">
+                  {item.value}
+                </p>
               </div>
 
               {/* Right Icon */}
@@ -162,32 +181,37 @@ export default function DashboardPage() {
         })}
       </div>
       <div className=" border border-[#E5E7EB] rounded-2xl">
-
         <div className="p-6">
-          <h3 className="text-[#032B15] text-[20px] font-bold leading-100% pb-6.5">Recent Activity</h3>
+          <h3 className="text-[#032B15] text-[20px] font-bold leading-100% pb-6.5">
+            Recent Activity
+          </h3>
           <div className="space-y-4">
-            {
-              Activity?.slice(0, 10).map((item) => (
-                <div key={item.id} className="">
-                  <div className="">
-                    <div className="flex justify-between">
-                      <div className="flex gap-3">
-                        <div className="w-3 h-3 rounded-full flex  flex-col justify-center items-center my-auto" style={{ backgroundColor: item.bg }}></div>
-                        <div>
-                          <p className="text-[#032B15] text-base font-normal leading-100%">{item.title}</p>
-                          <p className="text-[#787878] font-normal leading-140% text-sm pt-2.5">{item.name}</p>
-                        </div>
+            {Activity?.slice(0, 10).map((item) => (
+              <div key={item.id} className="">
+                <div className="">
+                  <div className="flex justify-between">
+                    <div className="flex gap-3">
+                      <div
+                        className="w-3 h-3 rounded-full flex  flex-col justify-start mt-1.5"
+                        style={{ backgroundColor: item.bg }}
+                      ></div>
+                      <div>
+                        <p className="text-[#032B15] text-base font-normal leading-100%">
+                          {item.title}
+                        </p>
+                        <p className="text-[#787878] font-normal leading-140% text-sm pt-2.5">
+                          {item.name}
+                        </p>
                       </div>
-                      <p className="text-[#676968] font-normal leading-140% text-sm flex justify-center text-center items-center">{formatTime(item.time)}</p>
-
                     </div>
-                    <hr className="mt-3" />
+                    <p className="text-[#676968] font-normal leading-140% text-sm flex justify-center text-center items-center">
+                      {formatTime(item.time)}
+                    </p>
                   </div>
-
+                  <hr className="mt-3" />
                 </div>
-
-              ))
-            }
+              </div>
+            ))}
           </div>
         </div>
       </div>

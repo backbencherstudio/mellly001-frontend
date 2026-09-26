@@ -47,7 +47,7 @@ export default function CleanerDetails({ cleaner }: { cleaner: any }) {
               "bg-gray-100 text-gray-700 border-gray-200"
             }`}
           >
-              <span>{cleaner.status}</span>
+            <span className="uppercase">{cleaner.status}</span>
           </span>
         </div>
       </div>

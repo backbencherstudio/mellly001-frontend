@@ -31,7 +31,19 @@ export const dashboardOverViewApi = baseApi.injectEndpoints({
           params,
         };
       },
+      providesTags: ["Homeowners"],
     }),
+
+    updateHomeowners: builder.mutation({
+      query: ({ id, status }) => {
+        return {
+          url: `dashboard/homeowners/actions?userId=${id}&status=${status}`,
+          method: "PATCH",
+        };
+      },
+      invalidatesTags: ["Homeowners"],
+    }),
+
     getCleaners: builder.query({
       query: () => {
         return {
@@ -39,7 +51,19 @@ export const dashboardOverViewApi = baseApi.injectEndpoints({
           method: "GET",
         };
       },
+      providesTags: ["Cleaners"],
     }),
+
+    updateCleaners: builder.mutation({
+      query: ({ id, status }) => {
+        return {
+          url: `dashboard/cleaners/actions?userId=${id}&status=${status}`,
+          method: "PATCH",
+        };
+      },
+      invalidatesTags: ["Cleaners"],
+    }),
+
     getCleanerRequest: builder.query({
       query: () => {
         return {
@@ -141,7 +165,9 @@ export const {
   useGetDashboardOverviewQuery,
   useGetActivitiesQuery,
   useGetHomeownersQuery,
+  useUpdateHomeownersMutation,
   useGetCleanersQuery,
+  useUpdateCleanersMutation,
   useGetClearnerRequestByIdQuery,
   useGetCleanerRequestQuery,
   useUpdateCleanerRequestMutation,

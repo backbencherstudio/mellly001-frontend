@@ -18,8 +18,69 @@ interface Notification {
   created_at: string;
   type?: string;
   isRead?: boolean;
+  is_read?: boolean;
+  targetUrl?: string;
+  entityId?: string;
+  bookingId?: string;
+  applicationId?: string;
+  homeownerId?: string;
+  cleanerId?: string;
+  jobApprovalId?: string;
+  dangerRequestId?: string;
   sender?: { name?: string } | null;
 }
+
+const notificationLabels: Record<string, string> = {
+  approve_job_submission: "Job Approval Submitted",
+  job_approval: "Job Approval Update",
+  booking_created: "New Booking",
+  booking_updated: "Booking Updated",
+  cleaner_registration: "New Cleaner Application",
+  homeowner_registration: "New Homeowner Registration",
+  danger_request: "Urgent Safety Request",
+};
+
+const getNotificationLabel = (notification: Notification) => {
+  if (notification.type && notificationLabels[notification.type]) {
+    return notificationLabels[notification.type];
+  }
+
+  return (
+    notification.type
+      ?.replaceAll("_", " ")
+      .replace(/\b\w/g, (letter) => letter.toUpperCase()) ||
+    "Notification"
+  );
+};
+
+const getNotificationHref = (notification: Notification) => {
+  if (notification.targetUrl) return notification.targetUrl;
+
+  const type = notification.type?.toLowerCase() || "";
+  const entityId = notification.entityId;
+
+  if (notification.bookingId || type.includes("booking") || type.includes("job")) {
+    return "/dashboard/booking";
+  }
+
+  if (notification.applicationId || type.includes("cleaner")) {
+    return "/dashboard/cleaner-request";
+  }
+
+  if (notification.homeownerId || type.includes("homeowner")) {
+    return "/dashboard/homeowners";
+  }
+
+  if (notification.cleanerId) return "/dashboard/cleaners";
+  if (notification.jobApprovalId || type.includes("approval")) {
+    return "/dashboard/jobAppruve";
+  }
+  if (notification.dangerRequestId || type.includes("danger")) {
+    return "/dashboard/danger-request";
+  }
+
+  return entityId ? "/dashboard" : null;
+};
 
 const routeMeta: Record<string, { title: string; desc: string }> = {
   "/dashboard": {
@@ -61,6 +122,7 @@ const DashboardHeader = () => {
   const [open, setOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [moreItems, setMoreItems] = useState<Notification[]>([]);
+  const [readIds, setReadIds] = useState<string[]>([]);
   const [loadingMore, setLoadingMore] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -80,7 +142,9 @@ const DashboardHeader = () => {
   const totalPages = firstData?.pagination?.totalPages ?? 1;
   const hasNextPage = page < totalPages;
 
-  const unReadCount = list.filter((i) => !i.isRead).length;
+  const unReadCount = list.filter(
+    (item) => !(item.isRead || item.is_read || readIds.includes(item.id))
+  ).length;
 
   const meta = routeMeta[pathname] ?? {
     title: "Dashboard",
@@ -140,6 +204,16 @@ const DashboardHeader = () => {
     }
   };
 
+  const handleNotificationClick = (item: Notification) => {
+    setReadIds((current) =>
+      current.includes(item.id) ? current : [...current, item.id]
+    );
+    setOpen(false);
+
+    const href = getNotificationHref(item);
+    if (href) window.location.assign(href);
+  };
+
   return (
     <div className="w-full sticky top-0 z-10">
       <div className="flex items-center justify-between">
@@ -172,15 +246,15 @@ const DashboardHeader = () => {
               ) : (
                 <>
                   {list.map((item) => (
-                    <div
+                    <button
                       key={item.id}
+                      type="button"
+                      onClick={() => handleNotificationClick(item)}
                       className="px-4 py-2.5 hover:bg-gray-100  border-b border-gray-50 last:border-0"
                     >
-                      <div>
+                      <div className="w-full text-left">
                         <p className="text-sm font-medium text-gray-900 capitalize">
-                          {item.sender?.name ||
-                            item.type?.replaceAll("_", " ") ||
-                            "Notification"}
+                          {getNotificationLabel(item)}
                         </p>
                         <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
                           {item.text}
@@ -189,7 +263,7 @@ const DashboardHeader = () => {
                           {new Date(item.created_at).toLocaleString()}
                         </p>
                       </div>
-                    </div>
+                    </button>
                   ))}
 
                   {hasNextPage && (
