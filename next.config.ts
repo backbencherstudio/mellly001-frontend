@@ -1,4 +1,8 @@
-module.exports = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  env: {
+    NEXT_PUBLIC_API_URL: "https://cleennconnect.anikstudio.com/api/",
+  },
   images: {
     remotePatterns: [
       {
@@ -15,3 +19,5 @@ module.exports = {
     ],
   },
 };
+
+module.exports = nextConfig;

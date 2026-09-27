@@ -66,7 +66,7 @@ export const SidebarData: SidebarDataType[] = [
 
   {
     id: 7,
-    name: "Danger Request",
+    name: "Emergency Requests",
     href: "/dashboard/danger-request",
     icon: TriangleAlert,
   },

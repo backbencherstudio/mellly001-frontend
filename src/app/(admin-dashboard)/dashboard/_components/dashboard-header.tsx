@@ -48,8 +48,7 @@ const getNotificationLabel = (notification: Notification) => {
   return (
     notification.type
       ?.replaceAll("_", " ")
-      .replace(/\b\w/g, (letter) => letter.toUpperCase()) ||
-    "Notification"
+      .replace(/\b\w/g, (letter) => letter.toUpperCase()) || "Notification"
   );
 };
 
@@ -59,7 +58,11 @@ const getNotificationHref = (notification: Notification) => {
   const type = notification.type?.toLowerCase() || "";
   const entityId = notification.entityId;
 
-  if (notification.bookingId || type.includes("booking") || type.includes("job")) {
+  if (
+    notification.bookingId ||
+    type.includes("booking") ||
+    type.includes("job")
+  ) {
     return "/dashboard/booking";
   }
 
@@ -112,7 +115,7 @@ const routeMeta: Record<string, { title: string; desc: string }> = {
     desc: "Approve or reject job requests from homeowners.",
   },
   "/dashboard/danger-request": {
-    title: "Danger Request",
+    title: "Emergency Requests",
     desc: "Review, acknowledge, and resolve urgent safety incidents.",
   },
 };
@@ -131,7 +134,6 @@ const DashboardHeader = () => {
     perPage: 10,
   });
 
-
   const [fetchMore] = useLazyGetAllNotificationQuery();
 
   const firstItems: Notification[] = Array.isArray(firstData?.data)
@@ -143,7 +145,7 @@ const DashboardHeader = () => {
   const hasNextPage = page < totalPages;
 
   const unReadCount = list.filter(
-    (item) => !(item.isRead || item.is_read || readIds.includes(item.id))
+    (item) => !(item.isRead || item.is_read || readIds.includes(item.id)),
   ).length;
 
   const meta = routeMeta[pathname] ?? {
@@ -206,7 +208,7 @@ const DashboardHeader = () => {
 
   const handleNotificationClick = (item: Notification) => {
     setReadIds((current) =>
-      current.includes(item.id) ? current : [...current, item.id]
+      current.includes(item.id) ? current : [...current, item.id],
     );
     setOpen(false);
 
