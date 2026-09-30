@@ -29,7 +29,7 @@ type Employee = {
   bookings: number;
   total_spent: number;
   joined_at: string;
-  status: "ACTIVE" | "INACTIVE" | "SUSPENDED";
+  status: "active" | "inactive" | "suspended";
 };
 
 const columns: ColumnDef<Employee>[] = [
@@ -101,9 +101,9 @@ const columns: ColumnDef<Employee>[] = [
       <span
         className={`px-3 py-1 rounded-full text-xs
         ${
-          row.original.status === "ACTIVE"
+          row.original.status === "active"
             ? "bg-green-100 text-green-700"
-            : row.original.status === "INACTIVE"
+            : row.original.status === "inactive"
               ? "bg-gray-100 text-gray-600"
               : "bg-red-100 text-red-600"
         }`}

@@ -7,7 +7,7 @@ type Homeowner = {
   location: string | null;
   bookings: number;
   total_spent: number;
-  status: "ACTIVE" | "INACTIVE" | "SUSPENDED";
+  status: "active" | "inactive" | "suspended";
 };
 
 export default function HomeownerDetails({
