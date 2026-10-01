@@ -2,9 +2,18 @@
 
 import React from "react";
 
-import { Calendar, Users, UserCheck, DollarSign, Clock4 } from "lucide-react";
+import {
+  Activity as ActivityIcon,
+  Calendar,
+  Clock3,
+  Clock4,
+  DollarSign,
+  Users,
+  UserCheck,
+} from "lucide-react";
 import { LuUserPlus } from "react-icons/lu";
 import ArrowIcon from "@/components/icon/ArrowIcon";
+import DashboardSkeleton from "@/components/loading/DashboardSkeleton";
 import {
   useGetActivitiesQuery,
   useGetDashboardOverviewQuery,
@@ -65,9 +74,9 @@ type recent = {
 };
 
 export default function DashboardPage() {
-  const { data: activity } = useGetActivitiesQuery({});
+  const { data: activity, isLoading: isActivityLoading } = useGetActivitiesQuery({});
 
-  const { data } = useGetDashboardOverviewQuery({});
+  const { data, isLoading: isOverviewLoading } = useGetDashboardOverviewQuery({});
   // console.log(data)
   //  Later: replace this with API data
   const stats: Stat[] = [
@@ -141,6 +150,10 @@ export default function DashboardPage() {
       created_at: item.created_at,
     })) || [];
 
+  if (isActivityLoading || isOverviewLoading) {
+    return <DashboardSkeleton />;
+  }
+
   return (
     <div className="w-full space-y-6">
       {/* Stats Cards */}
@@ -181,41 +194,67 @@ export default function DashboardPage() {
           );
         })}
       </div>
-      <div className=" border border-[#E5E7EB] rounded-2xl">
-        <div className="p-6">
-          <h3 className="text-[#032B15] text-[20px] font-bold leading-100% pb-6.5">
-            Recent Activity
-          </h3>
-          <div className="space-y-4">
-            {Activity?.slice(0, 10).map((item) => (
-              <div key={item.id} className="">
-                <div className="">
-                  <div className="flex justify-between">
-                    <div className="flex gap-3">
-                      <div
-                        className="w-3 h-3 rounded-full flex  flex-col justify-start mt-1.5"
-                        style={{ backgroundColor: item.bg }}
-                      ></div>
-                      <div>
-                        <p className="text-[#032B15] text-base font-normal leading-100%">
-                          {item.title}
-                        </p>
-                        <p className="text-[#787878] font-normal leading-140% text-sm pt-2.5">
-                          {item.name}
-                        </p>
-                      </div>
-                    </div>
-                    <p className="text-[#676968] font-normal leading-140% text-sm flex justify-center text-center items-center">
-                      {formatTime(item.time)}
+      <section className="overflow-hidden rounded-2xl border border-[#E5E7EB] bg-white shadow-[0px_4px_24px_4px_rgba(0,0,0,0.03)]">
+        <div className="flex items-center justify-between border-b border-[#EEF0EF] px-6 py-5">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#EAF7EF] text-[#168044]">
+              <ActivityIcon className="h-5 w-5" aria-hidden="true" />
+            </div>
+            <h3 className="text-lg font-semibold text-[#032B15]">
+              Recent Activity
+            </h3>
+          </div>
+          <span className="rounded-full bg-[#F2F7F3] px-3 py-1 text-xs font-semibold text-[#168044]">
+            {Activity.length}
+          </span>
+        </div>
+
+        {Activity.length > 0 ? (
+          <div className="divide-y divide-[#F0F1F0] px-6">
+            {Activity.map((item) => (
+              <div
+                key={item.id}
+                className="group flex gap-4 py-5 transition-colors hover:bg-[#FBFDFC]"
+              >
+                <div className="relative flex w-9 shrink-0 justify-center">
+                  <span
+                    className="relative z-10 mt-1 h-3 w-3 rounded-full border-[3px] border-white shadow-[0_0_0_2px_var(--activity-color)]"
+                    style={{
+                      "--activity-color": item.bg,
+                      backgroundColor: item.bg,
+                    } as React.CSSProperties}
+                    aria-hidden="true"
+                  />
+                  <span className="absolute top-5 bottom-[-1.25rem] w-px bg-[#E8ECE9] group-last:hidden" />
+                </div>
+                <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+                  <div className="min-w-0">
+                    <p className="break-words text-sm font-semibold text-[#183324]">
+                      {item.title}
+                    </p>
+                    <p className="mt-1 text-sm text-[#7A817D]">
+                      {item.name || "Unknown user"}
                     </p>
                   </div>
-                  <hr className="mt-3" />
+                  <p className="flex shrink-0 items-center gap-1.5 text-xs font-medium text-[#737B76] sm:pt-0.5">
+                    <Clock3 className="h-3.5 w-3.5" aria-hidden="true" />
+                    {formatTime(item.time)}
+                  </p>
                 </div>
               </div>
             ))}
           </div>
-        </div>
-      </div>
+        ) : (
+          <div className="flex flex-col items-center px-6 py-12 text-center">
+            <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-[#F2F7F3] text-[#7A9A84]">
+              <Clock3 className="h-5 w-5" aria-hidden="true" />
+            </div>
+            <p className="text-sm font-medium text-[#33483A]">
+              No recent activity
+            </p>
+          </div>
+        )}
+      </section>
     </div>
   );
 }
