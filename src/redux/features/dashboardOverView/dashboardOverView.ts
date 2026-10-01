@@ -105,9 +105,17 @@ export const dashboardOverViewApi = baseApi.injectEndpoints({
       providesTags: ["Bookings"],
     }),
 
+    getBookingById: builder.query({
+      query: (id: string) => ({
+        url: `dashboard/bookings/${id}`,
+        method: "GET",
+      }),
+      providesTags: ["Bookings"],
+    }),
+
     updateBookingStatus: builder.mutation({
       query: ({ id, status }: { id: string; status: string }) => ({
-        url: `dashboard/bookings/actions?bookingId=${id}&status=${status}`,
+        url: `dashboard/bookings/${id}/status`,
         method: "PATCH",
         body: { status },
       }),
@@ -115,10 +123,10 @@ export const dashboardOverViewApi = baseApi.injectEndpoints({
     }),
 
     assignBookingCleaner: builder.mutation({
-      query: ({ id, cleaner_id, cleaner_name }: { id: string; cleaner_id: string; cleaner_name?: string }) => ({
-        url: `dashboard/bookings/assign-cleaner?bookingId=${id}&cleanerId=${cleaner_id}`,
+      query: ({ id, cleaner_id }: { id: string; cleaner_id: string; cleaner_name?: string }) => ({
+        url: `dashboard/bookings/${id}/cleaner`,
         method: "PATCH",
-        body: { booking_id: id, cleaner_id, cleaner_name },
+        body: { cleaner_id },
       }),
       invalidatesTags: ["Bookings"],
     }),
@@ -200,6 +208,7 @@ export const {
   useGetCleanerRequestQuery,
   useUpdateCleanerRequestMutation,
   useGetBookingDetaialsQuery,
+  useGetBookingByIdQuery,
   useUpdateBookingStatusMutation,
   useAssignBookingCleanerMutation,
   useUpdateBookingMutation,

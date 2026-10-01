@@ -1,25 +1,59 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import dayjs from "dayjs";
 import { toast } from "sonner";
 import {
+  useGetBookingByIdQuery,
   useGetCleanersQuery,
   useUpdateBookingStatusMutation,
   useAssignBookingCleanerMutation,
 } from "@/redux/features/dashboardOverView/dashboardOverView";
 
 export default function BookingDetails({
-  bookingData,
+  bookingData: initialBookingData,
   onClose,
 }: {
   bookingData: any;
   onClose?: () => void;
 }) {
+  const bookingId =
+    initialBookingData?.id ||
+    initialBookingData?.booking_id ||
+    initialBookingData?.bookingId;
+
+  const {
+    data: apiBookingDetailData,
+    isLoading: isBookingLoading,
+    refetch,
+  } = useGetBookingByIdQuery(bookingId, {
+    skip: !bookingId,
+  });
+
+  const bookingData =
+    apiBookingDetailData?.data ||
+    apiBookingDetailData?.booking ||
+    apiBookingDetailData ||
+    initialBookingData;
+
   const [selectedCleanerId, setSelectedCleanerId] = useState<string>("");
-  const [selectedStatus, setSelectedStatus] = useState<string>(
-    bookingData?.status?.toLowerCase() || "pending",
-  );
+  const [selectedStatus, setSelectedStatus] = useState<string>("PENDING");
+
+  useEffect(() => {
+    if (bookingData) {
+      if (bookingData.status) {
+        setSelectedStatus(bookingData.status.toUpperCase());
+      }
+      const existingCleanerId =
+        bookingData.cleaner_id ||
+        bookingData.cleanerId ||
+        bookingData.cleaner?.id ||
+        bookingData.cleaner?.cleaner_id;
+      if (existingCleanerId) {
+        setSelectedCleanerId(String(existingCleanerId));
+      }
+    }
+  }, [bookingData]);
 
   const { data: cleanersData, isLoading: isCleanersLoading } =
     useGetCleanersQuery({});
@@ -34,17 +68,25 @@ export default function BookingDetails({
     return [];
   }, [cleanersData]);
 
-  if (!bookingData) {
+  if (!bookingData && !isBookingLoading) {
     return (
       <p className="px-2 py-4 text-sm text-gray-500">No booking selected.</p>
     );
   }
 
-  const status = (bookingData?.status || "pending").toLowerCase();
+  const currentBookingId =
+    bookingData?.booking_id ||
+    bookingData?.id ||
+    bookingId ||
+    "-";
+
+  const status = (bookingData?.status || "PENDING").toLowerCase();
 
   const statusStyles: Record<string, string> = {
     confirmed: "bg-purple-100 text-purple-700 border-purple-200",
     completed: "bg-green-100 text-green-700 border-green-200",
+    started: "bg-blue-100 text-blue-700 border-blue-200",
+    submitted: "bg-indigo-100 text-indigo-700 border-indigo-200",
     "in-progress": "bg-blue-100 text-blue-700 border-blue-200",
     inprogress: "bg-blue-100 text-blue-700 border-blue-200",
     cancelled: "bg-red-100 text-red-700 border-red-200",
@@ -66,13 +108,14 @@ export default function BookingDetails({
   const handleStatusUpdate = async () => {
     if (!selectedStatus) return;
     try {
-      await updateBookingStatus({
-        id: bookingData.id,
+      const res = await updateBookingStatus({
+        id: currentBookingId,
         status: selectedStatus.toUpperCase(),
       }).unwrap();
-      toast.success("Booking status updated successfully");
+      toast.success(res?.message || "Booking status updated successfully");
+      refetch();
     } catch (error: any) {
-      toast.success("Booking status updated successfully");
+      toast.error(error?.data?.message || "Failed to update booking status");
     }
   };
 
@@ -83,22 +126,15 @@ export default function BookingDetails({
       return;
     }
 
-    const selectedCleaner = cleanersList.find(
-      (c) =>
-        String(c.id) === selectedCleanerId ||
-        String(c.userId) === selectedCleanerId ||
-        String(c.user_id) === selectedCleanerId,
-    );
-
     try {
-      await assignBookingCleaner({
-        id: bookingData.id,
+      const res = await assignBookingCleaner({
+        id: currentBookingId,
         cleaner_id: selectedCleanerId,
-        cleaner_name: selectedCleaner?.name,
       }).unwrap();
-      toast.success(`Cleaner assigned: ${selectedCleaner?.name || "Updated"}`);
+      toast.success(res?.message || "Cleaner assigned successfully");
+      refetch();
     } catch (error: any) {
-      toast.success(`Cleaner assigned: ${selectedCleaner?.name || "Updated"}`);
+      toast.error(error?.data?.message || "Failed to assign cleaner");
     }
   };
 
@@ -109,7 +145,7 @@ export default function BookingDetails({
         <div>
           <p className="text-xs text-gray-400">Booking ID</p>
           <p className="font-semibold text-gray-900 text-base">
-            {bookingData?.id || "-"}
+            {bookingData?.booking_id || bookingData?.id || currentBookingId || "-"}
           </p>
         </div>
         <div>
@@ -119,7 +155,7 @@ export default function BookingDetails({
               "bg-gray-100 text-gray-700 border-gray-200"
             }`}
           >
-            {bookingData?.status || "Pending"}
+            {bookingData?.status || "PENDING"}
           </span>
         </div>
       </div>
@@ -188,12 +224,13 @@ export default function BookingDetails({
                 onChange={(e) => setSelectedStatus(e.target.value)}
                 className="w-full rounded-md border bg-white px-2 py-1.5 text-xs text-gray-800 focus:outline-none"
               >
-                <option value="pending">Pending</option>
-                <option value="confirmed">Confirmed</option>
-                <option value="in-progress">In Progress</option>
-                <option value="completed">Completed</option>
-                <option value="cancelled">Cancelled</option>
-                <option value="rejected">Rejected</option>
+                <option value="PENDING">Pending</option>
+                <option value="CONFIRMED">Confirmed</option>
+                <option value="STARTED">Started</option>
+                <option value="SUBMITTED">Submitted</option>
+                <option value="COMPLETED">Completed</option>
+                <option value="REJECTED">Rejected</option>
+                <option value="CANCELLED">Cancelled</option>
               </select>
               <button
                 type="button"
@@ -251,3 +288,4 @@ export default function BookingDetails({
     </div>
   );
 }
+
