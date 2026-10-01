@@ -45,10 +45,11 @@ export default function BookingDetails({
         setSelectedStatus(bookingData.status.toUpperCase());
       }
       const existingCleanerId =
+        bookingData.maid?.id ||
+        bookingData.maid_id ||
         bookingData.cleaner_id ||
         bookingData.cleanerId ||
-        bookingData.cleaner?.id ||
-        bookingData.cleaner?.cleaner_id;
+        bookingData.cleaner?.id;
       if (existingCleanerId) {
         setSelectedCleanerId(String(existingCleanerId));
       }
@@ -75,8 +76,8 @@ export default function BookingDetails({
   }
 
   const currentBookingId =
-    bookingData?.booking_id ||
     bookingData?.id ||
+    bookingData?.booking_id ||
     bookingId ||
     "-";
 
@@ -99,10 +100,54 @@ export default function BookingDetails({
       ? dayjs(bookingData.booking_date).format("MMM D, YYYY")
       : bookingData?.booking_date || "-";
 
+  // Service details mapping
+  const serviceTitle =
+    bookingData?.residential_cleaning_package?.title ||
+    bookingData?.service_name ||
+    bookingData?.service ||
+    "-";
+
+  const serviceDuration =
+    bookingData?.residential_cleaning_package?.duration ||
+    bookingData?.service_duration ||
+    "-";
+
+  // Amount & Revenue
+  const rawPrice =
+    bookingData?.total_price !== undefined && bookingData?.total_price !== null
+      ? bookingData.total_price
+      : bookingData?.residential_cleaning_package?.price !== undefined
+      ? bookingData.residential_cleaning_package.price
+      : bookingData?.amount;
+
   const formattedAmount =
-    bookingData?.amount !== undefined && bookingData?.amount !== null
-      ? `$${Number(bookingData.amount).toFixed(2)}`
+    rawPrice !== undefined && rawPrice !== null
+      ? `$${Number(rawPrice).toFixed(2)}`
       : "$0.00";
+
+  const formattedRevenue =
+    bookingData?.revenue !== undefined && bookingData?.revenue !== null
+      ? `$${Number(bookingData.revenue).toFixed(2)}`
+      : null;
+
+  // Homeowner details
+  const homeownerName =
+    bookingData?.user?.name || bookingData?.homeowner_name || "-";
+  const homeownerEmail = bookingData?.user?.email || null;
+  const homeownerPhone = bookingData?.user?.phone_number || null;
+  const homeownerLocation =
+    bookingData?.homeowner_location ||
+    bookingData?.user?.location ||
+    bookingData?.location ||
+    "-";
+
+  // Maid / Cleaner details
+  const maidName =
+    bookingData?.maid?.name ||
+    bookingData?.cleaner_name ||
+    (bookingData?.maid ? "Cleaner Assigned" : "Unassigned");
+  const maidEmail = bookingData?.maid?.email || null;
+  const maidPhone = bookingData?.maid?.phone_number || null;
 
   // Status Change Handler
   const handleStatusUpdate = async () => {
@@ -139,16 +184,21 @@ export default function BookingDetails({
   };
 
   return (
-    <div className="space-y-4 px-4 py-1 text-sm">
+    <div className="space-y-4 px-2 py-1 text-sm">
       {/* Top Header: ID & Status */}
       <div className="flex items-center justify-between border-b pb-3">
         <div>
           <p className="text-xs text-gray-400">Booking ID</p>
-          <p className="font-semibold text-gray-900 text-base">
-            {bookingData?.booking_id || bookingData?.id || currentBookingId || "-"}
+          <p className="font-semibold text-gray-900 text-sm md:text-base break-all">
+            {currentBookingId}
           </p>
         </div>
-        <div>
+        <div className="flex items-center gap-2">
+          {bookingData?.payment_status && (
+            <span className="inline-block px-2.5 py-1 rounded-full text-xs font-medium border bg-gray-50 text-gray-700 border-gray-200">
+              Payment: {bookingData.payment_status}
+            </span>
+          )}
           <span
             className={`inline-block px-3 py-1 rounded-full text-xs font-medium border capitalize ${
               statusStyles[status] ||
@@ -162,32 +212,38 @@ export default function BookingDetails({
 
       {/* Details Grid */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div>
-          <p className="text-xs text-gray-500">Homeowner</p>
-          <p className="font-medium text-gray-900 mt-0.5">
-            {bookingData?.homeowner_name || "-"}
-          </p>
+        {/* Homeowner Info */}
+        <div className="rounded-lg border bg-gray-50/50 p-3 space-y-1">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Homeowner</p>
+          <p className="font-medium text-gray-900 text-sm">{homeownerName}</p>
+          {homeownerEmail && (
+            <p className="text-xs text-gray-600">{homeownerEmail}</p>
+          )}
+          {homeownerPhone && (
+            <p className="text-xs text-gray-600">{homeownerPhone}</p>
+          )}
+        </div>
+
+        {/* Cleaner Info */}
+        <div className="rounded-lg border bg-gray-50/50 p-3 space-y-1">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Assigned Cleaner</p>
+          <p className="font-medium text-gray-900 text-sm">{maidName}</p>
+          {maidEmail && (
+            <p className="text-xs text-gray-600">{maidEmail}</p>
+          )}
+          {maidPhone && (
+            <p className="text-xs text-gray-600">{maidPhone}</p>
+          )}
         </div>
 
         <div>
-          <p className="text-xs text-gray-500">Cleaner</p>
-          <p className="font-medium text-gray-900 mt-0.5">
-            {bookingData?.cleaner_name || "Unassigned"}
-          </p>
-        </div>
-
-        <div>
-          <p className="text-xs text-gray-500">Service Name</p>
-          <p className="font-medium text-gray-900 mt-0.5">
-            {bookingData?.service_name || "-"}
-          </p>
+          <p className="text-xs text-gray-500">Service Package</p>
+          <p className="font-medium text-gray-900 mt-0.5">{serviceTitle}</p>
         </div>
 
         <div>
           <p className="text-xs text-gray-500">Service Duration</p>
-          <p className="font-medium text-gray-900 mt-0.5">
-            {bookingData?.service_duration || "-"}
-          </p>
+          <p className="font-medium text-gray-900 mt-0.5">{serviceDuration}</p>
         </div>
 
         <div>
@@ -196,18 +252,33 @@ export default function BookingDetails({
         </div>
 
         <div>
-          <p className="text-xs text-gray-500">Booking Time</p>
+          <p className="text-xs text-gray-500">Time Slot</p>
           <p className="font-medium text-gray-900 mt-0.5">
-            {bookingData?.booking_time || "-"}
+            {bookingData?.slot ? `Slot ${bookingData.slot}` : bookingData?.booking_time || "-"}
+            {bookingData?.start_time && ` (${bookingData.start_time} - ${bookingData.end_time || ""})`}
           </p>
         </div>
 
         <div className="sm:col-span-2">
           <p className="text-xs text-gray-500">Location / Address</p>
-          <p className="font-medium text-gray-900 mt-0.5 leading-relaxed">
-            {bookingData?.location || "-"}
+          <p className="font-medium text-gray-900 mt-0.5 leading-relaxed text-xs sm:text-sm">
+            {homeownerLocation}
           </p>
         </div>
+
+        {bookingData?.cancle_reason && (
+          <div className="sm:col-span-2 rounded-md bg-red-50 p-2.5 text-xs text-red-700">
+            <span className="font-semibold">Cancel Reason: </span>
+            {bookingData.cancle_reason}
+          </div>
+        )}
+
+        {bookingData?.maid_note && (
+          <div className="sm:col-span-2 rounded-md bg-yellow-50 p-2.5 text-xs text-yellow-800">
+            <span className="font-semibold">Maid Note: </span>
+            {bookingData.maid_note}
+          </div>
+        )}
       </div>
 
       {/* Admin Controls: Status Management & Cleaner Assignment */}
@@ -280,9 +351,14 @@ export default function BookingDetails({
         </div>
       </div>
 
-      {/* Amount Footer */}
+      {/* Amount & Revenue Footer */}
       <div className="flex items-center justify-between border-t pt-3">
-        <p className="font-medium text-gray-700">Total Amount</p>
+        <div>
+          <p className="font-medium text-gray-700">Total Price</p>
+          {formattedRevenue && (
+            <p className="text-xs text-gray-500">Revenue: {formattedRevenue}</p>
+          )}
+        </div>
         <p className="text-lg font-bold text-gray-900">{formattedAmount}</p>
       </div>
     </div>
