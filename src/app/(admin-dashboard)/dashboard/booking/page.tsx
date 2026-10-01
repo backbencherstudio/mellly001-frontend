@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Search, User, Calendar, MapPin, Clock } from "lucide-react";
 import Pagination from "@/components/reusable/pagination";
+import BookingSkeleton from "@/components/loading/BookingSkeleton";
 import { useGetBookingDetaialsQuery } from "@/redux/features/dashboardOverView/dashboardOverView";
 import dayjs from "dayjs";
 import CustomModal from "@/components/reusable/CustomModal";
@@ -113,6 +114,10 @@ export default function BookingsList() {
     return processedBookings.slice(start, start + pageSize);
   }, [processedBookings, page, pageSize]);
 
+  if (isLoading) {
+    return <BookingSkeleton />;
+  }
+
   return (
     <div>
       <div className="space-y-6">
@@ -143,11 +148,7 @@ export default function BookingsList() {
 
         {/* Booking cards */}
         <div className="space-y-3">
-          {isLoading ? (
-            <div className="py-8 text-center text-sm text-gray-500">
-              Loading bookings...
-            </div>
-          ) : paginated.length === 0 ? (
+          {paginated.length === 0 ? (
             <div className="rounded-2xl border bg-white p-8 text-center text-sm text-gray-500">
               No bookings found.
             </div>
