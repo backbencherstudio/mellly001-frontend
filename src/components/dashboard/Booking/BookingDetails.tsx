@@ -18,9 +18,9 @@ export default function BookingDetails({
   onClose?: () => void;
 }) {
   const bookingId =
-    initialBookingData?.id ||
     initialBookingData?.booking_id ||
-    initialBookingData?.bookingId;
+    initialBookingData?.bookingId ||
+    initialBookingData?.id;
 
   const {
     data: apiBookingDetailData,
