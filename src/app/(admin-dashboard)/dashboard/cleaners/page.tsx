@@ -5,6 +5,7 @@ import { ColumnDef } from "@tanstack/react-table";
 
 import { Mail, Phone, Search, MoreVertical, Star } from "lucide-react";
 import { DataTable } from "@/components/reusable/Table";
+import CleanersSkeleton from "@/components/loading/CleanersSkeleton";
 import {
   useGetCleanersQuery,
   useUpdateCleanerRequestMutation,
@@ -193,6 +194,10 @@ export default function EmployeesTable() {
     const start = (page - 1) * pageSize;
     return filteredData.slice(start, start + pageSize);
   }, [filteredData, page, pageSize]);
+
+  if (isLoading) {
+    return <CleanersSkeleton />;
+  }
 
   return (
     <div>
