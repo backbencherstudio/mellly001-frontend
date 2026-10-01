@@ -98,7 +98,7 @@ export const dashboardOverViewApi = baseApi.injectEndpoints({
 
     getBookingDetaials: builder.query({
       query: (params) => ({
-        url: "dashboard/bookings/details",
+        url: "dashboard/bookings",
         method: "GET",
         params,
       }),
