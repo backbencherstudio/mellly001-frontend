@@ -154,17 +154,18 @@ export default function DashboardPage() {
               className="flex justify-between gap-6 rounded-xl border border-[#E9E9E9] bg-white p-5 shadow-[0px_4px_33px_8px_rgba(0,0,0,0.04)]"
             >
               {/* Left */}
-              <div className="space-y-2">
-                <div
-                  className="flex h-12 w-12 items-center justify-center rounded-xl"
-                  style={{ backgroundColor: item.bg }}
-                >
-                  <Icon className="h-5 w-5 text-white" />
+              <div className="flex justify-between w-full">
+                <div className="space-y-1">
+                  <div
+                    className="flex h-12 w-12 items-center justify-center rounded-xl"
+                    style={{ backgroundColor: item.bg }}
+                  >
+                    <Icon className="h-5 w-5 text-white" />
+                  </div>
+                  <p className="text-sm font-normal text-[#4A5565]">
+                    {item.title}
+                  </p>
                 </div>
-                <p className="text-sm font-normal text-[#4A5565]">
-                  {item.title}
-                </p>
-
                 <p className="text-3xl font-bold text-[#101828] leading-100%">
                   {item.value}
                 </p>
