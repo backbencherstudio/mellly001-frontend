@@ -215,7 +215,7 @@ export default function JobApprovals() {
 
                     <div className="flex items-start gap-2 border-t border-[#F0F3F1] pt-3">
                       <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#75847A]" aria-hidden="true" />
-                      <p className="line-clamp-2 break-words text-xs leading-relaxed text-[#59675E]">
+                      <p className="line-clamp-2 wrap-break-word text-xs leading-relaxed text-[#59675E]">
                         {job.homeowner_location || "Location not provided"}
                       </p>
                     </div>

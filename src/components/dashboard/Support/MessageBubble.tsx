@@ -39,7 +39,7 @@ export default function MessageBubble({
                         <span className="text-[11px] font-medium text-gray-700">{senderName}</span>
                     </div>
                 )}
-                {text && <p className="break-words">{text}</p>}
+                {text && <p className="wrap-break-word">{text}</p>}
 
                 {imageList.length > 0 && (
                     <div className="mt-2 flex flex-wrap gap-2">
