@@ -5,6 +5,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Mail, Phone, MapPin, MoreVertical, Search } from "lucide-react";
 
 import { DataTable } from "@/components/reusable/Table";
+import HomeownersSkeleton from "@/components/loading/HomeownersSkeleton";
 import {
   useGetHomeownersQuery,
   useUpdateHomeownersMutation,
@@ -159,6 +160,10 @@ export default function EmployeesTable() {
     const start = (page - 1) * pageSize;
     return (filteredEmployees || []).slice(start, start + pageSize);
   }, [page, pageSize, filteredEmployees]);
+
+  if (isLoading) {
+    return <HomeownersSkeleton />;
+  }
 
   return (
     <div>
