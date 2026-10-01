@@ -17,6 +17,7 @@ import {
   X,
 } from "lucide-react";
 import { DataTable } from "@/components/reusable/Table";
+import CleanerRequestSkeleton from "@/components/loading/CleanerRequestSkeleton";
 import { DialogScrollableContent } from "@/components/dashboard/CleanerRequest/CleanerRequest";
 import Link from "next/link";
 import {
@@ -99,7 +100,7 @@ const columns: ColumnDef<Employee>[] = [
     cell: ({ row }) => (
       <div className="flex items-center gap-1 text-sm w-75 line-clamp-3 whitespace-normal wrap-break">
         <MapPin className="h-4 w-4 shrink-0 text-[#99A1AF]" />
-        <span className="font-medium">{row.original.location}</span>
+        <span className="font-medium line-clamp-1">{row.original.location}</span>
       </div>
     ),
   },
@@ -200,6 +201,10 @@ export default function CleanerRequest() {
       toast.error("Failed to approve cleaner request");
     }
   };
+
+  if (isLoading) {
+    return <CleanerRequestSkeleton />;
+  }
 
   return (
     <div className="space-y-6">
