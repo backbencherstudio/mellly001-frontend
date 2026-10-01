@@ -21,6 +21,7 @@ import { DialogScrollableContent } from "@/components/dashboard/CleanerRequest/C
 import { DangerDetails } from "@/components/dashboard/DangerDetails/DangerDetails";
 import { LineChart } from "../_components/TotalUserGraph";
 import { useGetDangerRequestQuery } from "@/redux/features/dashboardOverView/dashboardOverView";
+import DangerRequestSkeleton from "@/components/loading/DangerRequestSkeleton";
 import { formatDate } from "@/lib/DateFormate";
 import dayjs from "dayjs";
 
@@ -310,6 +311,10 @@ export default function CleanerRequest() {
     const handleDelete = (employee: DangerRequest) => {
 
     };
+
+    if (isLoading) {
+        return <DangerRequestSkeleton />;
+    }
 
     return (
         <div className="space-y-6">
