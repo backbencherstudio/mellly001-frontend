@@ -122,7 +122,7 @@ export function DataTable<TData, TValue>({
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUpOrLeave}
         onMouseLeave={handleMouseUpOrLeave}
-        className={`overflow-x-auto rounded-xl border bg-white [&>[data-slot=table-container]]:overflow-visible ${
+        className={`overflow-x-auto rounded-xl border bg-white *:data-[slot=table-container]:overflow-visible ${
           isDragging ? "cursor-grabbing select-none" : ""
         }`}
       >
