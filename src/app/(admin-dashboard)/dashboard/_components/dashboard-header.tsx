@@ -1,10 +1,9 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Bell, Circle } from "lucide-react";
 
-import NotificationsIcon from "@/components/icon/Notifications";
 import { getSocket } from "@/lib/Socket";
 
 import {
@@ -217,33 +216,57 @@ const DashboardHeader = () => {
   };
 
   return (
-    <div className="w-full sticky top-0 z-10">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-2xl lg:text-3xl font-bold text-[#101828] leading-120% pb-3">
-            {meta.title}
-          </h3>
-          <p className="font-normal text-base text-[#4A5565]">{meta.desc}</p>
-        </div>
+    <div className="flex h-full w-full min-w-0 items-center justify-between gap-4">
+      <div className="min-w-0">
+        <h1 className="truncate text-xl font-bold leading-tight text-[#173323] sm:text-2xl">
+          {meta.title.trim()}
+        </h1>
+        <p className="mt-1 hidden max-w-2xl truncate text-sm text-[#718078] sm:block">
+          {meta.desc}
+        </p>
+      </div>
 
-        <div className="relative" ref={dropdownRef}>
-          <div
-            onClick={() => setOpen(!open)}
-            className="cursor-pointer relative"
-          >
-            <NotificationsIcon />
-            {unReadCount > 0 && (
-              <div className="absolute -top-1 right-1">
-                <div className="h-3 w-3 bg-red-500 rounded-full" />
-              </div>
-            )}
-          </div>
+      <div className="relative shrink-0" ref={dropdownRef}>
+        <button
+          type="button"
+          onClick={() => setOpen(!open)}
+          aria-label={
+            unReadCount > 0
+              ? `Notifications, ${unReadCount} unread`
+              : "Notifications"
+          }
+          aria-expanded={open}
+          aria-haspopup="true"
+          className="relative flex h-11 w-11 items-center justify-center rounded-xl border border-[#E3EAE5] bg-white text-[#345342] shadow-sm transition hover:border-[#B8D5C1] hover:bg-[#F7FBF8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#168044] focus-visible:ring-offset-2"
+        >
+          <Bell className="h-5 w-5" aria-hidden="true" />
+          {unReadCount > 0 && (
+            <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-white bg-[#E34D4D] px-1 text-[10px] font-bold leading-none text-white">
+              {unReadCount > 9 ? "9+" : unReadCount}
+            </span>
+          )}
+        </button>
 
-          {open && (
-            <div className="absolute top-full right-0 mt-2 w-72 bg-white border rounded-lg shadow-lg py-2 z-50 max-h-80 overflow-y-auto">
+        {open && (
+          <div className="absolute right-0 top-full z-50 mt-3 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-[#E3EAE5] bg-white shadow-[0px_16px_40px_rgba(16,40,26,0.14)]">
+            <div className="flex items-center justify-between border-b border-[#EEF2EF] px-4 py-3.5">
+              <h2 className="text-sm font-semibold text-[#173323]">
+                Notifications
+              </h2>
+              {unReadCount > 0 && (
+                <span className="text-xs font-medium text-[#718078]">
+                  {unReadCount} unread
+                </span>
+              )}
+            </div>
+
+            <div className="max-h-80 overflow-y-auto">
               {list.length === 0 ? (
-                <div className="px-4 py-6 text-center text-sm text-gray-400">
-                  No notifications
+                <div className="px-4 py-10 text-center">
+                  <Bell className="mx-auto mb-2 h-5 w-5 text-[#9AA8A0]" aria-hidden="true" />
+                  <p className="text-sm font-medium text-[#53645A]">
+                    No notifications
+                  </p>
                 </div>
               ) : (
                 <>
@@ -252,27 +275,26 @@ const DashboardHeader = () => {
                       key={item.id}
                       type="button"
                       onClick={() => handleNotificationClick(item)}
-                      className="px-4 py-2.5 hover:bg-gray-100  border-b border-gray-50 last:border-0"
+                      className="w-full border-b border-[#F0F3F1] px-4 py-3 text-left transition last:border-0 hover:bg-[#F7FBF8]"
                     >
-                      <div className="w-full text-left">
-                        <p className="text-sm font-medium text-gray-900 capitalize">
-                          {getNotificationLabel(item)}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
-                          {item.text}
-                        </p>
-                        <p className="text-[10px] text-gray-400 mt-1">
-                          {new Date(item.created_at).toLocaleString()}
-                        </p>
-                      </div>
+                      <p className="text-sm font-semibold text-[#243B2E]">
+                        {getNotificationLabel(item)}
+                      </p>
+                      <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-[#718078]">
+                        {item.text}
+                      </p>
+                      <p className="mt-2 text-[10px] font-medium text-[#9AA8A0]">
+                        {new Date(item.created_at).toLocaleString()}
+                      </p>
                     </button>
                   ))}
 
                   {hasNextPage && (
                     <button
+                      type="button"
                       onClick={loadMore}
                       disabled={loadingMore}
-                      className="w-full text-center py-2.5 text-sm text-[#03652B] font-medium hover:bg-gray-50 border-t border-gray-100 disabled:opacity-50"
+                      className="w-full border-t border-[#EEF2EF] py-3 text-sm font-semibold text-[#168044] transition hover:bg-[#F7FBF8] disabled:opacity-50"
                     >
                       {loadingMore ? "Loading..." : "See All"}
                     </button>
@@ -280,8 +302,8 @@ const DashboardHeader = () => {
                 </>
               )}
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
