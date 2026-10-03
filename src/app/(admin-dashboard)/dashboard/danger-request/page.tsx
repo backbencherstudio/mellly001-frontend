@@ -23,6 +23,7 @@ import { LineChart } from "../_components/TotalUserGraph";
 import { useGetDangerRequestQuery } from "@/redux/features/dashboardOverView/dashboardOverView";
 import DangerRequestSkeleton from "@/components/loading/DangerRequestSkeleton";
 import { formatDate } from "@/lib/DateFormate";
+import { getImageUrl } from "@/lib/utils";
 import dayjs from "dayjs";
 import {
   Select,
@@ -158,8 +159,18 @@ const columns: ColumnDef<DangerRequest>[] = [
 
             return (
                 <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-[#E0E7FF] text-[#4F39F6] flex items-center justify-center text-sm font-semibold">
-                        {initials}
+                    <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#E0E7FF] text-sm font-semibold text-[#4F39F6]">
+                        <span>{initials}</span>
+                        {row.original.avatar && (
+                            <img
+                                src={getImageUrl(row.original.avatar)}
+                                alt={name}
+                                className="absolute inset-0 h-full w-full object-cover"
+                                onError={(event) => {
+                                    event.currentTarget.style.display = "none";
+                                }}
+                            />
+                        )}
                     </div>
                     <div>
                         <p className="font-medium leading-none">{name}</p>
