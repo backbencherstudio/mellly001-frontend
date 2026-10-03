@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { ColumnDef } from "@tanstack/react-table";
-import { Mail, Phone, MapPin, MoreVertical, Search } from "lucide-react";
+import { Mail, Phone, MoreVertical, Search } from "lucide-react";
 
 import { DataTable } from "@/components/reusable/Table";
 import HomeownersSkeleton from "@/components/loading/HomeownersSkeleton";
@@ -27,18 +27,23 @@ import dayjs from "dayjs";
 import CustomModal from "@/components/reusable/CustomModal";
 import HomeownerDetails from "@/components/dashboard/Homeowner/HomeownerDetails";
 import { getImageUrl } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 type Employee = {
-  id: string;
-  name: string;
-  email: string;
-  phone_number: string | null;
+  id?: string;
+  userId?: string;
+  user_id?: string;
+  user?: { id?: string };
+  name?: string;
+  email?: string;
+  phone_number?: string | null;
   avatar: string | null;
-  location: string | null;
-  bookings: number;
-  total_spent: number;
-  joined_at: string;
-  status: "active" | "inactive" | "suspended";
+  location?: string | null;
+  bookings?: number;
+  total_spent?: number | string | null;
+  joined_at?: string;
+  status?: string;
 };
 
 const columns: ColumnDef<Employee>[] = [
@@ -47,7 +52,8 @@ const columns: ColumnDef<Employee>[] = [
     cell: ({ row }) => {
       const user = row.original;
 
-      const initials = user.name
+      const name = user?.name || "Unknown homeowner";
+      const initials = name
         .trim()
         .split(/\s+/)
         .slice(0, 2)
@@ -59,10 +65,10 @@ const columns: ColumnDef<Employee>[] = [
         <div className="flex items-center gap-3">
           <div className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#E0E7FF] font-semibold text-indigo-700 border ">
             <span>{initials}</span>
-            {user.avatar && (
+            {user?.avatar && (
               <img
                 src={getImageUrl(user.avatar)}
-                alt={user.name}
+                alt={name}
                 className="absolute inset-0 h-full w-full object-cover"
                 onError={(event) => {
                   event.currentTarget.style.display = "none";
@@ -72,10 +78,12 @@ const columns: ColumnDef<Employee>[] = [
           </div>
 
           <div>
-            <p className="font-normal text-base">{user.name}</p>
+            <p className="font-normal text-base">{name}</p>
 
             <p className="text-sm text-[#6A7282]">
-              Joined {dayjs(user.joined_at).format("MMM D, YYYY")}
+              Joined {user?.joined_at && dayjs(user.joined_at).isValid()
+                ? dayjs(user.joined_at).format("MMM D, YYYY")
+                : "N/A"}
             </p>
           </div>
         </div>
@@ -88,11 +96,11 @@ const columns: ColumnDef<Employee>[] = [
       <div className="space-y-1">
         <p className="flex gap-2 text-sm text-[#101828]">
           <Mail className="text-[#6A7282] mt-1" size={12} />
-          {row.original.email}
+          {row.original?.email || "N/A"}
         </p>
         <p className="flex gap-2 text-[#6A7282]">
           <Phone size={12} className="text-[#6A7282] mt-1" />
-          {row.original.phone_number}
+          {row.original?.phone_number || "N/A"}
         </p>
       </div>
     ),
@@ -105,14 +113,20 @@ const columns: ColumnDef<Employee>[] = [
     maxSize: 300,
     cell: ({ row }) => (
       <div className="w-75 line-clamp-3 whitespace-normal wrap-break">
-        {row.original.location || "N/A"}
+        {row.original?.location || "N/A"}
       </div>
     ),
   },
-  { accessorKey: "bookings", header: "Bookings" },
+  {
+    header: "Bookings",
+    cell: ({ row }) => row.original?.bookings ?? 0,
+  },
   {
     header: "Total Spent",
-    cell: ({ row }) => `$${row.original.total_spent}`,
+    cell: ({ row }) => {
+      const totalSpent = Number(row.original?.total_spent ?? 0);
+      return `$${Number.isFinite(totalSpent) ? totalSpent.toFixed(2) : "0.00"}`;
+    },
   },
   {
     header: "Status",
@@ -120,14 +134,14 @@ const columns: ColumnDef<Employee>[] = [
       <span
         className={`px-3 py-1 rounded-full text-xs
         ${
-          row.original.status === "active"
+          (row.original?.status || "inactive").toLowerCase() === "active"
             ? "bg-green-100 text-green-700"
-            : row.original.status === "inactive"
+            : (row.original?.status || "inactive").toLowerCase() === "inactive"
               ? "bg-gray-100 text-gray-600"
               : "bg-red-100 text-red-600"
         }`}
       >
-        <span className="uppercase font-medium"> {row.original.status}</span>
+        <span className="uppercase font-medium"> {row.original?.status || "INACTIVE"}</span>
       </span>
     ),
   },
@@ -142,7 +156,7 @@ export default function EmployeesTable() {
   const [selectedHomeowner, setSelectedHomeowner] =
     React.useState<Employee | null>(null);
 
-  const { data, isLoading } = useGetHomeownersQuery({
+  const { data, isLoading, isError, refetch } = useGetHomeownersQuery({
     search,
 
     page,
@@ -150,25 +164,63 @@ export default function EmployeesTable() {
   });
 
   const [updateHomeowners] = useUpdateHomeownersMutation();
-  const updateHomeownerStatus = (id: string, status: string) => {
-    updateHomeowners({ id, status });
+  const updateHomeownerStatus = async (homeowner: Employee, status: string) => {
+    const id = homeowner?.userId ?? homeowner?.user_id ?? homeowner?.user?.id ?? homeowner?.id;
+    if (!id) {
+      toast.error("Unable to update homeowner: missing user ID");
+      return;
+    }
+
+    try {
+      const response = await updateHomeowners({ id, status }).unwrap();
+      if (response?.success === false) {
+        toast.error(response?.message || "Unable to update homeowner status");
+        return;
+      }
+      toast.success(response?.message || "Homeowner status updated successfully");
+    } catch (error: unknown) {
+      const message =
+        typeof error === "object" && error !== null && "data" in error &&
+        typeof error.data === "object" && error.data !== null && "message" in error.data &&
+        typeof error.data.message === "string"
+          ? error.data.message
+          : "Unable to update homeowner status. Please try again.";
+      toast.error(message);
+    }
   };
 
-  const homeowners = data?.data?.data || [];
+  const homeowners = React.useMemo(() => {
+    const rows: unknown = data?.data?.data;
+    return Array.isArray(rows)
+      ? rows.filter(
+          (row: unknown): row is Employee =>
+            typeof row === "object" && row !== null,
+        )
+      : [];
+  }, [data]);
+
   const filteredEmployees = React.useMemo(() => {
-    let data = Array.isArray(homeowners) ? homeowners : [];
+    let data = homeowners;
 
     if (search) {
       const lower = search.toLowerCase();
-      data = data.filter((emp) => emp.name.toLowerCase().includes(lower));
+      data = data.filter((emp) =>
+        `${emp?.name ?? ""} ${emp?.email ?? ""} ${emp?.phone_number ?? ""}`
+          .toLowerCase()
+          .includes(lower),
+      );
     }
 
     if (sort === "name-asc") {
-      data = [...data].sort((a, b) => a.name.localeCompare(b.name));
+      data = [...data].sort((a, b) =>
+        (a?.name ?? "").localeCompare(b?.name ?? ""),
+      );
     }
 
     if (sort === "name-desc") {
-      data = [...data].sort((a, b) => b.name.localeCompare(a.name));
+      data = [...data].sort((a, b) =>
+        (b?.name ?? "").localeCompare(a?.name ?? ""),
+      );
     }
 
     return data;
@@ -181,6 +233,17 @@ export default function EmployeesTable() {
 
   if (isLoading) {
     return <HomeownersSkeleton />;
+  }
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center gap-3 py-12 text-center">
+        <p className="text-sm text-red-600">Unable to load homeowners. Please try again.</p>
+        <Button type="button" variant="outline" onClick={() => refetch()}>
+          Retry
+        </Button>
+      </div>
+    );
   }
 
   return (
@@ -233,7 +296,7 @@ export default function EmployeesTable() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
-                  aria-label={`Actions for ${row.name}`}
+                  aria-label={`Actions for ${row?.name || "homeowner"}`}
                   className="cursor-pointer"
                 >
                   <MoreVertical />
@@ -252,19 +315,19 @@ export default function EmployeesTable() {
                 </DropdownMenuItem>
 
                 <DropdownMenuItem
-                  onClick={() => updateHomeownerStatus(row.id, "ACTIVE")}
+                  onClick={() => updateHomeownerStatus(row, "ACTIVE")}
                   className="cursor-pointer"
                 >
                   Activate
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onClick={() => updateHomeownerStatus(row.id, "INACTIVE")}
+                  onClick={() => updateHomeownerStatus(row, "INACTIVE")}
                   className="cursor-pointer"
                 >
                   Inactive
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onClick={() => updateHomeownerStatus(row.id, "SUSPENDED")}
+                  onClick={() => updateHomeownerStatus(row, "SUSPENDED")}
                   className="cursor-pointer"
                 >
                   Suspend
