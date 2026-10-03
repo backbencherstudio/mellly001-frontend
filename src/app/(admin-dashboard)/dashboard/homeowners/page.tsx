@@ -26,6 +26,7 @@ import {
 import dayjs from "dayjs";
 import CustomModal from "@/components/reusable/CustomModal";
 import HomeownerDetails from "@/components/dashboard/Homeowner/HomeownerDetails";
+import { getImageUrl } from "@/lib/utils";
 
 type Employee = {
   id: string;
@@ -56,8 +57,18 @@ const columns: ColumnDef<Employee>[] = [
 
       return (
         <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-full bg-[#E0E7FF] flex items-center justify-center font-semibold text-indigo-700">
-            {initials}
+          <div className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#E0E7FF] font-semibold text-indigo-700 border ">
+            <span>{initials}</span>
+            {user.avatar && (
+              <img
+                src={getImageUrl(user.avatar)}
+                alt={user.name}
+                className="absolute inset-0 h-full w-full object-cover"
+                onError={(event) => {
+                  event.currentTarget.style.display = "none";
+                }}
+              />
+            )}
           </div>
 
           <div>
