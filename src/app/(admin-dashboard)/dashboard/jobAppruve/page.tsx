@@ -16,6 +16,13 @@ import Pagination from "@/components/reusable/pagination";
 import { useGetJobApprovalQuery, useGetJobApprovalUpdateMutation } from "@/redux/features/dashboardOverView/dashboardOverView";
 import dayjs from "dayjs";
 import JobApprovalSkeleton from "@/components/loading/JobApprovalSkeleton";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 /* ================= COMPONENT ================= */
 export default function JobApprovals() {
@@ -134,16 +141,18 @@ export default function JobApprovals() {
           />
         </div>
         <div className="w-full sm:w-48">
-          <select
-            aria-label="Sort job approvals"
-            value={sort}
-            onChange={(e) => setSort(e.target.value)}
-            className="h-11 w-full rounded-xl border border-[#E0E8E2] bg-white px-3 text-sm text-[#53645A] outline-none transition focus:border-[#70A986] focus:ring-2 focus:ring-[#168044]/10"
+          <Select
+            value={sort || undefined}
+            onValueChange={(value) => setSort(value)}
           >
-            <option value="">Sort by</option>
-            <option value="name-asc">Homeowner (A–Z)</option>
-            <option value="name-desc">Homeowner (Z–A)</option>
-          </select>
+            <SelectTrigger className="h-11 w-full rounded-xl border border-[#E0E8E2] bg-white px-3 text-sm text-[#53645A] outline-none transition focus:border-[#70A986] focus:ring-2 focus:ring-[#168044]/10 shadow-none">
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="name-asc">Homeowner (A–Z)</SelectItem>
+              <SelectItem value="name-desc">Homeowner (Z–A)</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

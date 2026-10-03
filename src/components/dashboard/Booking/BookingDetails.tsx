@@ -9,6 +9,13 @@ import {
   useUpdateBookingStatusMutation,
   useAssignBookingCleanerMutation,
 } from "@/redux/features/dashboardOverView/dashboardOverView";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function BookingDetails({
   bookingData: initialBookingData,
@@ -290,19 +297,23 @@ export default function BookingDetails({
           <div className="space-y-1">
             <label className="text-[11px] text-gray-500">Change Status</label>
             <div className="flex gap-1.5">
-              <select
+              <Select
                 value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value)}
-                className="w-full rounded-md border bg-white px-2 py-1.5 text-xs text-gray-800 focus:outline-none"
+                onValueChange={(value) => setSelectedStatus(value)}
               >
-                <option value="PENDING">Pending</option>
-                <option value="CONFIRMED">Confirmed</option>
-                <option value="STARTED">Started</option>
-                <option value="SUBMITTED">Submitted</option>
-                <option value="COMPLETED">Completed</option>
-                <option value="REJECTED">Rejected</option>
-                <option value="CANCELLED">Cancelled</option>
-              </select>
+                <SelectTrigger className="w-full rounded-md border bg-white px-2 py-1.5 text-xs text-gray-800 shadow-none focus:ring-0">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="PENDING">Pending</SelectItem>
+                  <SelectItem value="CONFIRMED">Confirmed</SelectItem>
+                  <SelectItem value="STARTED">Started</SelectItem>
+                  <SelectItem value="SUBMITTED">Submitted</SelectItem>
+                  <SelectItem value="COMPLETED">Completed</SelectItem>
+                  <SelectItem value="REJECTED">Rejected</SelectItem>
+                  <SelectItem value="CANCELLED">Cancelled</SelectItem>
+                </SelectContent>
+              </Select>
               <button
                 type="button"
                 onClick={handleStatusUpdate}
@@ -318,26 +329,29 @@ export default function BookingDetails({
           <div className="space-y-1">
             <label className="text-[11px] text-gray-500">Assign Cleaner</label>
             <div className="flex gap-1.5">
-              <select
-                value={selectedCleanerId}
-                onChange={(e) => setSelectedCleanerId(e.target.value)}
+              <Select
+                value={selectedCleanerId || undefined}
+                onValueChange={(value) => setSelectedCleanerId(value)}
                 disabled={isCleanersLoading}
-                className="w-full rounded-md border bg-white px-2 py-1.5 text-xs text-gray-800 focus:outline-none"
               >
-                <option value="">-- Select Cleaner --</option>
-                {cleanersList.map((cleaner) => {
-                  const cleanerId =
-                    cleaner.userId ||
-                    cleaner.user_id ||
-                    cleaner.user?.id ||
-                    cleaner.id;
-                  return (
-                    <option key={cleanerId} value={cleanerId}>
-                      {cleaner.name}
-                    </option>
-                  );
-                })}
-              </select>
+                <SelectTrigger className="w-full rounded-md border bg-white px-2 py-1.5 text-xs text-gray-800 shadow-none focus:ring-0 disabled:opacity-50">
+                  <SelectValue placeholder="-- Select Cleaner --" />
+                </SelectTrigger>
+                <SelectContent>
+                  {cleanersList.map((cleaner) => {
+                    const cleanerId =
+                      cleaner.userId ||
+                      cleaner.user_id ||
+                      cleaner.user?.id ||
+                      cleaner.id;
+                    return (
+                      <SelectItem key={cleanerId} value={String(cleanerId)}>
+                        {cleaner.name}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
               <button
                 type="button"
                 onClick={handleAssignCleaner}

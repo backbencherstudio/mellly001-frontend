@@ -17,6 +17,13 @@ import {
 } from "lucide-react";
 import { DataTable } from "@/components/reusable/Table";
 import ArrowIcon from "@/components/icon/ArrowIcon";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 /* ================= TYPES ================= */
 type PaymentStatus = "completed" | "pending" | "refunded";
@@ -330,11 +337,14 @@ export default function PaymentsTable() {
           </div>
 
           <div className="w-40">
-            <select className="h-full w-full rounded-lg border px-3 py-2 focus:outline-none text-[12px]">
-              <option value="">Sort by</option>
-              {/* <option value="name">Name</option>
-            <option value="date">Date</option> */}
-            </select>
+            <Select>
+              <SelectTrigger className="h-10 w-full rounded-lg border px-3 py-2 text-[12px] shadow-none focus:ring-0">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="placeholder">Sort by</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 

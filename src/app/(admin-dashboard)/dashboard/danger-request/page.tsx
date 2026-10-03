@@ -24,6 +24,13 @@ import { useGetDangerRequestQuery } from "@/redux/features/dashboardOverView/das
 import DangerRequestSkeleton from "@/components/loading/DangerRequestSkeleton";
 import { formatDate } from "@/lib/DateFormate";
 import dayjs from "dayjs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 /* ================= TYPES ================= */
 export type DangerRequest = {
@@ -331,15 +338,17 @@ export default function CleanerRequest() {
                 </div>
 
                 <div className="w-40">
-                    <select
-                        value={sortBy}
-                        onChange={(e) => setSortBy(e.target.value)}
-                        className="h-full w-full rounded-lg border px-3 py-2.5 text-[12px]"
+                    <Select
+                        value={sortBy || undefined}
+                        onValueChange={(value) => setSortBy(value)}
                     >
-                        <option value="">Sort by</option>
-                        <option value="name">Name</option>
-
-                    </select>
+                        <SelectTrigger className="h-10 w-full rounded-lg border px-3 py-2.5 text-[12px] shadow-none focus:ring-0">
+                            <SelectValue placeholder="Sort by" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="name">Name</SelectItem>
+                        </SelectContent>
+                    </Select>
                 </div>
             </div>
 
