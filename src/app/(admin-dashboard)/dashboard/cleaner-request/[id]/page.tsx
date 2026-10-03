@@ -7,6 +7,25 @@ import { Loader2 } from "lucide-react";
 import { useCancelCleanerRequestMutation } from "../../../../../redux/features/cleanerRequest/cleanerRequestApi";
 import { Button } from "@/components/ui/button";
 
+const getErrorMessage = (value: unknown) => {
+  if (typeof value !== "object" || value === null) {
+    return "Cancel failed. Please try again.";
+  }
+
+  if ("data" in value && typeof value.data === "object" && value.data !== null) {
+    const data = value.data;
+    if ("message" in data && typeof data.message === "string") {
+      return data.message;
+    }
+  }
+
+  if ("message" in value && typeof value.message === "string") {
+    return value.message;
+  }
+
+  return "Cancel failed. Please try again.";
+};
+
 export default function CancelCleanerRequestPage() {
   const router = useRouter();
   const params = useParams();
@@ -20,13 +39,27 @@ export default function CancelCleanerRequestPage() {
   const [cancelRequest, { isLoading }] = useCancelCleanerRequestMutation();
 
   const handleCancel = async () => {
-    if (!id) return;
     setError(null);
+    const requestId = id?.trim();
+    if (!requestId) {
+      setError("A valid request ID is required to cancel this request.");
+      return;
+    }
+
     try {
-      await cancelRequest({ id, reason: reason || undefined }).unwrap();
+      const response = await cancelRequest({
+        id: requestId,
+        reason: reason.trim() || undefined,
+      }).unwrap();
+
+      if (response?.success === false) {
+        setError(response?.message || "Cancel failed. Please try again.");
+        return;
+      }
+
       router.push("/dashboard/cleaner-request");
-    } catch {
-      setError("Cancel failed. Please try again.");
+    } catch (requestError: unknown) {
+      setError(getErrorMessage(requestError));
     }
   };
 
@@ -65,7 +98,7 @@ export default function CancelCleanerRequestPage() {
         <Button
           variant="destructive"
           onClick={handleCancel}
-          disabled={isLoading || !id}
+          disabled={isLoading || !id?.trim()}
         >
           {isLoading ? (
             <>
