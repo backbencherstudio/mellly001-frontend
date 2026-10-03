@@ -18,6 +18,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import CustomModal from "@/components/reusable/CustomModal";
 import CleanerDetails from "@/components/dashboard/CleanerRequest/CleanerDetails";
 
@@ -215,15 +222,18 @@ export default function EmployeesTable() {
           </div>
 
           <div className="w-40">
-            <select
-              value={sort}
-              onChange={(e) => setSort(e.target.value)}
-              className="h-full w-full rounded-lg border px-3 py-2.5 focus:outline-none text-[12px]"
+            <Select
+              value={sort || undefined}
+              onValueChange={(value) => setSort(value)}
             >
-              <option value="">Sort by</option>
-              <option value="name-asc">Name (A-Z)</option>
-              <option value="name-desc">Name (Z-A)</option>
-            </select>
+              <SelectTrigger className="h-10 w-full rounded-lg border px-3 py-2.5 text-[12px] shadow-none focus:ring-0">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="name-asc">Name (A-Z)</SelectItem>
+                <SelectItem value="name-desc">Name (Z-A)</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
