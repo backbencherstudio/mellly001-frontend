@@ -23,7 +23,14 @@ type BookingDetailsData = {
   bookingId?: string | number;
   status?: string;
   booking_date?: string | null;
-  payment_status?: string;
+  payment_status?: string | null;
+  payment?: {
+    status?: string | null;
+    transactions?: unknown;
+    status_history?: unknown;
+  } | null;
+  payment_transaction?: unknown;
+  payment_status_history?: unknown;
   residential_cleaning_package?: {
     title?: string;
     duration?: string;
@@ -64,10 +71,55 @@ type BookingDetailsData = {
   maid_note?: string;
 };
 
+type PaymentTransaction = {
+  id?: string | number;
+  booking_id?: string | number;
+  user_id?: string | number;
+  type?: string;
+  status?: string;
+  amount?: number | string | null;
+  paid_amount?: number | string | null;
+  created_at?: string | null;
+};
+
+type PaymentStatusHistory = {
+  id?: string | number;
+  previous_status?: string | null;
+  status?: string | null;
+  changed_by?: string | number | null;
+  created_at?: string | null;
+};
+
 const toBookingDetailsData = (value: unknown): BookingDetailsData | null =>
   typeof value === "object" && value !== null
     ? (value as BookingDetailsData)
     : null;
+
+const getPaymentTransactions = (value: unknown): PaymentTransaction[] =>
+  Array.isArray(value)
+    ? value.filter(
+        (item): item is PaymentTransaction =>
+          typeof item === "object" && item !== null,
+      )
+    : [];
+
+const getPaymentStatusHistory = (value: unknown): PaymentStatusHistory[] =>
+  Array.isArray(value)
+    ? value.filter(
+        (item): item is PaymentStatusHistory =>
+          typeof item === "object" && item !== null,
+      )
+    : [];
+
+const formatCurrency = (value: number | string | null | undefined) => {
+  const amount = Number(value);
+  return Number.isFinite(amount) ? `$${amount.toFixed(2)}` : "N/A";
+};
+
+const formatPaymentDate = (value?: string | null) =>
+  value && dayjs(value).isValid()
+    ? dayjs(value).format("MMM D, YYYY · h:mm A")
+    : "N/A";
 
 const getErrorMessage = (error: unknown, fallback: string) => {
   if (typeof error !== "object" || error === null) return fallback;
@@ -215,6 +267,24 @@ export default function BookingDetails({
       ? `$${Number(bookingData.revenue).toFixed(2)}`
       : null;
 
+  const paymentStatus =
+    bookingData?.payment?.status || bookingData?.payment_status || "UNKNOWN";
+  const paymentStatusStyle: Record<string, string> = {
+    paid: "bg-green-100 text-green-700",
+    completed: "bg-green-100 text-green-700",
+    pending: "bg-yellow-100 text-yellow-700",
+    refunded: "bg-gray-100 text-gray-700",
+    failed: "bg-red-100 text-red-700",
+  };
+  const transactionSource = Array.isArray(bookingData?.payment?.transactions)
+    ? bookingData.payment.transactions
+    : bookingData?.payment_transaction;
+  const statusHistorySource = Array.isArray(bookingData?.payment?.status_history)
+    ? bookingData.payment.status_history
+    : bookingData?.payment_status_history;
+  const paymentTransactions = getPaymentTransactions(transactionSource);
+  const paymentStatusHistory = getPaymentStatusHistory(statusHistorySource);
+
   // Homeowner details
   const homeownerName =
     bookingData?.user?.name || bookingData?.homeowner_name || "-";
@@ -296,11 +366,11 @@ export default function BookingDetails({
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {bookingData?.payment_status && (
-            <span className="inline-block px-2.5 py-1 rounded-full text-xs font-medium border bg-gray-50 text-gray-700 border-gray-200">
-              Payment: {bookingData.payment_status}
-            </span>
-          )}
+          <span
+            className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium border ${paymentStatusStyle[paymentStatus.toLowerCase()] || "bg-gray-50 text-gray-700 border-gray-200"}`}
+          >
+            Payment: {paymentStatus}
+          </span>
           <span
             className={`inline-block px-3 py-1 rounded-full text-xs font-medium border capitalize ${
               statusStyles[status] ||
@@ -391,6 +461,89 @@ export default function BookingDetails({
           </div>
         )}
       </div>
+
+      <section className="space-y-3 border-t pt-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h3 className="font-semibold text-gray-900">Payment Details</h3>
+          <span
+            className={`rounded-full px-2.5 py-1 text-xs font-medium ${paymentStatusStyle[paymentStatus.toLowerCase()] || "bg-gray-100 text-gray-700"}`}
+          >
+            {paymentStatus}
+          </span>
+        </div>
+
+        <div className="space-y-2">
+          <h4 className="text-xs font-semibold uppercase text-gray-500">
+            Transactions ({paymentTransactions.length})
+          </h4>
+          {paymentTransactions.length > 0 ? (
+            paymentTransactions.map((transaction, index) => (
+              <div
+                key={String(transaction.id ?? `transaction-${index}`)}
+                className="grid gap-2 rounded-md border p-3 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center"
+              >
+                <div className="min-w-0">
+                  <p className="truncate font-medium text-gray-900">
+                    {transaction.id ? `Transaction ${transaction.id}` : "Transaction"}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {[transaction.type, transaction.status]
+                      .filter(Boolean)
+                      .join(" · ") || "Status unavailable"}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {formatPaymentDate(transaction.created_at)}
+                  </p>
+                </div>
+                <p className="text-xs text-gray-600">
+                  Amount <span className="font-semibold text-gray-900">{formatCurrency(transaction.amount)}</span>
+                </p>
+                <p className="text-xs text-gray-600">
+                  Paid <span className="font-semibold text-gray-900">{formatCurrency(transaction.paid_amount)}</span>
+                </p>
+              </div>
+            ))
+          ) : (
+            <p className="rounded-md bg-gray-50 px-3 py-2 text-xs text-gray-500">
+              No payment transactions recorded.
+            </p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <h4 className="text-xs font-semibold uppercase text-gray-500">
+            Status History ({paymentStatusHistory.length})
+          </h4>
+          {paymentStatusHistory.length > 0 ? (
+            <div className="divide-y rounded-md border px-3">
+              {paymentStatusHistory.map((entry, index) => (
+                <div
+                  key={String(entry.id ?? `payment-history-${index}`)}
+                  className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 py-2 text-xs"
+                >
+                  <div>
+                    <span className="text-gray-500">
+                      {entry.previous_status || "Initial"} → {entry.status || "Unknown"}
+                    </span>
+                    {entry.changed_by && (
+                      <span className="ml-2 text-gray-400">
+                        by {entry.changed_by}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-gray-500">
+                    {formatPaymentDate(entry.created_at)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="rounded-md bg-gray-50 px-3 py-2 text-xs text-gray-500">
+              No payment status changes recorded.
+            </p>
+          )}
+        </div>
+      </section>
 
       {/* Admin Controls: Status Management & Cleaner Assignment */}
       <div className="rounded-lg border bg-gray-50/70 p-3 space-y-3">
