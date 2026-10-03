@@ -16,6 +16,7 @@ import Pagination from "@/components/reusable/pagination";
 import { useGetJobApprovalQuery, useGetJobApprovalUpdateMutation } from "@/redux/features/dashboardOverView/dashboardOverView";
 import dayjs from "dayjs";
 import JobApprovalSkeleton from "@/components/loading/JobApprovalSkeleton";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -24,6 +25,43 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+type JobApprovalRecord = {
+  id?: string | number;
+  bookingNo?: string | number;
+  status?: string | null;
+  booking_date?: string | null;
+  slot?: string | number | null;
+  amount?: number | string | null;
+  homeowner?: { name?: string | null } | null;
+  maid?: { name?: string | null } | null;
+  homeowner_location?: string | null;
+  maid_note?: string | null;
+  before_photos?: unknown;
+  after_photos?: unknown;
+};
+
+const getErrorMessage = (error: unknown) => {
+  if (typeof error !== "object" || error === null) return "Something went wrong";
+
+  if ("data" in error && typeof error.data === "object" && error.data !== null) {
+    const data = error.data;
+    if ("message" in data && typeof data.message === "string") {
+      return data.message;
+    }
+  }
+
+  if ("message" in error && typeof error.message === "string") {
+    return error.message;
+  }
+
+  return "Something went wrong";
+};
+
+const getPhotos = (photos: unknown): string[] =>
+  Array.isArray(photos)
+    ? photos.filter((photo): photo is string => typeof photo === "string")
+    : [];
+
 /* ================= COMPONENT ================= */
 export default function JobApprovals() {
   const [page, setPage] = React.useState(1);
@@ -31,52 +69,70 @@ export default function JobApprovals() {
   const [search, setSearch] = React.useState("");
   const [sort, setSort] = React.useState("");
 
-  const [approve] = useGetJobApprovalUpdateMutation();
+  const [approve, { isLoading: isUpdating }] = useGetJobApprovalUpdateMutation();
 
-  const handleCompleted = async (id: string) => {
+  const handleCompleted = async (id: string | number | undefined) => {
+    if (id === undefined || id === null || id === "") {
+      toast.error("Unable to approve job: missing job ID");
+      return;
+    }
+
     try {
       const response = await approve({
-        id,
+        id: String(id),
         status: "COMPLETED",
       }).unwrap();
 
       if (response?.success === false) {
-        toast.error(response.message);
+        toast.error(response?.message || "Unable to approve job");
         return;
       }
 
       toast.success(
         response?.message || "Job completed successfully"
       );
-    } catch (error: any) {
-      toast.error(
-        error?.data?.message || "Something went wrong"
-      );
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error));
     }
   };
 
 
 
 
-  const handleReject = async (id: string) => {
+  const handleReject = async (id: string | number | undefined) => {
+    if (id === undefined || id === null || id === "") {
+      toast.error("Unable to reject job: missing job ID");
+      return;
+    }
+
     try {
-      await approve({
-        id,
+      const response = await approve({
+        id: String(id),
         status: "REJECTED",
       }).unwrap();
 
-      toast.error("Job rejected successfully");
-    } catch (error: any) {
-      toast.error(error?.data?.message || "Something went wrong");
+      if (response?.success === false) {
+        toast.error(response?.message || "Unable to reject job");
+        return;
+      }
+      toast.success(response?.message || "Job rejected successfully");
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error));
     }
   };
 
-  const { data: jobApproval, isLoading } = useGetJobApprovalQuery({});
+  const { data: jobApproval, isLoading, isError, refetch } =
+    useGetJobApprovalQuery({});
 
 
   const jobApprovalData = React.useMemo(() => {
     const raw = jobApproval?.data?.data;
-    return Array.isArray(raw) ? raw : [];
+    return Array.isArray(raw)
+      ? raw.filter(
+          (job: unknown): job is JobApprovalRecord =>
+            typeof job === "object" && job !== null,
+        )
+      : [];
   }, [jobApproval]);
 
   const processedJobs = React.useMemo(() => {
@@ -87,22 +143,22 @@ export default function JobApprovals() {
 
       data = data.filter(
         (job) =>
-          String(job.id || "").toLowerCase().includes(lower) ||
-          job.bookingNo?.toLowerCase().includes(lower) ||
-          job.homeowner?.name?.toLowerCase().includes(lower) ||
-          job.maid?.name?.toLowerCase().includes(lower),
+          String(job?.id ?? "").toLowerCase().includes(lower) ||
+          String(job?.bookingNo ?? "").toLowerCase().includes(lower) ||
+          String(job?.homeowner?.name ?? "").toLowerCase().includes(lower) ||
+          String(job?.maid?.name ?? "").toLowerCase().includes(lower),
       );
     }
 
     if (sort === "name-asc") {
       data.sort((a, b) =>
-        (a.homeowner?.name || "").localeCompare(b.homeowner?.name || ""),
+        String(a?.homeowner?.name ?? "").localeCompare(String(b?.homeowner?.name ?? "")),
       );
     }
 
     if (sort === "name-desc") {
       data.sort((a, b) =>
-        (b.homeowner?.name || "").localeCompare(a.homeowner?.name || ""),
+        String(b?.homeowner?.name ?? "").localeCompare(String(a?.homeowner?.name ?? "")),
       );
     }
 
@@ -122,6 +178,17 @@ export default function JobApprovals() {
 
   if (isLoading) {
     return <JobApprovalSkeleton />;
+  }
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center gap-3 py-12 text-center">
+        <p className="text-sm text-red-600">Unable to load job approvals. Please try again.</p>
+        <Button type="button" variant="outline" onClick={() => refetch()}>
+          Retry
+        </Button>
+      </div>
+    );
   }
 
   return (
@@ -159,7 +226,10 @@ export default function JobApprovals() {
       {paginatedJobs.length > 0 ? (
         <div className="space-y-3">
           {paginatedJobs.map((job) => {
-            const status = String(job.status || "PENDING");
+            const status = String(job?.status || "PENDING");
+            const beforePhotos = getPhotos(job?.before_photos);
+            const afterPhotos = getPhotos(job?.after_photos);
+            const bookingDate = job?.booking_date;
             const statusClass = status.toLowerCase().includes("reject")
               ? "bg-[#FFF0EF] text-[#B94239]"
               : status.toLowerCase().includes("complet")
@@ -168,26 +238,28 @@ export default function JobApprovals() {
 
             return (
               <article
-                key={job.id}
+                key={String(job?.id ?? job?.bookingNo ?? `approval-${paginatedJobs.indexOf(job)}`)}
                 className="overflow-hidden rounded-xl border border-[#E3EAE5] bg-white shadow-[0px_3px_14px_rgba(16,40,26,0.035)]"
               >
                 <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[#EEF2EF] px-4 py-3">
                   <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5">
                     <span className="text-xs font-semibold text-[#168044]">
-                      Approval · {String(job.id).slice(-6).toUpperCase()}
+                      Approval · {String(job?.id ?? "—").slice(-6).toUpperCase()}
                     </span>
                     <span className="rounded-md bg-[#F1F5F2] px-2 py-1 text-xs font-semibold text-[#52665A]">
-                      Slot {job.slot || "—"}
+                      Slot {job?.slot || "—"}
                     </span>
                     <span className="flex items-center gap-1 text-xs text-[#77847C]">
                       <CalendarDays className="h-3.5 w-3.5" aria-hidden="true" />
-                      {dayjs(job.booking_date).format("MMM D, YYYY")}
+                      {bookingDate && dayjs(bookingDate).isValid()
+                        ? dayjs(bookingDate).format("MMM D, YYYY")
+                        : "N/A"}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="flex items-center gap-0.5 text-sm font-semibold text-[#263B2E]">
                       <DollarSign className="h-4 w-4 text-[#75847A]" aria-hidden="true" />
-                      {job.amount}
+                      {job?.amount ?? "0"}
                     </span>
                     <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${statusClass}`}>
                       {status}
@@ -205,7 +277,7 @@ export default function JobApprovals() {
                         <div className="min-w-0">
                           <p className="text-[11px] text-[#89958E]">Homeowner</p>
                           <p className="truncate text-sm font-semibold text-[#263B2E]">
-                            {job.homeowner?.name || "Homeowner"}
+                            {job?.homeowner?.name || "Homeowner"}
                           </p>
                         </div>
                       </div>
@@ -216,7 +288,7 @@ export default function JobApprovals() {
                         <div className="min-w-0">
                           <p className="text-[11px] text-[#89958E]">Cleaner</p>
                           <p className="truncate text-sm font-semibold text-[#263B2E]">
-                            {job.maid?.name || "Cleaner"}
+                            {job?.maid?.name || "Cleaner"}
                           </p>
                         </div>
                       </div>
@@ -225,11 +297,11 @@ export default function JobApprovals() {
                     <div className="flex items-start gap-2 border-t border-[#F0F3F1] pt-3">
                       <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#75847A]" aria-hidden="true" />
                       <p className="line-clamp-2 wrap-break-word text-xs leading-relaxed text-[#59675E]">
-                        {job.homeowner_location || "Location not provided"}
+                        {job?.homeowner_location || "Location not provided"}
                       </p>
                     </div>
 
-                    {job.maid_note && (
+                    {job?.maid_note && (
                       <p className="line-clamp-2 rounded-md bg-[#F7F9F7] px-3 py-2 text-xs leading-relaxed text-[#59675E]">
                         <span className="font-semibold text-[#34483A]">Note: </span>
                         {job.maid_note}
@@ -239,17 +311,17 @@ export default function JobApprovals() {
 
                   <div className="grid grid-cols-2 gap-3 border-t border-[#EEF2EF] pt-3 lg:border-l lg:border-t-0 lg:pl-4 lg:pt-0">
                     {[
-                      { label: "Before", photos: job.before_photos },
-                      { label: "After", photos: job.after_photos },
+                      { label: "Before", photos: beforePhotos },
+                      { label: "After", photos: afterPhotos },
                     ].map(({ label, photos }) => (
                       <section key={label} className="min-w-0">
                         <div className="mb-2 flex items-center justify-between gap-2">
                           <h3 className="text-xs font-semibold text-[#34483A]">{label}</h3>
                           <span className="text-[10px] text-[#89958E]">{photos?.length || 0}</span>
                         </div>
-                        {photos?.length ? (
+                        {photos.length ? (
                           <div className="flex gap-1.5 overflow-x-auto">
-                            {photos.slice(0, 3).map((photo: string, index: number) => (
+                            {photos.slice(0, 3).map((photo, index) => (
                               <img
                                 key={index}
                                 src={photo}
@@ -276,14 +348,16 @@ export default function JobApprovals() {
 
                 <footer className="flex justify-end gap-2 border-t border-[#EEF2EF] bg-[#FCFDFC] px-4 py-2.5">
                   <button
-                    onClick={() => handleCompleted(job.id)}
+                    onClick={() => handleCompleted(job?.id)}
+                    disabled={isUpdating}
                     className="flex h-9 items-center justify-center gap-1.5 rounded-lg bg-[#168044] px-3 text-xs font-semibold text-white transition hover:bg-[#116A37] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#168044] focus-visible:ring-offset-2"
                   >
                     <Check className="h-3.5 w-3.5" aria-hidden="true" />
                     Approve
                   </button>
                   <button
-                    onClick={() => handleReject(job.id)}
+                    onClick={() => handleReject(job?.id)}
+                    disabled={isUpdating}
                     className="flex h-9 items-center justify-center gap-1.5 rounded-lg border border-[#F0D3D0] bg-white px-3 text-xs font-semibold text-[#B94239] transition hover:bg-[#FFF5F4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8554B] focus-visible:ring-offset-2"
                   >
                     <X className="h-3.5 w-3.5" aria-hidden="true" />
