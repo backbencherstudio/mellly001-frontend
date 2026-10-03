@@ -8,7 +8,6 @@ import { DataTable } from "@/components/reusable/Table";
 import CleanersSkeleton from "@/components/loading/CleanersSkeleton";
 import {
   useGetCleanersQuery,
-  useUpdateCleanerRequestMutation,
   useUpdateCleanersMutation,
 } from "@/redux/features/dashboardOverView/dashboardOverView";
 import dayjs from "dayjs";
@@ -28,6 +27,8 @@ import {
 import CustomModal from "@/components/reusable/CustomModal";
 import CleanerDetails from "@/components/dashboard/CleanerRequest/CleanerDetails";
 import { getImageUrl } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 /* ================= TYPES ================= */
 type Employee = {
@@ -37,16 +38,16 @@ type Employee = {
   user?: {
     id: string;
   };
-  name: string;
-  email: string;
+  name?: string;
+  email?: string;
   phone_number: string | null;
   avatar: string | null;
-  earnings: number;
-  rating: number;
-  total_reviews: number;
-  joined_at: string;
-  status: "active" | "busy" | "inactive";
-  jobs: {
+  earnings?: number;
+  rating?: number;
+  total_reviews?: number;
+  joined_at?: string;
+  status?: string;
+  jobs?: {
     completed: number;
     completion_rate: number;
     total: number;
@@ -58,7 +59,7 @@ const columns: ColumnDef<Employee>[] = [
   {
     header: "Cleaner",
     cell: ({ row }) => {
-      const name = row.original.name;
+      const name = row.original?.name || "Unknown cleaner";
       const initials = name
         ?.split(" ")
         .map((n) => n[0])
@@ -68,7 +69,7 @@ const columns: ColumnDef<Employee>[] = [
         <div className="flex items-center gap-3">
           <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-green-100 text-sm font-semibold text-green-700">
             <span>{initials}</span>
-            {row.original.avatar && (
+            {row.original?.avatar && (
               <img
                 src={getImageUrl(row.original.avatar)}
                 alt={name}
@@ -82,7 +83,9 @@ const columns: ColumnDef<Employee>[] = [
           <div>
             <p className="font-medium leading-none">{name}</p>
             <p className="text-xs text-gray-500 mt-1">
-              Joined {dayjs(row.original.joined_at).format("MMM D, YYYY")}
+              Joined {row.original?.joined_at && dayjs(row.original.joined_at).isValid()
+                ? dayjs(row.original.joined_at).format("MMM D, YYYY")
+                : "N/A"}
             </p>
           </div>
         </div>
@@ -94,10 +97,10 @@ const columns: ColumnDef<Employee>[] = [
     cell: ({ row }) => (
       <div className="space-y-1 text-sm text-gray-600">
         <p className="flex items-center text-[#101828] text-sm font-normal leading-140% gap-2">
-          <Mail size={14} /> {row.original.email}
+          <Mail size={14} /> {row.original?.email || "N/A"}
         </p>
         <p className="flex items-center gap-2">
-          <Phone size={14} /> {row.original.phone_number || "N/A"}
+          <Phone size={14} /> {row.original?.phone_number || "N/A"}
         </p>
       </div>
     ),
@@ -107,15 +110,15 @@ const columns: ColumnDef<Employee>[] = [
     cell: ({ row }) => (
       <div className="flex items-center gap-1 text-sm">
         <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-        <span className="font-medium">{row.original.rating}</span>
-        <span className="text-gray-500">({row.original.total_reviews})</span>
+        <span className="font-medium">{row.original?.rating ?? 0}</span>
+        <span className="text-gray-500">({row.original?.total_reviews ?? 0})</span>
       </div>
     ),
   },
   {
     header: "Jobs",
     cell: ({ row }) => {
-      const { completed, total, completion_rate } = row.original.jobs || {};
+      const { completed, total, completion_rate } = row.original?.jobs || {};
 
       return (
         <div>
@@ -132,14 +135,14 @@ const columns: ColumnDef<Employee>[] = [
   {
     header: "Earnings",
     cell: ({ row }) => (
-      <span className="font-medium">${row.original.earnings}</span>
+      <span className="font-medium">${row.original?.earnings ?? 0}</span>
     ),
   },
   {
     header: "Status",
     cell: ({ row }) => {
       const status = (
-        row.original.status || "INACTIVE"
+        row.original?.status || "INACTIVE"
       ).toUpperCase() as keyof typeof styles;
       const styles = {
         ACTIVE: "bg-green-100 text-green-700",
@@ -151,7 +154,7 @@ const columns: ColumnDef<Employee>[] = [
         <span
           className={`px-3 py-1 rounded-full text-xs font-medium ${styles[status] || styles.INACTIVE}`}
         >
-          <span className="uppercase">{row.original.status}</span>
+          <span className="uppercase">{row.original?.status || "INACTIVE"}</span>
         </span>
       );
     },
@@ -169,20 +172,42 @@ export default function EmployeesTable() {
     null,
   );
 
-  const { data, isLoading } = useGetCleanersQuery({});
-  const cleaners = data?.data?.data || [];
+  const { data, isLoading, isError, refetch } = useGetCleanersQuery({});
+  const cleaners = React.useMemo(() => {
+    const rows = data?.data?.data;
+    return Array.isArray(rows)
+      ? rows.filter(
+          (row): row is Employee =>
+            typeof row === "object" && row !== null,
+        )
+      : [];
+  }, [data]);
 
   const [updateCleaner] = useUpdateCleanersMutation();
 
-  // সঠিক User ID খুঁজে বের করার জন্য আপডেট করা ফাংশন
-  const updateCleanerStatus = (row: Employee, status: string) => {
-    // অবজেক্টে থাকা সম্ভাব্য সব ফিল্ড থেকে মূল User ID নেওয়া হচ্ছে
-    const targetUserId = row.userId || row.user_id || row.user?.id || row.id;
+  const updateCleanerStatus = async (row: Employee, status: string) => {
+    const targetUserId = row?.userId ?? row?.user_id ?? row?.user?.id ?? row?.id;
+    if (!targetUserId) {
+      toast.error("Unable to update cleaner: missing user ID");
+      return;
+    }
 
-    console.log("Selected Cleaner Row Data:", row);
-    console.log("Submitting Target User ID:", targetUserId);
-
-    updateCleaner({ id: targetUserId, status });
+    try {
+      const response = await updateCleaner({ id: targetUserId, status }).unwrap();
+      if (response?.success === false) {
+        toast.error(response?.message || "Unable to update cleaner status");
+        return;
+      }
+      toast.success(response?.message || "Cleaner status updated successfully");
+    } catch (error: unknown) {
+      const message =
+        typeof error === "object" && error !== null && "data" in error &&
+        typeof error.data === "object" && error.data !== null && "message" in error.data &&
+        typeof error.data.message === "string"
+          ? error.data.message
+          : "Unable to update cleaner status. Please try again.";
+      toast.error(message);
+    }
   };
 
   /* search filter */
@@ -192,16 +217,20 @@ export default function EmployeesTable() {
     if (search) {
       const lower = search.toLowerCase();
       result = result.filter((e) =>
-        `${e.name} ${e.email}`.toLowerCase().includes(lower),
+        `${e?.name ?? ""} ${e?.email ?? ""}`.toLowerCase().includes(lower),
       );
     }
 
     if (sort === "name-asc") {
-      result = [...result].sort((a, b) => a.name.localeCompare(b.name));
+      result = [...result].sort((a, b) =>
+        (a?.name ?? "").localeCompare(b?.name ?? ""),
+      );
     }
 
     if (sort === "name-desc") {
-      result = [...result].sort((a, b) => b.name.localeCompare(a.name));
+      result = [...result].sort((a, b) =>
+        (b?.name ?? "").localeCompare(a?.name ?? ""),
+      );
     }
 
     return result;
@@ -215,6 +244,17 @@ export default function EmployeesTable() {
 
   if (isLoading) {
     return <CleanersSkeleton />;
+  }
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center gap-3 py-12 text-center">
+        <p className="text-sm text-red-600">Unable to load cleaners. Please try again.</p>
+        <Button type="button" variant="outline" onClick={() => refetch()}>
+          Retry
+        </Button>
+      </div>
+    );
   }
 
   return (
