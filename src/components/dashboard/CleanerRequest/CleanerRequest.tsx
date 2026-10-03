@@ -19,6 +19,23 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { getImageUrl } from "@/lib/utils";
 
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (typeof error !== "object" || error === null) return fallback;
+
+  if ("data" in error && typeof error.data === "object" && error.data !== null) {
+    const data = error.data;
+    if ("message" in data && typeof data.message === "string") {
+      return data.message;
+    }
+  }
+
+  if ("message" in error && typeof error.message === "string") {
+    return error.message;
+  }
+
+  return fallback;
+};
+
 export function DialogScrollableContent({
   data: employee,
 }: {
@@ -26,7 +43,12 @@ export function DialogScrollableContent({
 }) {
   const [rejectOpen, setRejectOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
-  const { data } = useGetClearnerRequestByIdQuery(employee?.id, {
+  const {
+    data,
+    isLoading: isDetailsLoading,
+    isError: isDetailsError,
+    refetch,
+  } = useGetClearnerRequestByIdQuery(employee?.id, {
     skip: !employee?.id,
   });
 
@@ -43,15 +65,24 @@ export function DialogScrollableContent({
 
   const resumeUrl = cleaner?.resume_url;
   const handleApprove = async () => {
+    if (!employee?.id) {
+      toast.error("Unable to approve request: missing cleaner ID");
+      return;
+    }
+
     try {
-      await updateCleanerRequest({
+      const response = await updateCleanerRequest({
         id: employee.id,
         status: "VERIFIED",
       }).unwrap();
 
-      toast.success("Cleaner approved successfully");
-    } catch (error) {
-      toast.error("Failed to approve cleaner request");
+      if (response?.success === false) {
+        toast.error(response?.message || "Failed to approve cleaner request");
+        return;
+      }
+      toast.success(response?.message || "Cleaner approved successfully");
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, "Failed to approve cleaner request"));
     }
   };
 
@@ -71,6 +102,11 @@ export function DialogScrollableContent({
   );
 
   const handleReject = async () => {
+    if (!employee?.id) {
+      toast.error("Unable to reject request: missing cleaner ID");
+      return;
+    }
+
     try {
       const response = await updateCleanerRequest({
         id: employee.id,
@@ -78,16 +114,16 @@ export function DialogScrollableContent({
         rejected_reason: rejectReason,
       }).unwrap();
 
-      if (response?.success) {
-        toast.success(response?.message || "Cleaner rejected successfully");
-
-        setRejectReason("");
-        setRejectOpen(false);
-      } else {
+      if (response?.success === false) {
         toast.error(response?.message || "Cleaner rejection failed");
+        return;
       }
-    } catch (error: any) {
-      toast.error(error?.data?.message || "Failed to reject cleaner request");
+
+      toast.success(response?.message || "Cleaner rejected successfully");
+      setRejectReason("");
+      setRejectOpen(false);
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, "Failed to reject cleaner request"));
     }
   };
 
@@ -107,6 +143,18 @@ export function DialogScrollableContent({
         <p className="text-sm font-normal text-[#6A7282]">
           Review complete profile information
         </p>
+
+        {isDetailsLoading && (
+          <p className="text-sm text-gray-500">Loading cleaner details...</p>
+        )}
+        {isDetailsError && (
+          <div className="flex items-center justify-between gap-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+            <span>Unable to load the latest cleaner details.</span>
+            <button type="button" className="font-medium underline" onClick={() => refetch()}>
+              Retry
+            </button>
+          </div>
+        )}
 
         <div className="space-y-4 mt-4   ">
           <p className="text-[#03652B] font-bold text-lg">
@@ -186,12 +234,9 @@ export function DialogScrollableContent({
 
               <button
                 onClick={() =>
-                  window.open(
-                    cleaner?.resume_url,
-                    "_blank",
-                    "noopener,noreferrer",
-                  )
+                  resumeUrl && window.open(resumeUrl, "_blank", "noopener,noreferrer")
                 }
+                disabled={!resumeUrl}
                 className="rounded-lg bg-green-700 px-4 py-2 text-white cursor-pointer hover:bg-green-800"
               >
                 View Resume

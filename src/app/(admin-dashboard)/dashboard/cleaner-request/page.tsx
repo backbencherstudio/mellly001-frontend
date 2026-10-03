@@ -7,26 +7,15 @@ import {
   Mail,
   Phone,
   Search,
-  MoreVertical,
-  Star,
   MapPin,
-  Eye,
-  Edit2,
-  Trash2,
-  Check,
-  X,
 } from "lucide-react";
 import { DataTable } from "@/components/reusable/Table";
 import CleanerRequestSkeleton from "@/components/loading/CleanerRequestSkeleton";
 import { DialogScrollableContent } from "@/components/dashboard/CleanerRequest/CleanerRequest";
-import Link from "next/link";
-import {
-  useGetCleanerRequestQuery,
-  useUpdateCleanerRequestMutation,
-} from "@/redux/features/dashboardOverView/dashboardOverView";
-import { toast } from "sonner";
+import { useGetCleanerRequestQuery } from "@/redux/features/dashboardOverView/dashboardOverView";
 import dayjs from "dayjs";
 import { getImageUrl } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -37,15 +26,15 @@ import {
 
 /* ================= TYPES ================= */
 export type Employee = {
-  id: string;
-  name: string;
-  email: string;
-  phone_number: string | null;
-  location: string;
-  rejected_reason: string;
-  applied_date: string | null;
-  avatar: string | null;
-  status: string;
+  id?: string;
+  name?: string;
+  email?: string;
+  phone_number?: string | null;
+  location?: string | null;
+  rejected_reason?: string | null;
+  applied_date?: string | null;
+  avatar?: string | null;
+  status?: string;
 };
 
 /* ================= COLUMNS ================= */
@@ -53,7 +42,7 @@ const columns: ColumnDef<Employee>[] = [
   {
     header: "Cleaner",
     cell: ({ row }) => {
-      const name = row.original.name;
+      const name = row.original?.name || "Unknown cleaner";
       const initials = name
         .split(" ")
         .map((n) => n[0])
@@ -62,10 +51,10 @@ const columns: ColumnDef<Employee>[] = [
       return (
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-full overflow-hidden bg-green-100 flex items-center justify-center border ">
-            {row.original.avatar ? (
+            {row.original?.avatar ? (
               <img
                 src={getImageUrl(row.original.avatar)}
-                alt={row.original.name}
+                alt={name}
                 className="w-full h-full object-cover "
               />
             ) : (
@@ -78,7 +67,7 @@ const columns: ColumnDef<Employee>[] = [
             <p className="font-medium leading-none">{name}</p>
             <p className="text-xs text-gray-500 mt-1">
               Applied{" "}
-              {row.original.applied_date
+              {row.original?.applied_date && dayjs(row.original.applied_date).isValid()
                 ? dayjs(row.original.applied_date).format("MMM D, YYYY")
                 : "N/A"}
             </p>
@@ -92,10 +81,10 @@ const columns: ColumnDef<Employee>[] = [
     cell: ({ row }) => (
       <div className="space-y-1 text-sm text-gray-600">
         <p className="flex items-center text-[#101828] text-sm font-normal leading-140%  gap-2">
-          <Mail size={14} /> {row.original.email}
+          <Mail size={14} /> {row.original?.email || "N/A"}
         </p>
         <p className="flex items-center gap-2">
-          <Phone size={14} /> {row.original.phone_number || "N/A"}
+          <Phone size={14} /> {row.original?.phone_number || "N/A"}
         </p>
       </div>
     ),
@@ -109,7 +98,7 @@ const columns: ColumnDef<Employee>[] = [
       <div className="flex items-center gap-1 text-sm w-75 line-clamp-3 whitespace-normal wrap-break">
         <MapPin className="h-4 w-4 shrink-0 text-[#99A1AF]" />
         <span className="font-medium line-clamp-1">
-          {row.original.location}
+          {row.original?.location || "N/A"}
         </span>
       </div>
     ),
@@ -123,7 +112,7 @@ const columns: ColumnDef<Employee>[] = [
     cell: ({ row }) => (
       <div className="w-75 line-clamp-3 whitespace-normal wrap-break">
         <span className="font-medium">
-          {row.original.rejected_reason || "N/A"}
+          {row.original?.rejected_reason || "N/A"}
         </span>
       </div>
     ),
@@ -133,7 +122,7 @@ const columns: ColumnDef<Employee>[] = [
     cell: ({ row }) => (
       <div>
         <span className="font-medium">
-          {row.original.applied_date
+          {row.original?.applied_date && dayjs(row.original.applied_date).isValid()
             ? new Date(row.original.applied_date).toLocaleDateString("en-GB")
             : "N/A"}
         </span>
@@ -143,7 +132,7 @@ const columns: ColumnDef<Employee>[] = [
   {
     header: "Status",
     cell: ({ row }) => {
-      const status = row.original.status;
+      const status = row.original?.status || "unknown";
       const styles: Record<string, string> = {
         pending: "bg-yellow-100 text-yellow-700",
         verified: "bg-green-100 text-green-700",
@@ -168,27 +157,39 @@ export default function CleanerRequest() {
   const [search, setSearch] = React.useState("");
   const [sort, setSort] = React.useState("");
 
-  const { data, isLoading } = useGetCleanerRequestQuery(undefined);
-  const [updateCleanerRequest] = useUpdateCleanerRequestMutation();
-  const cleaners = data?.data?.data || [];
+  const { data, isLoading, isError, refetch } =
+    useGetCleanerRequestQuery(undefined);
+  const cleaners = React.useMemo(() => {
+    const rows: unknown = data?.data?.data;
+    return Array.isArray(rows)
+      ? rows.filter(
+          (row: unknown): row is Employee =>
+            typeof row === "object" && row !== null,
+        )
+      : [];
+  }, [data]);
 
   /* search filter */
   const filteredData = React.useMemo(() => {
-    let result = Array.isArray(cleaners) ? cleaners : [];
+    let result = cleaners;
 
     if (search) {
       const lower = search.toLowerCase();
       result = result.filter((e) =>
-        `${e.name} ${e.email}`.toLowerCase().includes(lower),
+        `${e?.name ?? ""} ${e?.email ?? ""}`.toLowerCase().includes(lower),
       );
     }
 
     if (sort === "name-asc") {
-      result = [...result].sort((a, b) => a.name.localeCompare(b.name));
+      result = [...result].sort((a, b) =>
+        (a?.name ?? "").localeCompare(b?.name ?? ""),
+      );
     }
 
     if (sort === "name-desc") {
-      result = [...result].sort((a, b) => b.name.localeCompare(a.name));
+      result = [...result].sort((a, b) =>
+        (b?.name ?? "").localeCompare(a?.name ?? ""),
+      );
     }
 
     return result;
@@ -200,20 +201,19 @@ export default function CleanerRequest() {
     return filteredData.slice(start, start + pageSize);
   }, [filteredData, page, pageSize]);
 
-  const handleApprove = async (employee: Employee) => {
-    try {
-      await updateCleanerRequest({
-        id: employee.id,
-        status: "approved",
-      }).unwrap();
-      toast.success("Cleaner approved successfully");
-    } catch (error) {
-      toast.error("Failed to approve cleaner request");
-    }
-  };
-
   if (isLoading) {
     return <CleanerRequestSkeleton />;
+  }
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center gap-3 py-12 text-center">
+        <p className="text-sm text-red-600">Unable to load cleaner requests. Please try again.</p>
+        <Button type="button" variant="outline" onClick={() => refetch()}>
+          Retry
+        </Button>
+      </div>
+    );
   }
 
   return (
