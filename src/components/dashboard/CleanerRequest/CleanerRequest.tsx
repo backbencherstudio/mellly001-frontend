@@ -17,6 +17,7 @@ import {
 import { Eye } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { getImageUrl } from "@/lib/utils";
 
 export function DialogScrollableContent({
   data: employee,
@@ -203,7 +204,7 @@ export function DialogScrollableContent({
                 <p className="text-sm text-[#6A7282] mb-2">Front Image</p>
                 {cleaner?.id_card_front_url ? (
                   <img
-                    src={cleaner.id_card_front_url}
+                    src={getImageUrl(cleaner.id_card_front_url)}
                     crossOrigin="anonymous"
                     alt="Front ID"
                     className="w-full h-64 rounded-lg border object-center"
@@ -219,7 +220,7 @@ export function DialogScrollableContent({
                 <p className="text-sm text-[#6A7282] mb-2">Back Image</p>
                 {cleaner?.id_card_back_url ? (
                   <img
-                    src={cleaner.id_card_back_url}
+                    src={getImageUrl(cleaner.id_card_back_url)}
                     crossOrigin="anonymous"
                     alt=""
                     className="w-full h-64 rounded-lg border object-center"

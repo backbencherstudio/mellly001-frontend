@@ -26,6 +26,7 @@ import {
 } from "@/redux/features/dashboardOverView/dashboardOverView";
 import { toast } from "sonner";
 import dayjs from "dayjs";
+import { getImageUrl } from "@/lib/utils";
 import {
   Select,
   SelectContent,
@@ -60,12 +61,12 @@ const columns: ColumnDef<Employee>[] = [
 
       return (
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-full overflow-hidden bg-green-100 flex items-center justify-center">
+          <div className="h-10 w-10 rounded-full overflow-hidden bg-green-100 flex items-center justify-center border ">
             {row.original.avatar ? (
               <img
-                src={row.original.avatar}
+                src={getImageUrl(row.original.avatar)}
                 alt={row.original.name}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover "
               />
             ) : (
               <span className="text-sm font-semibold text-green-700">
@@ -107,7 +108,9 @@ const columns: ColumnDef<Employee>[] = [
     cell: ({ row }) => (
       <div className="flex items-center gap-1 text-sm w-75 line-clamp-3 whitespace-normal wrap-break">
         <MapPin className="h-4 w-4 shrink-0 text-[#99A1AF]" />
-        <span className="font-medium line-clamp-1">{row.original.location}</span>
+        <span className="font-medium line-clamp-1">
+          {row.original.location}
+        </span>
       </div>
     ),
   },
