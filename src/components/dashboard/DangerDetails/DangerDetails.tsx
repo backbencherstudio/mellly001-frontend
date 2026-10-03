@@ -27,17 +27,32 @@ export function DangerDetails({
     }
 
     const handleUpdateStatus = async (status: string) => {
+        const employeeId = employee?.id;
+        if (!employeeId) {
+            toast.error("Unable to update danger request: missing request ID");
+            return;
+        }
+
         try {
             const response = await updateStatus({
-                id: employee.id,
+                id: employeeId,
                 status,
             }).unwrap();
 
-            toast.success(response.message);
-        } catch (error: any) {
-            toast.error(
-                error?.data?.message || "Failed to update status"
-            );
+            if (response?.success === false) {
+                toast.error(response?.message || "Failed to update status");
+                return;
+            }
+
+            toast.success(response?.message || "Danger request updated successfully");
+        } catch (error: unknown) {
+            const message =
+                typeof error === "object" && error !== null && "data" in error &&
+                typeof error.data === "object" && error.data !== null && "message" in error.data &&
+                typeof error.data.message === "string"
+                    ? error.data.message
+                    : "Failed to update status. Please try again.";
+            toast.error(message);
         }
     };
 
@@ -60,20 +75,20 @@ export function DangerDetails({
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <p className="text-sm text-[#6A7282]">Full Name</p>
-                            <p className="font-medium text-[#101828] text-sm">{employee.name}</p>
+                            <p className="font-medium text-[#101828] text-sm">{employee?.name || "N/A"}</p>
                         </div>
                         <div>
                             <p className="text-sm text-gray-500">Email</p>
-                            <p className="font-medium text-[#101828] text-sm">{employee.email}</p>
+                            <p className="font-medium text-[#101828] text-sm">{employee?.email || "N/A"}</p>
                         </div>
                         <div>
                             <p className="text-sm text-gray-500">Phone</p>
-                            <p className="font-medium text-[#101828] text-sm">{employee.phone_number}</p>
+                            <p className="font-medium text-[#101828] text-sm">{employee?.phone_number || "N/A"}</p>
                         </div>
 
                         <div>
                             <p className="text-sm text-gray-500">Applied Date</p>
-                            <p className="font-medium">{formatDate(employee.applied_date)}</p>
+                            <p className="font-medium">{employee?.applied_date ? formatDate(employee.applied_date) : "N/A"}</p>
                         </div>
 
 
@@ -104,7 +119,7 @@ export function DangerDetails({
 
                     <div className="gap-4 flex flex-col md:flex-row justify-center items-center">
                         {/* <button className="text-red-500 font-bold text-base py-3.5 border border-red-500 border-2 cursor-pointer whitespace-nowrap text-center md:px-20 lg:px-25 rounded-lg" onClick={() => handleUpdateStatus("REJECTED")}>Reject Application</button> */}
-                        <button className="text-white bg-green-800 font-bold text-base py-3.5 whitespace-nowrap cursor-pointer text-center md:px-20 lg:px-25 rounded-lg" onClick={() => handleUpdateStatus("COMPLETED")}>Approve & Verify</button>
+                        <button disabled={isLoading} className="text-white bg-green-800 font-bold text-base py-3.5 whitespace-nowrap cursor-pointer text-center md:px-20 lg:px-25 rounded-lg disabled:cursor-not-allowed disabled:opacity-60" onClick={() => handleUpdateStatus("COMPLETED")}>{isLoading ? "Updating..." : "Approve & Verify"}</button>
                     </div>
 
 

@@ -25,6 +25,7 @@ import DangerRequestSkeleton from "@/components/loading/DangerRequestSkeleton";
 import { formatDate } from "@/lib/DateFormate";
 import { getImageUrl } from "@/lib/utils";
 import dayjs from "dayjs";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -35,20 +36,20 @@ import {
 
 /* ================= TYPES ================= */
 export type DangerRequest = {
-    id: string;
-    name: string;
-    email: string;
-    joined: string;
-    status: string;
-    phone_number: string;
-    phone: string;
+    id?: string;
+    name?: string;
+    email?: string;
+    joined?: string;
+    status?: string;
+    phone_number?: string;
+    phone?: string;
     avatar: string | null;
 
     location?: string | null;
     latitude?: number;
     longitude?: number;
 
-    applied_date: string;
+    applied_date?: string;
 };
 
 function LocationCell({
@@ -151,7 +152,7 @@ const columns: ColumnDef<DangerRequest>[] = [
     {
         header: "Cleaner",
         cell: ({ row }) => {
-            const name = row.original.name;
+            const name = row.original?.name || "Unknown cleaner";
             const initials = name
                 .split(" ")
                 .map((n) => n[0])
@@ -161,7 +162,7 @@ const columns: ColumnDef<DangerRequest>[] = [
                 <div className="flex items-center gap-3">
                     <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#E0E7FF] text-sm font-semibold text-[#4F39F6]">
                         <span>{initials}</span>
-                        {row.original.avatar && (
+                        {row.original?.avatar && (
                             <img
                                 src={getImageUrl(row.original.avatar)}
                                 alt={name}
@@ -175,7 +176,9 @@ const columns: ColumnDef<DangerRequest>[] = [
                     <div>
                         <p className="font-medium leading-none">{name}</p>
                         <p className="text-xs text-gray-500 mt-1">
-                            Joined {dayjs(row.original.joined).format("MMM D, YYYY")}
+                            Joined {row.original?.joined && dayjs(row.original.joined).isValid()
+                                ? dayjs(row.original.joined).format("MMM D, YYYY")
+                                : "N/A"}
                         </p>
                     </div>
                 </div>
@@ -187,10 +190,10 @@ const columns: ColumnDef<DangerRequest>[] = [
         cell: ({ row }) => (
             <div className="space-y-1 text-sm text-gray-600">
                 <p className="flex items-center text-[#101828] text-sm font-normal leading-140%  gap-2">
-                    <Mail size={14} /> {row.original.email}
+                    <Mail size={14} /> {row.original?.email || "N/A"}
                 </p>
                 <p className="flex items-center gap-2">
-                    <Phone size={14} /> {row.original.phone_number}
+                    <Phone size={14} /> {row.original?.phone_number || "N/A"}
                 </p>
             </div>
         ),
@@ -205,7 +208,7 @@ const columns: ColumnDef<DangerRequest>[] = [
         maxSize: 300,
 
         cell: ({ row }) => {
-            const { latitude, longitude, location } = row.original;
+            const { latitude, longitude, location } = row.original || {};
 
             const mapUrl =
                 latitude !== undefined && longitude !== undefined
@@ -239,7 +242,9 @@ const columns: ColumnDef<DangerRequest>[] = [
         header: "Applied Date",
         cell: ({ row }) => (
             <div>
-                <span className="font-medium">{formatDate(row.original.applied_date)}</span>
+                <span className="font-medium">
+                    {row.original?.applied_date ? formatDate(row.original.applied_date) : "N/A"}
+                </span>
             </div>
         ),
     },
@@ -247,10 +252,7 @@ const columns: ColumnDef<DangerRequest>[] = [
     {
         header: "Status",
         cell: ({ row }) => {
-            const status = row.original.status as
-                | "COMPLETED"
-                | "REJECTED"
-                | "PENDING";
+            const status = (row.original?.status || "UNKNOWN").toUpperCase();
 
             const styles = {
                 COMPLETED: "bg-green-100 text-green-700",
@@ -260,7 +262,7 @@ const columns: ColumnDef<DangerRequest>[] = [
 
             return (
                 <span
-                    className={`px-3 py-1 rounded-full text-xs font-medium ${styles[status]}`}
+                    className={`px-3 py-1 rounded-full text-xs font-medium ${styles[status as keyof typeof styles] || "bg-gray-100 text-gray-600"}`}
                 >
                     {status}
                 </span>
@@ -277,15 +279,17 @@ export default function CleanerRequest() {
     const [search, setSearch] = React.useState("");
     const [sortBy, setSortBy] = React.useState("");
 
-    const { data, isLoading } = useGetDangerRequestQuery({});
+    const { data, isLoading, isError, refetch } = useGetDangerRequestQuery({});
     const dangerRequest = React.useMemo(() => {
         const res = data?.data;
+        const rows = Array.isArray(res) ? res :
+            Array.isArray(res?.data) ? res.data :
+            Array.isArray(res?.items) ? res.items : [];
 
-        if (Array.isArray(res)) return res;
-        if (Array.isArray(res?.data)) return res.data;
-        if (Array.isArray(res?.items)) return res.items;
-
-        return [];
+        return rows.filter(
+            (row: unknown): row is DangerRequest =>
+                typeof row === "object" && row !== null,
+        );
     }, [data]);
 
     /* search filter */
@@ -293,7 +297,7 @@ export default function CleanerRequest() {
         if (!search) return dangerRequest;
 
         return dangerRequest.filter((e: DangerRequest) =>
-            `${e.name} ${e.email}`
+            `${e?.name ?? ""} ${e?.email ?? ""}`
                 .toLowerCase()
                 .includes(search.toLowerCase())
         );
@@ -304,7 +308,7 @@ export default function CleanerRequest() {
 
         if (sortBy === "name") {
             return data.sort((a, b) =>
-                a.name.localeCompare(b.name)
+                (a?.name ?? "").localeCompare(b?.name ?? "")
             );
         }
 
@@ -332,6 +336,17 @@ export default function CleanerRequest() {
 
     if (isLoading) {
         return <DangerRequestSkeleton />;
+    }
+
+    if (isError) {
+        return (
+            <div className="flex flex-col items-center gap-3 py-12 text-center">
+                <p className="text-sm text-red-600">Unable to load danger requests. Please try again.</p>
+                <Button type="button" variant="outline" onClick={() => refetch()}>
+                    Retry
+                </Button>
+            </div>
+        );
     }
 
     return (
