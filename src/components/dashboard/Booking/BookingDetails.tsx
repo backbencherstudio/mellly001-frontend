@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import dayjs from "dayjs";
 import { toast } from "sonner";
 import {
@@ -17,63 +17,127 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+type BookingDetailsData = {
+  id?: string | number;
+  booking_id?: string | number;
+  bookingId?: string | number;
+  status?: string;
+  booking_date?: string | null;
+  payment_status?: string;
+  residential_cleaning_package?: {
+    title?: string;
+    duration?: string;
+    price?: number | string;
+  } | null;
+  service_name?: string;
+  service?: string;
+  service_duration?: string;
+  total_price?: number | string | null;
+  amount?: number | string | null;
+  revenue?: number | string | null;
+  user?: {
+    id?: string | number;
+    name?: string;
+    email?: string;
+    phone_number?: string;
+    location?: string;
+  } | null;
+  homeowner_name?: string;
+  homeowner_location?: string;
+  location?: string;
+  maid?: {
+    id?: string | number;
+    name?: string;
+    email?: string;
+    phone_number?: string;
+  } | null;
+  maid_id?: string | number;
+  cleaner_id?: string | number;
+  cleanerId?: string | number;
+  cleaner_name?: string;
+  cleaner?: { id?: string | number } | null;
+  slot?: string | number;
+  booking_time?: string;
+  start_time?: string;
+  end_time?: string;
+  cancle_reason?: string;
+  maid_note?: string;
+};
+
+const toBookingDetailsData = (value: unknown): BookingDetailsData | null =>
+  typeof value === "object" && value !== null
+    ? (value as BookingDetailsData)
+    : null;
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (typeof error !== "object" || error === null) return fallback;
+
+  if ("data" in error && typeof error.data === "object" && error.data !== null) {
+    const data = error.data;
+    if ("message" in data && typeof data.message === "string") {
+      return data.message;
+    }
+  }
+
+  if ("message" in error && typeof error.message === "string") {
+    return error.message;
+  }
+
+  return fallback;
+};
+
 export default function BookingDetails({
-  bookingData: initialBookingData,
-  onClose,
+  bookingData: initialBookingValue,
 }: {
-  bookingData: any;
-  onClose?: () => void;
+  bookingData: unknown;
 }) {
-  const bookingId =
+  const initialBookingData = toBookingDetailsData(initialBookingValue);
+  const bookingId = String(
     initialBookingData?.booking_id ||
     initialBookingData?.bookingId ||
-    initialBookingData?.id;
+    initialBookingData?.id ||
+    "",
+  );
 
   const {
     data: apiBookingDetailData,
     isLoading: isBookingLoading,
+    isError: isBookingError,
     refetch,
   } = useGetBookingByIdQuery(bookingId, {
     skip: !bookingId,
   });
 
-  const bookingData =
+  const bookingData = toBookingDetailsData(
     apiBookingDetailData?.data ||
     apiBookingDetailData?.booking ||
     apiBookingDetailData ||
-    initialBookingData;
+    initialBookingData,
+  );
 
-  const [selectedCleanerId, setSelectedCleanerId] = useState<string>("");
-  const [selectedStatus, setSelectedStatus] = useState<string>("PENDING");
+  const [selectedCleanerId, setSelectedCleanerId] = useState<string | null>(null);
+  const [selectedStatusOverride, setSelectedStatusOverride] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (bookingData) {
-      if (bookingData.status) {
-        setSelectedStatus(bookingData.status.toUpperCase());
-      }
-      const existingCleanerId =
-        bookingData.maid?.id ||
-        bookingData.maid_id ||
-        bookingData.cleaner_id ||
-        bookingData.cleanerId ||
-        bookingData.cleaner?.id;
-      if (existingCleanerId) {
-        setSelectedCleanerId(String(existingCleanerId));
-      }
-    }
-  }, [bookingData]);
-
-  const { data: cleanersData, isLoading: isCleanersLoading } =
+  const {
+    data: cleanersData,
+    isLoading: isCleanersLoading,
+    isError: isCleanersError,
+    refetch: refetchCleaners,
+  } =
     useGetCleanersQuery({});
   const [updateBookingStatus, { isLoading: isUpdatingStatus }] =
     useUpdateBookingStatusMutation();
   const [assignBookingCleaner, { isLoading: isAssigningCleaner }] =
     useAssignBookingCleanerMutation();
 
-  const cleanersList: any[] = React.useMemo(() => {
+  const cleanersList: Record<string, unknown>[] = React.useMemo(() => {
     const raw = cleanersData?.data?.data || cleanersData?.data;
-    if (Array.isArray(raw)) return raw;
-    return [];
+    return Array.isArray(raw)
+      ? raw.filter(
+          (cleaner: unknown): cleaner is Record<string, unknown> =>
+            typeof cleaner === "object" && cleaner !== null,
+        )
+      : [];
   }, [cleanersData]);
 
   if (!bookingData && !isBookingLoading) {
@@ -82,11 +146,25 @@ export default function BookingDetails({
     );
   }
 
-  const currentBookingId =
+  const currentBookingId = String(
     bookingData?.id ||
     bookingData?.booking_id ||
     bookingId ||
-    "-";
+    "",
+  );
+  const selectedStatus =
+    selectedStatusOverride ?? bookingData?.status?.toUpperCase() ?? "PENDING";
+  const existingCleanerId =
+    bookingData?.maid?.id ??
+    bookingData?.maid_id ??
+    bookingData?.cleaner_id ??
+    bookingData?.cleanerId ??
+    bookingData?.cleaner?.id;
+  const cleanerSelectValue =
+    selectedCleanerId ??
+    (existingCleanerId === undefined || existingCleanerId === null
+      ? undefined
+      : String(existingCleanerId));
 
   const status = (bookingData?.status || "PENDING").toLowerCase();
 
@@ -159,15 +237,24 @@ export default function BookingDetails({
   // Status Change Handler
   const handleStatusUpdate = async () => {
     if (!selectedStatus) return;
+    if (!currentBookingId) {
+      toast.error("Unable to update booking: missing booking ID");
+      return;
+    }
+
     try {
       const res = await updateBookingStatus({
         id: currentBookingId,
         status: selectedStatus.toUpperCase(),
       }).unwrap();
+      if (res?.success === false) {
+        toast.error(res?.message || "Failed to update booking status");
+        return;
+      }
       toast.success(res?.message || "Booking status updated successfully");
       refetch();
-    } catch (error: any) {
-      toast.error(error?.data?.message || "Failed to update booking status");
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, "Failed to update booking status"));
     }
   };
 
@@ -177,16 +264,24 @@ export default function BookingDetails({
       toast.error("Please select a cleaner to assign");
       return;
     }
+    if (!currentBookingId) {
+      toast.error("Unable to assign cleaner: missing booking ID");
+      return;
+    }
 
     try {
       const res = await assignBookingCleaner({
         id: currentBookingId,
         cleaner_id: selectedCleanerId,
       }).unwrap();
+      if (res?.success === false) {
+        toast.error(res?.message || "Failed to assign cleaner");
+        return;
+      }
       toast.success(res?.message || "Cleaner assigned successfully");
       refetch();
-    } catch (error: any) {
-      toast.error(error?.data?.message || "Failed to assign cleaner");
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, "Failed to assign cleaner"));
     }
   };
 
@@ -197,7 +292,7 @@ export default function BookingDetails({
         <div>
           <p className="text-xs text-gray-400">Booking ID</p>
           <p className="font-semibold text-gray-900 text-sm md:text-base break-all">
-            {currentBookingId}
+            {currentBookingId || "-"}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -216,6 +311,15 @@ export default function BookingDetails({
           </span>
         </div>
       </div>
+
+      {isBookingError && (
+        <div className="flex items-center justify-between gap-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+          <span>Could not load the latest booking details.</span>
+          <button type="button" className="font-medium underline" onClick={() => refetch()}>
+            Retry
+          </button>
+        </div>
+      )}
 
       {/* Details Grid */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -299,7 +403,7 @@ export default function BookingDetails({
             <div className="flex gap-1.5">
               <Select
                 value={selectedStatus}
-                onValueChange={(value) => setSelectedStatus(value)}
+                onValueChange={(value) => setSelectedStatusOverride(value)}
               >
                 <SelectTrigger className="w-full rounded-md border bg-white px-2 py-1.5 text-xs text-gray-800 shadow-none focus:ring-0">
                   <SelectValue />
@@ -330,7 +434,7 @@ export default function BookingDetails({
             <label className="text-[11px] text-gray-500">Assign Cleaner</label>
             <div className="flex gap-1.5">
               <Select
-                value={selectedCleanerId || undefined}
+                value={cleanerSelectValue}
                 onValueChange={(value) => setSelectedCleanerId(value)}
                 disabled={isCleanersLoading}
               >
@@ -339,19 +443,36 @@ export default function BookingDetails({
                 </SelectTrigger>
                 <SelectContent>
                   {cleanersList.map((cleaner) => {
+                    const nestedUser = cleaner.user;
+                    const nestedUserId =
+                      typeof nestedUser === "object" && nestedUser !== null && "id" in nestedUser
+                        ? nestedUser.id
+                        : undefined;
                     const cleanerId =
-                      cleaner.userId ||
-                      cleaner.user_id ||
-                      cleaner.user?.id ||
+                      cleaner.userId ??
+                      cleaner.user_id ??
+                      nestedUserId ??
                       cleaner.id;
+                    if (cleanerId === undefined || cleanerId === null || cleanerId === "") {
+                      return null;
+                    }
                     return (
-                      <SelectItem key={cleanerId} value={String(cleanerId)}>
-                        {cleaner.name}
+                      <SelectItem key={String(cleanerId)} value={String(cleanerId)}>
+                        {typeof cleaner.name === "string" ? cleaner.name : "Unnamed cleaner"}
                       </SelectItem>
                     );
                   })}
                 </SelectContent>
               </Select>
+              {isCleanersError && (
+                <button
+                  type="button"
+                  className="text-left text-xs text-red-600 underline"
+                  onClick={() => refetchCleaners()}
+                >
+                  Cleaner list failed to load. Retry.
+                </button>
+              )}
               <button
                 type="button"
                 onClick={handleAssignCleaner}

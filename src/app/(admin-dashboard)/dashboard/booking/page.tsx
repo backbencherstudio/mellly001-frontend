@@ -8,6 +8,7 @@ import { useGetBookingDetaialsQuery } from "@/redux/features/dashboardOverView/d
 import dayjs from "dayjs";
 import CustomModal from "@/components/reusable/CustomModal";
 import BookingDetails from "@/components/dashboard/Booking/BookingDetails";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -16,14 +17,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-/* ================= TYPES ================= */
-type BookingStatus =
-  | "in-progress"
-  | "confirmed"
-  | "pending"
-  | "completed"
-  | "cancelled"
-  | "rejected";
+type BookingRecord = Record<string, unknown>;
+
+const toDisplayText = (value: unknown, fallback = "-") =>
+  typeof value === "string" || typeof value === "number"
+    ? String(value)
+    : fallback;
 
 /* ================= HELPERS ================= */
 const statusStyle: Record<string, string> = {
@@ -42,7 +41,8 @@ export default function BookingsList() {
   const [pageSize, setPageSize] = React.useState(5);
   const [search, setSearch] = React.useState("");
   const [open, setOpen] = React.useState(false);
-  const [selectedBooking, setSelectedBooking] = React.useState<any | null>(null);
+  const [selectedBooking, setSelectedBooking] =
+    React.useState<BookingRecord | null>(null);
   const [sort, setSort] = React.useState("");
 
   const queryParams = React.useMemo(() => {
@@ -52,13 +52,20 @@ export default function BookingsList() {
     };
   }, [search]);
 
-  const { data, isLoading } = useGetBookingDetaialsQuery(queryParams);
+  const { data, isLoading, isError, refetch } =
+    useGetBookingDetaialsQuery(queryParams);
 
   const bookingData = React.useMemo(() => {
     const raw = data?.data;
-    if (Array.isArray(raw)) return raw;
-    if (Array.isArray(raw?.data)) return raw.data;
-    return [];
+    const rows: unknown[] = Array.isArray(raw)
+      ? raw
+      : Array.isArray(raw?.data)
+        ? raw.data
+        : [];
+    return rows.filter(
+      (row): row is BookingRecord =>
+        typeof row === "object" && row !== null,
+    );
   }, [data]);
 
   /* search & sort */
@@ -68,7 +75,7 @@ export default function BookingsList() {
     if (search) {
       const lower = search.toLowerCase();
       list = list.filter(
-        (b: any) =>
+        (b) =>
           String(b.id || "").toLowerCase().includes(lower) ||
           String(b.homeowner_name || "").toLowerCase().includes(lower) ||
           String(b.cleaner_name || "").toLowerCase().includes(lower) ||
@@ -79,29 +86,25 @@ export default function BookingsList() {
     }
 
     if (sort === "name-asc") {
-      list.sort((a: any, b: any) =>
-        String(a.homeowner_name || "").localeCompare(
-          String(b.homeowner_name || "")
+      list.sort((a, b) =>
+        String(a.homeowner_name ?? "").localeCompare(
+          String(b.homeowner_name ?? "")
         )
       );
     } else if (sort === "name-desc") {
-      list.sort((a: any, b: any) =>
-        String(b.homeowner_name || "").localeCompare(
-          String(a.homeowner_name || "")
+      list.sort((a, b) =>
+        String(b.homeowner_name ?? "").localeCompare(
+          String(a.homeowner_name ?? "")
         )
       );
     } else {
       // Default: Most recent / newest booking at the top
-      list.sort((a: any, b: any) => {
-        const dateB = new Date(
-          b.created_at || b.createdAt || b.booking_date || 0
-        ).getTime();
-        const dateA = new Date(
-          a.created_at || a.createdAt || a.booking_date || 0
-        ).getTime();
+      list.sort((a, b) => {
+        const dateB = new Date(String(b.created_at ?? b.createdAt ?? b.booking_date ?? 0)).getTime();
+        const dateA = new Date(String(a.created_at ?? a.createdAt ?? a.booking_date ?? 0)).getTime();
         if (dateB !== dateA) return dateB - dateA;
-        return String(b.id || "").localeCompare(
-          String(a.id || ""),
+        return String(b.id ?? "").localeCompare(
+          String(a.id ?? ""),
           undefined,
           { numeric: true }
         );
@@ -123,6 +126,17 @@ export default function BookingsList() {
 
   if (isLoading) {
     return <BookingSkeleton />;
+  }
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center gap-3 py-12 text-center">
+        <p className="text-sm text-red-600">Unable to load bookings. Please try again.</p>
+        <Button type="button" variant="outline" onClick={() => refetch()}>
+          Retry
+        </Button>
+      </div>
+    );
   }
 
   return (
@@ -163,21 +177,21 @@ export default function BookingsList() {
               No bookings found.
             </div>
           ) : (
-            paginated.map((b: any) => {
-              const statusKey = String(b.status || "pending").toLowerCase();
+            paginated.map((b, index) => {
+              const statusKey = String(b?.status || "pending").toLowerCase();
+              const bookingDate = toDisplayText(b?.booking_date, "");
               const formattedDate =
-                b.booking_date && dayjs(b.booking_date).isValid()
-                  ? dayjs(b.booking_date).format("MMM D, YYYY")
-                  : b.booking_date || "-";
+                bookingDate && dayjs(bookingDate).isValid()
+                  ? dayjs(bookingDate).format("MMM D, YYYY")
+                  : bookingDate || "-";
 
+              const amount = Number(b?.amount ?? 0);
               const formattedAmount =
-                b.amount !== undefined && b.amount !== null
-                  ? `$${Number(b.amount).toFixed(2)}`
-                  : "$0.00";
+                Number.isFinite(amount) ? `$${amount.toFixed(2)}` : "$0.00";
 
               return (
                 <div
-                  key={b.id}
+                  key={String(b?.id ?? b?.booking_id ?? `booking-${index}`)}
                   className="rounded-2xl border bg-white p-5 cursor-pointer hover:border-gray-300 transition"
                   onClick={() => {
                     setSelectedBooking(b);
@@ -187,11 +201,11 @@ export default function BookingsList() {
                   <div className="flex justify-between gap-6">
                     {/* Left */}
                     <div className="space-y-2">
-                      <p className="font-semibold">{b.id}</p>
+                      <p className="font-semibold">{toDisplayText(b?.id ?? b?.booking_id, "Booking")}</p>
 
                       <p className="flex items-center gap-2 text-sm text-gray-600">
                         <User size={14} className="shrink-0" /> Homeowner:{" "}
-                        {b.homeowner_name || "-"}
+                        {toDisplayText(b?.homeowner_name)}
                       </p>
 
                       <p className="flex items-center gap-2 text-sm text-gray-600">
@@ -201,11 +215,11 @@ export default function BookingsList() {
 
                       <p className="flex items-center gap-2 text-sm text-gray-600">
                         <MapPin size={14} className="shrink-0" />{" "}
-                        {b.location || "-"}
+                        {toDisplayText(b?.location)}
                       </p>
 
-                      {b.service && (
-                        <p className="text-xs text-gray-500">{b.service}</p>
+                      {toDisplayText(b?.service, "") && (
+                        <p className="text-xs text-gray-500">{toDisplayText(b?.service, "")}</p>
                       )}
                     </div>
 
@@ -213,12 +227,12 @@ export default function BookingsList() {
                     <div className="space-y-2">
                       <p className="flex items-start lg:items-center gap-2 text-sm text-gray-600">
                         <User size={14} className="shrink-0" /> Cleaner:{" "}
-                        {b.cleaner_name || "Unassigned"}
+                        {toDisplayText(b?.cleaner_name, "Unassigned")}
                       </p>
 
                       <p className="flex items-center gap-2 text-sm text-gray-600">
                         <Clock size={14} className="shrink-0" />{" "}
-                        {b.booking_time || "-"}
+                        {toDisplayText(b?.booking_time)}
                       </p>
 
                       <div className="block md:hidden">
@@ -228,7 +242,7 @@ export default function BookingsList() {
                             "bg-gray-100 text-gray-700"
                           }`}
                         >
-                          {b.status || "Pending"}
+                          {toDisplayText(b?.status, "Pending")}
                         </span>
                       </div>
                     </div>
@@ -242,7 +256,7 @@ export default function BookingsList() {
                             "bg-gray-100 text-gray-700"
                           }`}
                         >
-                          {b.status || "Pending"}
+                          {toDisplayText(b?.status, "Pending")}
                         </span>
                       </div>
                     </div>
@@ -252,8 +266,8 @@ export default function BookingsList() {
 
                   <div className="flex justify-between items-center">
                     <div className="text-[14px] text-[#4A5565]">
-                      {b.service_name || "Cleaning"}
-                      {b.service_duration ? ` - ${b.service_duration}` : ""}
+                      {toDisplayText(b?.service_name, "Cleaning")}
+                      {toDisplayText(b?.service_duration, "") ? ` - ${toDisplayText(b?.service_duration, "")}` : ""}
                     </div>
                     <div className="font-semibold text-base text-gray-900">
                       {formattedAmount}
@@ -286,10 +300,7 @@ export default function BookingsList() {
           size="mmd"
           onOpenChange={setOpen}
         >
-          <BookingDetails
-            bookingData={selectedBooking}
-            onClose={() => setOpen(false)}
-          />
+          <BookingDetails bookingData={selectedBooking} />
         </CustomModal>
       </div>
     </div>
