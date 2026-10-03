@@ -7,16 +7,10 @@ import {
   Search,
   CreditCard,
   Wallet,
-  Users,
-  UserCheck,
-  Calendar,
-  DollarSign,
-  Clock4,
   CreditCardIcon,
   DollarSignIcon,
 } from "lucide-react";
 import { DataTable } from "@/components/reusable/Table";
-import ArrowIcon from "@/components/icon/ArrowIcon";
 import {
   Select,
   SelectContent,
@@ -41,17 +35,22 @@ type Stat = {
 };
 
 type Payment = {
-  id: string;
-  transactionId: string;
-  transactionTime: string;
-  bookingId: string;
-  from: string;
-  to: string;
-  amount: number;
-  platformFee: number;
-  cleanerEarns: number;
-  method: PaymentMethod;
-  status: PaymentStatus;
+  id?: string;
+  transactionId?: string;
+  transactionTime?: string;
+  bookingId?: string;
+  from?: string;
+  to?: string;
+  amount?: number;
+  platformFee?: number;
+  cleanerEarns?: number;
+  method?: PaymentMethod;
+  status?: PaymentStatus;
+};
+
+const formatAmount = (value?: number) => {
+  const amount = Number(value ?? 0);
+  return Number.isFinite(amount) ? amount.toFixed(2) : "0.00";
 };
 
 const stats: Stat[] = [
@@ -183,9 +182,9 @@ const columns: ColumnDef<Payment>[] = [
     header: "Transaction",
     cell: ({ row }) => (
       <div>
-        <p className="font-medium">{row.original.transactionId}</p>
+        <p className="font-medium">{row.original?.transactionId || "N/A"}</p>
         <p className="text-xs text-gray-500">
-          {row.original.transactionTime}
+          {row.original?.transactionTime || "N/A"}
         </p>
       </div>
     ),
@@ -194,7 +193,7 @@ const columns: ColumnDef<Payment>[] = [
     header: "Booking",
     cell: ({ row }) => (
       <span className="font-medium text-sm">
-        {row.original.bookingId}
+        {row.original?.bookingId || "N/A"}
       </span>
     ),
   },
@@ -204,10 +203,10 @@ const columns: ColumnDef<Payment>[] = [
       <div className="text-sm">
         <p>
           <span className="text-[#101828]">From:</span>{" "}
-          {row.original.from}
+          {row.original?.from || "N/A"}
         </p>
         <p className="text-gray-500">
-          To: {row.original.to}
+          To: {row.original?.to || "N/A"}
         </p>
 
       </div>
@@ -216,14 +215,14 @@ const columns: ColumnDef<Payment>[] = [
   {
     header: "Amount",
     cell: ({ row }) => (
-      <span className="font-bold text-base">${row.original.amount}</span>
+      <span className="font-bold text-base">${formatAmount(row.original?.amount)}</span>
     ),
   },
   {
     header: "Platform Fee",
     cell: ({ row }) => (
       <p className="text-[#101828] text-base font-normal">
-        ${row.original.platformFee}
+        ${formatAmount(row.original?.platformFee)}
       </p>
     ),
   },
@@ -231,7 +230,7 @@ const columns: ColumnDef<Payment>[] = [
     header: "Cleaner Earns",
     cell: ({ row }) => (
       <span className="font-medium text-green-600">
-        ${row.original.cleanerEarns}
+        ${formatAmount(row.original?.cleanerEarns)}
       </span>
     ),
   },
@@ -239,12 +238,12 @@ const columns: ColumnDef<Payment>[] = [
     header: "Method",
     cell: ({ row }) => (
       <div className="flex items-center gap-2 text-sm text-gray-600">
-        {row.original.method === "Wallet" ? (
+        {row.original?.method === "Wallet" ? (
           <Wallet size={14} />
         ) : (
           <CreditCard size={14} />
         )}
-        {row.original.method}
+        {row.original?.method || "N/A"}
       </div>
     ),
   },
@@ -252,9 +251,9 @@ const columns: ColumnDef<Payment>[] = [
     header: "Status",
     cell: ({ row }) => (
       <span
-        className={`px-3 py-1 rounded-full text-xs font-medium ${statusStyle[row.original.status]}`}
+        className={`px-3 py-1 rounded-full text-xs font-medium ${statusStyle[row.original?.status || "pending"] || "bg-gray-100 text-gray-600"}`}
       >
-        {row.original.status}
+        {row.original?.status || "pending"}
       </span>
     ),
   },
@@ -268,9 +267,14 @@ export default function PaymentsTable() {
 
   /* search */
   const filtered = React.useMemo(() => {
-    if (!search) return payments;
-    return payments.filter((p) =>
-      `${p.transactionId} ${p.bookingId} ${p.from}`
+    const rows = Array.isArray(payments)
+      ? payments.filter((payment): payment is Payment =>
+          typeof payment === "object" && payment !== null,
+        )
+      : [];
+    if (!search) return rows;
+    return rows.filter((p) =>
+      `${p?.transactionId ?? ""} ${p?.bookingId ?? ""} ${p?.from ?? ""}`
         .toLowerCase()
         .includes(search.toLowerCase())
     );
