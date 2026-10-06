@@ -212,7 +212,7 @@ export default function JobApprovals() {
             value={sort || undefined}
             onValueChange={(value) => setSort(value)}
           >
-            <SelectTrigger className="h-11 w-full rounded-xl border border-[#E0E8E2] bg-white px-3 text-sm text-[#53645A] outline-none transition focus:border-[#70A986] focus:ring-2 focus:ring-[#168044]/10 shadow-none">
+            <SelectTrigger className="h-11 w-full rounded-xl border border-[#E0E8E2] bg-white px-3 py-5 text-sm text-[#53645A] outline-none transition focus:border-[#70A986] focus:ring-2 focus:ring-[#168044]/10 shadow-none">
               <SelectValue placeholder="Sort by" />
             </SelectTrigger>
             <SelectContent>
