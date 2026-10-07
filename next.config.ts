@@ -1,18 +1,18 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   env: {
-    NEXT_PUBLIC_API_URL: "https://backend.cleennconnect.com/api/",
+    NEXT_PUBLIC_API_URL: "https://cleennconnect.anikstudio.com/api/",
   },
   images: {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "backend.cleennconnect.com",
+        hostname: "cleennconnect.anikstudio.com",
         pathname: "/**",
       },
       {
         protocol: "http",
-        hostname: "backend.cleennconnect.com",
+        hostname: "cleennconnect.anikstudio.com",
         port: "4000",
         pathname: "/**",
       },
