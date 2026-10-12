@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { usePathname } from "next/navigation";
-import { Bell, Circle } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { Bell, CheckCheck } from "lucide-react";
 
 import { getSocket } from "@/lib/Socket";
 
@@ -29,6 +29,16 @@ interface Notification {
   sender?: { name?: string } | null;
 }
 
+const sanitizeTerminology = (text?: string | null): string => {
+  if (!text) return "";
+  return text
+    .replace(/professional\s+maid/gi, "Professional Cleaner")
+    .replace(/\bmaid\b/gi, "cleaner")
+    .replace(/\bmaids\b/gi, "cleaners")
+    .replace(/\bMaid\b/g, "Cleaner")
+    .replace(/\bMaids\b/g, "Cleaners");
+};
+
 const notificationLabels: Record<string, string> = {
   approve_job_submission: "Job Approval Submitted",
   job_approval: "Job Approval Update",
@@ -36,52 +46,121 @@ const notificationLabels: Record<string, string> = {
   booking_updated: "Booking Updated",
   cleaner_registration: "New Cleaner Application",
   homeowner_registration: "New Homeowner Registration",
-  danger_request: "Urgent Safety Request",
+  user_registration: "New User Registration",
+  new_user_registration: "New User Registration",
+  danger_request: "Emergency Request",
+  emergency_request: "Emergency Request",
 };
 
 const getNotificationLabel = (notification: Notification) => {
-  if (notification.type && notificationLabels[notification.type]) {
-    return notificationLabels[notification.type];
+  const type = notification.type || "";
+  if (notificationLabels[type]) {
+    return sanitizeTerminology(notificationLabels[type]);
   }
 
-  return (
-    notification.type
+  const raw =
+    type
       ?.replaceAll("_", " ")
-      .replace(/\b\w/g, (letter) => letter.toUpperCase()) || "Notification"
-  );
+      .replace(/\b\w/g, (letter) => letter.toUpperCase()) || "Notification";
+
+  return sanitizeTerminology(raw);
 };
 
-const getNotificationHref = (notification: Notification) => {
+const getNotificationHref = (notification: Notification): string => {
   if (notification.targetUrl) return notification.targetUrl;
 
-  const type = notification.type?.toLowerCase() || "";
-  const entityId = notification.entityId;
+  const type = (notification.type || "").toLowerCase();
+  const text = (notification.text || "").toLowerCase();
 
+  // Booking or Job related
   if (
     notification.bookingId ||
     type.includes("booking") ||
-    type.includes("job")
+    type.includes("job") ||
+    text.includes("booking")
   ) {
+    if (
+      type.includes("approval") ||
+      type.includes("submission") ||
+      text.includes("approval") ||
+      text.includes("submission")
+    ) {
+      return "/dashboard/jobAppruve";
+    }
     return "/dashboard/booking";
   }
 
-  if (notification.applicationId || type.includes("cleaner")) {
-    return "/dashboard/cleaner-request";
-  }
-
-  if (notification.homeownerId || type.includes("homeowner")) {
-    return "/dashboard/homeowners";
-  }
-
-  if (notification.cleanerId) return "/dashboard/cleaners";
-  if (notification.jobApprovalId || type.includes("approval")) {
-    return "/dashboard/jobAppruve";
-  }
-  if (notification.dangerRequestId || type.includes("danger")) {
+  // Emergency / Safety Request
+  if (
+    notification.dangerRequestId ||
+    type.includes("danger") ||
+    type.includes("emergency") ||
+    type.includes("safety") ||
+    text.includes("danger") ||
+    text.includes("emergency")
+  ) {
     return "/dashboard/danger-request";
   }
 
-  return entityId ? "/dashboard" : null;
+  // Cleaner application / registration
+  if (
+    notification.applicationId ||
+    type.includes("cleaner_registration") ||
+    type.includes("cleaner_application") ||
+    type.includes("cleaner_request") ||
+    text.includes("cleaner application") ||
+    (type.includes("registration") && text.includes("cleaner"))
+  ) {
+    return "/dashboard/cleaner-request";
+  }
+
+  // Existing cleaner account
+  if (notification.cleanerId) {
+    return "/dashboard/cleaners";
+  }
+
+  // Homeowner
+  if (
+    notification.homeownerId ||
+    type.includes("homeowner") ||
+    text.includes("homeowner")
+  ) {
+    return "/dashboard/homeowners";
+  }
+
+  // New User Registration (fixes item where New User Registration did nothing)
+  if (
+    type.includes("user") ||
+    type.includes("registration") ||
+    text.includes("registration") ||
+    text.includes("registered")
+  ) {
+    if (text.includes("cleaner") || type.includes("cleaner")) {
+      return "/dashboard/cleaner-request";
+    }
+    return "/dashboard/homeowners";
+  }
+
+  // Job Approvals
+  if (
+    notification.jobApprovalId ||
+    type.includes("approval") ||
+    text.includes("approval")
+  ) {
+    return "/dashboard/jobAppruve";
+  }
+
+  // Payments / Transactions
+  if (
+    type.includes("payment") ||
+    type.includes("transaction") ||
+    text.includes("payment") ||
+    text.includes("transaction")
+  ) {
+    return "/dashboard/payments";
+  }
+
+  return "/dashboard";
 };
 
 const routeMeta: Record<string, { title: string; desc: string }> = {
@@ -98,12 +177,12 @@ const routeMeta: Record<string, { title: string; desc: string }> = {
     desc: "Manage all cleaner accounts and their activities.",
   },
   "/dashboard/cleaner-request": {
-    title: "Cleaner Applications ",
-    desc: "Review and manage cleaner applications, documents, and verification status",
+    title: "Cleaner Applications",
+    desc: "Review and manage cleaner applications, documents, and verification status.",
   },
   "/dashboard/booking": {
     title: "Bookings",
-    desc: "Manage and monitor all service bookings",
+    desc: "Manage and monitor all service bookings.",
   },
   "/dashboard/payments": {
     title: "Payments",
@@ -119,14 +198,32 @@ const routeMeta: Record<string, { title: string; desc: string }> = {
   },
 };
 
+const STORAGE_KEY = "cleen_admin_read_notification_ids";
+
 const DashboardHeader = () => {
   const pathname = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [moreItems, setMoreItems] = useState<Notification[]>([]);
   const [readIds, setReadIds] = useState<string[]>([]);
   const [loadingMore, setLoadingMore] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Load persistent read IDs on client mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          setReadIds(parsed);
+        }
+      }
+    } catch (e) {
+      console.error("Failed to load read notifications from localStorage:", e);
+    }
+  }, []);
 
   const { data: firstData, refetch } = useGetAllNotificationQuery({
     page: 1,
@@ -143,16 +240,18 @@ const DashboardHeader = () => {
   const totalPages = firstData?.pagination?.totalPages ?? 1;
   const hasNextPage = page < totalPages;
 
-  const unReadCount = list.filter(
-    (item) => !(item.isRead || item.is_read || readIds.includes(item.id)),
-  ).length;
+  const isItemRead = (item: Notification) => {
+    return Boolean(item.isRead || item.is_read || readIds.includes(item.id));
+  };
+
+  const unReadCount = list.filter((item) => !isItemRead(item)).length;
 
   const meta = routeMeta[pathname] ?? {
     title: "Dashboard",
     desc: "Welcome back",
   };
 
-  // Socket
+  // Socket listener
   useEffect(() => {
     const socket = getSocket();
     const onNew = () => {
@@ -166,7 +265,7 @@ const DashboardHeader = () => {
     };
   }, [refetch]);
 
-  // Outside click
+  // Outside click listener
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (
@@ -205,14 +304,35 @@ const DashboardHeader = () => {
     }
   };
 
+  const markAsRead = (id: string) => {
+    setReadIds((current) => {
+      if (current.includes(id)) return current;
+      const updated = [...current, id];
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      } catch (e) {
+        console.error("Failed to save read notifications:", e);
+      }
+      return updated;
+    });
+  };
+
+  const markAllAsRead = () => {
+    const allIds = Array.from(new Set([...list.map((i) => i.id), ...readIds]));
+    setReadIds(allIds);
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(allIds));
+    } catch (e) {
+      console.error("Failed to save all read notifications:", e);
+    }
+  };
+
   const handleNotificationClick = (item: Notification) => {
-    setReadIds((current) =>
-      current.includes(item.id) ? current : [...current, item.id],
-    );
+    markAsRead(item.id);
     setOpen(false);
 
     const href = getNotificationHref(item);
-    if (href) window.location.assign(href);
+    router.push(href);
   };
 
   return (
@@ -239,7 +359,7 @@ const DashboardHeader = () => {
           aria-haspopup="true"
           className="relative flex h-11 w-11 items-center justify-center rounded-xl border border-[#E3EAE5] bg-white text-[#345342] shadow-sm transition hover:border-[#B8D5C1] hover:bg-[#F7FBF8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#168044] focus-visible:ring-offset-2"
         >
-          <Bell className="h-5 w-5" aria-hidden="true" />
+          <Bell className="h-5 w-5 cursor-pointer" aria-hidden="true" />
           {unReadCount > 0 && (
             <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-white bg-[#E34D4D] px-1 text-[10px] font-bold leading-none text-white">
               {unReadCount > 9 ? "9+" : unReadCount}
@@ -248,15 +368,27 @@ const DashboardHeader = () => {
         </button>
 
         {open && (
-          <div className="absolute right-0 top-full z-50 mt-3 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-[#E3EAE5] bg-white shadow-[0px_16px_40px_rgba(16,40,26,0.14)]">
+          <div className="absolute right-0 top-full z-50 mt-3 w-[min(24rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-[#E3EAE5] bg-white shadow-[0px_16px_40px_rgba(16,40,26,0.14)]">
             <div className="flex items-center justify-between border-b border-[#EEF2EF] px-4 py-3.5">
-              <h2 className="text-sm font-semibold text-[#173323]">
-                Notifications
-              </h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-sm font-semibold text-[#173323]">
+                  Notifications
+                </h2>
+                {unReadCount > 0 && (
+                  <span className="rounded-full bg-[#E34D4D]/10 px-2 py-0.5 text-xs font-semibold text-[#E34D4D]">
+                    {unReadCount} unread
+                  </span>
+                )}
+              </div>
               {unReadCount > 0 && (
-                <span className="text-xs font-medium text-[#718078]">
-                  {unReadCount} unread
-                </span>
+                <button
+                  type="button"
+                  onClick={markAllAsRead}
+                  className="flex cursor-pointer items-center gap-1 text-xs font-semibold text-[#168044] transition hover:underline"
+                >
+                  <CheckCheck className="h-3.5 w-3.5" />
+                  Mark all as read
+                </button>
               )}
             </div>
 
@@ -270,24 +402,37 @@ const DashboardHeader = () => {
                 </div>
               ) : (
                 <>
-                  {list.map((item) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => handleNotificationClick(item)}
-                      className="w-full border-b border-[#F0F3F1] px-4 py-3 text-left transition last:border-0 hover:bg-[#F7FBF8]"
-                    >
-                      <p className="text-sm font-semibold text-[#243B2E]">
-                        {getNotificationLabel(item)}
-                      </p>
-                      <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-[#718078]">
-                        {item.text}
-                      </p>
-                      <p className="mt-2 text-[10px] font-medium text-[#9AA8A0]">
-                        {new Date(item.created_at).toLocaleString()}
-                      </p>
-                    </button>
-                  ))}
+                  {list.map((item) => {
+                    const read = isItemRead(item);
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => handleNotificationClick(item)}
+                        className={`w-full border-b border-[#F0F3F1] px-4 py-3 text-left transition last:border-0 hover:bg-[#F7FBF8] ${
+                          read ? "bg-white opacity-80" : "bg-[#F4F9F5]/70"
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="text-sm font-semibold text-[#243B2E]">
+                            {getNotificationLabel(item)}
+                          </p>
+                          {!read && (
+                            <span
+                              className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[#168044]"
+                              title="Unread"
+                            />
+                          )}
+                        </div>
+                        <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-[#718078]">
+                          {sanitizeTerminology(item.text)}
+                        </p>
+                        <p className="mt-2 text-[10px] font-medium text-[#9AA8A0]">
+                          {new Date(item.created_at).toLocaleString()}
+                        </p>
+                      </button>
+                    );
+                  })}
 
                   {hasNextPage && (
                     <button
