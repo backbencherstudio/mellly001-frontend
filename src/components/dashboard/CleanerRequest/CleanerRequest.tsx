@@ -14,7 +14,7 @@ import {
   useGetClearnerRequestByIdQuery,
   useUpdateCleanerRequestMutation,
 } from "@/redux/features/dashboardOverView/dashboardOverView";
-import { Eye } from "lucide-react";
+import { Eye, AlertCircle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { getImageUrl } from "@/lib/utils";
@@ -61,9 +61,16 @@ export function DialogScrollableContent({
 
   const cleaner = data?.data;
 
-  const status = cleaner?.status?.toUpperCase();
+  const rawStatus = (cleaner?.status || employee?.status || "").toUpperCase();
+  const isDraftOrIncomplete =
+    rawStatus === "DRAFT" ||
+    rawStatus === "INCOMPLETE" ||
+    cleaner?.status?.toLowerCase() === "draft" ||
+    employee?.status?.toLowerCase() === "draft";
 
+  const displayStatus = isDraftOrIncomplete ? "INCOMPLETE" : rawStatus || "PENDING";
   const resumeUrl = cleaner?.resume_url;
+
   const handleApprove = async () => {
     if (!employee?.id) {
       toast.error("Unable to approve request: missing cleaner ID");
@@ -96,12 +103,20 @@ export function DialogScrollableContent({
     cleaner?.id_card_back_url,
   ];
 
-  const isProfileComplete = requiredFields.every(
-    (field) =>
-      field !== null && field !== undefined && String(field).trim() !== "",
-  );
+  const isProfileComplete =
+    !isDraftOrIncomplete &&
+    requiredFields.every(
+      (field) =>
+        field !== null && field !== undefined && String(field).trim() !== "",
+    );
 
   const handleReject = async () => {
+    if (isDraftOrIncomplete) {
+      toast.error("Cannot reject: applicant has not submitted verification yet.");
+      setRejectOpen(false);
+      return;
+    }
+
     if (!employee?.id) {
       toast.error("Unable to reject request: missing cleaner ID");
       return;
@@ -130,18 +145,18 @@ export function DialogScrollableContent({
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <button className="p-1 hover:bg-gray-100 rounded cursor-pointer">
+        <button className="p-1 hover:bg-gray-100 rounded cursor-pointer" title="View Details">
           <Eye size={16} />
         </button>
       </DialogTrigger>
       <DialogContent className="max-h-[85vh] max-w-[90vw]! w-200! overflow-y-auto rounded">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold ">
+          <DialogTitle className="text-2xl font-bold">
             Cleaner Application Details
           </DialogTitle>
         </DialogHeader>
         <p className="text-sm font-normal text-[#6A7282]">
-          Review complete profile information
+          Review applicant profile information and documents
         </p>
 
         {isDetailsLoading && (
@@ -156,7 +171,19 @@ export function DialogScrollableContent({
           </div>
         )}
 
-        <div className="space-y-4 mt-4   ">
+        {isDraftOrIncomplete && (
+          <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+            <div>
+              <p className="font-semibold">Incomplete Application (Not Submitted)</p>
+              <p className="mt-0.5 text-amber-800 leading-relaxed">
+                This applicant has not completed or submitted their verification application yet. Rejection and Approval actions are disabled to prevent invalid submissions.
+              </p>
+            </div>
+          </div>
+        )}
+
+        <div className="space-y-4 mt-4">
           <p className="text-[#03652B] font-bold text-lg">
             Personal Information
           </p>
@@ -188,16 +215,10 @@ export function DialogScrollableContent({
               </p>
             </div>
 
-            {/* <div>
-                            <p className="text-sm text-gray-500">Applied Date</p>
-                            <p className="font-medium">{cleaner?.applied_date ? new Date(cleaner?.applied_date).toLocaleDateString("en-GB") : "N/A"}</p>
-                        </div> */}
-
             <div>
-              <div className="text-[#03652B] font-bold text-lg w-full ">
+              <div className="text-[#03652B] font-bold text-lg w-full">
                 Address
               </div>
-
               <p className="text-sm text-gray-500">Street Address</p>
               <p className="font-medium">
                 {cleaner?.location || "Not Provided"}
@@ -209,40 +230,46 @@ export function DialogScrollableContent({
               <div>
                 <span
                   className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    status === "VERIFIED"
+                    displayStatus === "VERIFIED"
                       ? "bg-green-100 text-green-700"
-                      : status === "REJECTED"
+                      : displayStatus === "REJECTED"
                         ? "bg-red-100 text-red-700"
-                        : "bg-gray-100 text-gray-700"
+                        : displayStatus === "INCOMPLETE"
+                          ? "bg-amber-100 text-amber-700"
+                          : "bg-gray-100 text-gray-700"
                   }`}
                 >
-                  {status?.toLowerCase() === "draft"
-                    ? "INCOMPLETE"
-                    : status || "PENDING"}
+                  {displayStatus}
                 </span>
               </div>
             </div>
-            <div>
-              {/* <a
-                                href={cleaner?.resume_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-green-900 font-medium text-xl underline"
-                            >
-                                View Resume
-                            </a> */}
 
-              <button
-                onClick={() =>
-                  resumeUrl && window.open(resumeUrl, "_blank", "noopener,noreferrer")
-                }
-                disabled={!resumeUrl}
-                className="rounded-lg bg-green-700 px-4 py-2 text-white cursor-pointer hover:bg-green-800"
-              >
-                View Resume
-              </button>
+            {/* Resume button: Hide or disable when applicant has not uploaded one */}
+            <div>
+              <p className="text-sm text-gray-500 mb-1">Resume</p>
+              {resumeUrl ? (
+                <button
+                  type="button"
+                  onClick={() =>
+                    window.open(resumeUrl, "_blank", "noopener,noreferrer")
+                  }
+                  className="rounded-lg bg-green-700 px-4 py-2 text-sm font-medium text-white cursor-pointer hover:bg-green-800 transition shadow-sm"
+                >
+                  View Resume (PDF)
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  disabled
+                  className="rounded-lg border border-gray-200 bg-gray-100 px-4 py-2 text-sm font-medium text-gray-400 cursor-not-allowed"
+                  title="No resume uploaded by applicant"
+                >
+                  No Resume Uploaded
+                </button>
+              )}
             </div>
           </div>
+
           <div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -267,7 +294,7 @@ export function DialogScrollableContent({
                   <img
                     src={getImageUrl(cleaner.id_card_back_url)}
                     crossOrigin="anonymous"
-                    alt=""
+                    alt="Back ID"
                     className="w-full h-64 rounded-lg border object-center"
                   />
                 ) : (
@@ -279,18 +306,46 @@ export function DialogScrollableContent({
             </div>
           </div>
 
-          <div className="gap-4 flex flex-col md:flex-row w-full">
+          {/* Action buttons: Disable Reject for incomplete records */}
+          <div className="gap-4 flex flex-col md:flex-row w-full pt-2">
             <button
-              className="text-red-500 font-bold text-base py-3.5 border-2 border-red-500 cursor-pointer text-center w-full md:px-20 lg:px-25 rounded-lg whitespace-nowrap disabled:opacity-50"
-              onClick={() => setRejectOpen(true)}
-              disabled={isLoading}
+              type="button"
+              className={`font-bold text-base py-3.5 border-2 text-center w-full md:px-20 lg:px-25 rounded-lg whitespace-nowrap transition ${
+                isDraftOrIncomplete
+                  ? "border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed"
+                  : "text-red-500 border-red-500 cursor-pointer hover:bg-red-50"
+              }`}
+              onClick={() => {
+                if (isDraftOrIncomplete) {
+                  toast.error("Application is incomplete (not submitted yet) and cannot be rejected.");
+                  return;
+                }
+                setRejectOpen(true);
+              }}
+              disabled={isLoading || isDraftOrIncomplete}
+              title={
+                isDraftOrIncomplete
+                  ? "Cannot reject: application is incomplete and not yet submitted"
+                  : "Reject Application"
+              }
             >
-              {isLoading ? "Processing..." : "Reject Application"}
+              {isDraftOrIncomplete
+                ? "Not Submitted (Cannot Reject)"
+                : isLoading
+                  ? "Processing..."
+                  : "Reject Application"}
             </button>
+
             <button
-              className="text-white bg-green-800 font-bold text-base py-3.5 cursor-pointer text-center md:px-20 lg:px-25 w-full rounded-lg whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+              type="button"
+              className="text-white bg-green-800 font-bold text-base py-3.5 cursor-pointer text-center md:px-20 lg:px-25 w-full rounded-lg whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed hover:bg-green-900 transition"
               onClick={handleApprove}
               disabled={isLoading || !isProfileComplete}
+              title={
+                !isProfileComplete
+                  ? "Cannot approve: profile information or required documents are incomplete"
+                  : "Approve and verify cleaner"
+              }
             >
               {isLoading ? "Processing..." : "Approve & Verify"}
             </button>
