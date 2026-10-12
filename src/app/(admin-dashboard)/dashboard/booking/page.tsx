@@ -19,10 +19,15 @@ import {
 
 type BookingRecord = Record<string, unknown>;
 
-const toDisplayText = (value: unknown, fallback = "-") =>
-  typeof value === "string" || typeof value === "number"
-    ? String(value)
-    : fallback;
+const toDisplayText = (value: unknown, fallback = "-") => {
+  if (typeof value !== "string" && typeof value !== "number") return fallback;
+  return String(value)
+    .replace(/professional\s+maid/gi, "Professional Cleaner")
+    .replace(/\bmaid\b/gi, "cleaner")
+    .replace(/\bmaids\b/gi, "cleaners")
+    .replace(/\bMaid\b/g, "Cleaner")
+    .replace(/\bMaids\b/g, "Cleaners");
+};
 
 /* ================= HELPERS ================= */
 const statusStyle: Record<string, string> = {

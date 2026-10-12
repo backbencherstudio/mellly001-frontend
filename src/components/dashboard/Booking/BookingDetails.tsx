@@ -296,11 +296,14 @@ export default function BookingDetails({
     bookingData?.location ||
     "-";
 
-  // Maid / Cleaner details
-  const maidName =
+  // Cleaner details
+  const rawCleanerName =
     bookingData?.maid?.name ||
     bookingData?.cleaner_name ||
     (bookingData?.maid ? "Cleaner Assigned" : "Unassigned");
+  const maidName = rawCleanerName
+    .replace(/professional\s+maid/gi, "Professional Cleaner")
+    .replace(/\bmaid\b/gi, "Cleaner");
   const maidEmail = bookingData?.maid?.email || null;
   const maidPhone = bookingData?.maid?.phone_number || null;
 
@@ -456,7 +459,7 @@ export default function BookingDetails({
 
         {bookingData?.maid_note && (
           <div className="sm:col-span-2 rounded-md bg-yellow-50 p-2.5 text-xs text-yellow-800">
-            <span className="font-semibold">Maid Note: </span>
+            <span className="font-semibold">Cleaner Note: </span>
             {bookingData.maid_note}
           </div>
         )}
