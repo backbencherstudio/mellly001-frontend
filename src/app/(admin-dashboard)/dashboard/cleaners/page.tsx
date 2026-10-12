@@ -59,7 +59,11 @@ const columns: ColumnDef<Employee>[] = [
   {
     header: "Cleaner",
     cell: ({ row }) => {
-      const name = row.original?.name || "Unknown cleaner";
+      const rawName = row.original?.name || "Unknown cleaner";
+      const name = rawName
+        .replace(/professional\s+maid/gi, "Professional Cleaner")
+        .replace(/\bmaid\b/gi, "cleaner")
+        .replace(/\bMaid\b/g, "Cleaner");
       const initials = name
         ?.split(" ")
         .map((n) => n[0])

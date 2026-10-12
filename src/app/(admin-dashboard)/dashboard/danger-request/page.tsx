@@ -152,7 +152,11 @@ const columns: ColumnDef<DangerRequest>[] = [
     {
         header: "Cleaner",
         cell: ({ row }) => {
-            const name = row.original?.name || "Unknown cleaner";
+            const rawName = row.original?.name || "Unknown cleaner";
+            const name = rawName
+                .replace(/professional\s+maid/gi, "Professional Cleaner")
+                .replace(/\bmaid\b/gi, "cleaner")
+                .replace(/\bMaid\b/g, "Cleaner");
             const initials = name
                 .split(" ")
                 .map((n) => n[0])
@@ -239,7 +243,7 @@ const columns: ColumnDef<DangerRequest>[] = [
     },
 
     {
-        header: "Applied Date",
+        header: "Reported Date",
         cell: ({ row }) => (
             <div>
                 <span className="font-medium">
@@ -252,19 +256,21 @@ const columns: ColumnDef<DangerRequest>[] = [
     {
         header: "Status",
         cell: ({ row }) => {
-            const status = (row.original?.status || "UNKNOWN").toUpperCase();
+            const rawStatus = (row.original?.status || "UNKNOWN").toUpperCase();
+            const isResolved = rawStatus === "COMPLETED" || rawStatus === "RESOLVED";
 
             const styles = {
                 COMPLETED: "bg-green-100 text-green-700",
-                REJECTED: "bg-yellow-100 text-yellow-700",
-                PENDING: "bg-yellow-100 text-yellow-600",
+                RESOLVED: "bg-green-100 text-green-700",
+                REJECTED: "bg-red-100 text-red-700",
+                PENDING: "bg-yellow-100 text-yellow-700",
             };
 
             return (
                 <span
-                    className={`px-3 py-1 rounded-full text-xs font-medium ${styles[status as keyof typeof styles] || "bg-gray-100 text-gray-600"}`}
+                    className={`px-3 py-1 rounded-full text-xs font-medium ${styles[rawStatus as keyof typeof styles] || "bg-gray-100 text-gray-600"}`}
                 >
-                    {status}
+                    {isResolved ? "RESOLVED" : rawStatus}
                 </span>
             );
         },
@@ -341,7 +347,7 @@ export default function CleanerRequest() {
     if (isError) {
         return (
             <div className="flex flex-col items-center gap-3 py-12 text-center">
-                <p className="text-sm text-red-600">Unable to load danger requests. Please try again.</p>
+                <p className="text-sm text-red-600">Unable to load emergency requests. Please try again.</p>
                 <Button type="button" variant="outline" onClick={() => refetch()}>
                     Retry
                 </Button>
