@@ -506,8 +506,8 @@ export default function PrivacyPolicyPage() {
                 This Privacy Policy explains how {DEVELOPER_NAME} (“we,” “us,” or
                 “our”) collects, uses, shares, and protects personal
                 information when you use the Cleen-N-Connect mobile app and
-                related services (the “Service”) as a homeowner, cleaner
-                (maid), or other authorized user.
+                related services (the “Service”) as a homeowner, cleaner, or
+                other authorized user.
               </p>
             </div>
           </div>
