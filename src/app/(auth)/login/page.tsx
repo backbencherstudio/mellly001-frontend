@@ -69,6 +69,44 @@ export default function AdminLogin() {
         expires: 3650,
       });
 
+      // Extract userId from login response (response.user.id) or decoded JWT token
+      let userId =
+        res?.user?.id ||
+        res?.user?._id ||
+        res?.id ||
+        res?._id ||
+        res?.userId ||
+        "";
+
+      if (!userId && accessToken) {
+        try {
+          const payloadBase64 = accessToken.split(".")[1];
+          if (payloadBase64) {
+            const decodedJson = atob(
+              payloadBase64.replace(/-/g, "+").replace(/_/g, "/")
+            );
+            const payload = JSON.parse(decodedJson);
+            userId =
+              payload?.id ||
+              payload?.userId ||
+              payload?.sub ||
+              payload?._id ||
+              "";
+          }
+        } catch {
+          // ignore parsing error
+        }
+      }
+
+      if (userId) {
+        Cookies.set("userId", String(userId), {
+          path: "/",
+          sameSite: "strict",
+          expires: 3650,
+        });
+        localStorage.setItem("userId", String(userId));
+      }
+
       router.replace("/dashboard");
     } catch (error: unknown) {
       console.error("Login failed:", error);
