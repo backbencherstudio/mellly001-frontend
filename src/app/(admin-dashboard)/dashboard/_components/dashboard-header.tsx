@@ -13,7 +13,9 @@ import {
   useGetUnreadNotificationCountQuery,
   useMarkAllNotificationsAsReadMutation,
   useMarkNotificationAsReadMutation,
+  type NotificationItem,
 } from "@/redux/features/chattingAndSocket/socket";
+import NotificationDetailModal from "@/components/dashboard/Notification/NotificationDetailModal";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -207,6 +209,10 @@ const DashboardHeader = () => {
   const [loadingMore, setLoadingMore] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  const [selectedNotificationId, setSelectedNotificationId] = useState<string | null>(null);
+  const [selectedNotificationItem, setSelectedNotificationItem] = useState<NotificationItem | null>(null);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+
   // Load persisted read-state from localStorage on mount
   useEffect(() => {
     try {
@@ -348,7 +354,9 @@ const DashboardHeader = () => {
   const handleNotificationClick = (item: Notification) => {
     markAsRead(item.id);
     setOpen(false);
-    router.push(getNotificationHref(item));
+    setSelectedNotificationId(item.id);
+    setSelectedNotificationItem(item as unknown as NotificationItem);
+    setDetailModalOpen(true);
   };
 
   // ---------------------------------------------------------------------------
@@ -426,7 +434,7 @@ const DashboardHeader = () => {
                         key={item.id}
                         type="button"
                         onClick={() => handleNotificationClick(item)}
-                        className={`w-full border-b border-[#F0F3F1] px-4 py-3 text-left transition last:border-0 hover:bg-[#F7FBF8] ${
+                        className={`w-full border-b border-[#F0F3F1] px-4 py-3 text-left transition last:border-0 hover:bg-[#F7FBF8] cursor-pointer ${
                           read ? "bg-white opacity-80" : "bg-[#F4F9F5]/70"
                         }`}
                       >
@@ -467,6 +475,24 @@ const DashboardHeader = () => {
           </div>
         )}
       </div>
+
+      {/* Notification Detail Modal */}
+      <NotificationDetailModal
+        notificationId={selectedNotificationId}
+        open={detailModalOpen}
+        onOpenChange={setDetailModalOpen}
+        initialData={selectedNotificationItem}
+        onNavigate={(href) =>
+          router.push(
+            href ||
+              (selectedNotificationItem
+                ? getNotificationHref(
+                    selectedNotificationItem as unknown as Notification
+                  )
+                : "/dashboard")
+          )
+        }
+      />
     </div>
   );
 };

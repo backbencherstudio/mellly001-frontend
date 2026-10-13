@@ -9,6 +9,7 @@ import {
   Clock,
   ExternalLink,
   Trash2,
+  Eye,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -24,6 +25,7 @@ import {
   type NotificationItem,
 } from "@/redux/features/chattingAndSocket/socket";
 import { Button } from "@/components/ui/button";
+import NotificationDetailModal from "@/components/dashboard/Notification/NotificationDetailModal";
 
 const sanitizeTerminology = (text?: string | null): string => {
   if (!text) return "";
@@ -242,16 +244,22 @@ export default function NotificationsPage() {
     }
   };
 
-  const handleClick = async (item: NotificationItem) => {
+  const [selectedNotificationId, setSelectedNotificationId] = useState<string | null>(null);
+  const [selectedNotificationItem, setSelectedNotificationItem] = useState<NotificationItem | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+
+  const handleOpenDetail = (item: NotificationItem) => {
+    setSelectedNotificationId(item.id);
+    setSelectedNotificationItem(item);
+    setModalOpen(true);
+  };
+
+  const handleDirectNavigate = (e: React.MouseEvent, item: NotificationItem) => {
+    e.stopPropagation();
     if (!isItemRead(item)) {
-      try {
-        await markNotificationAsRead(item.id).unwrap();
-      } catch (err) {
-        console.error(err);
-      }
+      markNotificationAsRead(item.id).unwrap().catch(() => {});
     }
-    const href = getNotificationHref(item);
-    router.push(href);
+    router.push(getNotificationHref(item));
   };
 
   return (
@@ -405,27 +413,27 @@ export default function NotificationsPage() {
               return (
                 <div
                   key={item.id}
-                  onClick={() => handleClick(item)}
+                  onClick={() => handleOpenDetail(item)}
                   role="button"
                   tabIndex={0}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") handleClick(item);
+                    if (e.key === "Enter" || e.key === " ") handleOpenDetail(item);
                   }}
-                  className={`group flex cursor-pointer items-start justify-between gap-4 p-5 transition-colors hover:bg-[#FBFDFC] ${
+                  className={`group flex cursor-pointer select-none items-start justify-between gap-4 p-5 transition-colors hover:bg-[#FBFDFC] ${
                     read ? "bg-white" : "bg-[#F7FBF8]/80"
                   }`}
                 >
                   {/* Left content */}
-                  <div className="flex items-start gap-3.5 min-w-0 flex-1">
+                  <div className="flex items-start gap-3.5 min-w-0 flex-1 cursor-pointer">
                     <span
                       className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${
                         read ? "bg-gray-300" : "bg-[#168044]"
                       }`}
                       title={read ? "Read" : "Unread"}
                     />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-semibold text-[#173323] group-hover:text-[#168044] transition-colors">
+                    <div className="min-w-0 flex-1 cursor-pointer">
+                      <div className="flex items-center gap-2 cursor-pointer">
+                        <p className="text-sm font-semibold text-[#173323] group-hover:text-[#168044] transition-colors cursor-pointer">
                           {getNotificationLabel(item)}
                         </p>
                         {!read && (
@@ -434,10 +442,10 @@ export default function NotificationsPage() {
                           </span>
                         )}
                       </div>
-                      <p className="mt-1 text-sm leading-relaxed text-[#59675E]">
+                      <p className="mt-1 text-sm leading-relaxed text-[#59675E] cursor-pointer">
                         {sanitizeTerminology(item.text)}
                       </p>
-                      <p className="mt-2 flex items-center gap-1.5 text-xs text-[#9AA8A0]">
+                      <p className="mt-2 flex items-center gap-1.5 text-xs text-[#9AA8A0] cursor-pointer">
                         <Clock className="h-3.5 w-3.5" />
                         {new Date(item.created_at).toLocaleString()}
                       </p>
@@ -445,7 +453,19 @@ export default function NotificationsPage() {
                   </div>
 
                   {/* Actions on row */}
-                  <div className="flex shrink-0 items-center gap-2">
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenDetail(item);
+                      }}
+                      title="View Details"
+                      className="rounded-lg p-1.5 text-gray-400 hover:bg-[#F2F7F3] hover:text-[#168044] transition-colors cursor-pointer"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </button>
+
                     {!read && (
                       <button
                         type="button"
@@ -466,9 +486,14 @@ export default function NotificationsPage() {
                       <Trash2 className="h-4 w-4" />
                     </button>
 
-                    <div className="pl-1 text-[#718078] group-hover:text-[#168044] transition-colors">
+                    <button
+                      type="button"
+                      onClick={(e) => handleDirectNavigate(e, item)}
+                      title="Go to related page"
+                      className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-[#168044] transition-colors cursor-pointer"
+                    >
                       <ExternalLink className="h-4 w-4" />
-                    </div>
+                    </button>
                   </div>
                 </div>
               );
@@ -501,6 +526,15 @@ export default function NotificationsPage() {
           </div>
         )}
       </div>
+
+      {/* Notification Detail Modal */}
+      <NotificationDetailModal
+        notificationId={selectedNotificationId}
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        initialData={selectedNotificationItem}
+        onNavigate={(href) => router.push(href)}
+      />
     </div>
   );
 }

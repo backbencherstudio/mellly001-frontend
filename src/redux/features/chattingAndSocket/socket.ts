@@ -149,6 +149,18 @@ export const Socket = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["Notification"],
     }),
+
+    // 7. Get single notification by id
+    GetSingleNotification: builder.query<
+      { success: boolean; data: NotificationItem; message?: string },
+      string
+    >({
+      query: (id) => ({
+        url: `notification/${id}`,
+        method: "GET",
+      }),
+      providesTags: ["Notification"],
+    }),
   }),
 });
 
@@ -164,4 +176,6 @@ export const {
   useMarkNotificationAsReadMutation,
   useDeleteNotificationMutation,
   useDeleteAllNotificationsMutation,
+  useGetSingleNotificationQuery,
+  useLazyGetSingleNotificationQuery,
 } = Socket;
