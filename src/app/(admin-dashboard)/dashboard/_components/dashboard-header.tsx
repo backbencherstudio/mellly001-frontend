@@ -464,7 +464,7 @@ const DashboardHeader = () => {
                       type="button"
                       onClick={loadMore}
                       disabled={loadingMore}
-                      className="w-full border-t border-[#EEF2EF] py-3 text-sm font-semibold text-[#168044] transition hover:bg-[#F7FBF8] disabled:opacity-50"
+                      className="w-full border-t border-[#EEF2EF] py-3 text-sm font-semibold text-[#168044] transition hover:bg-[#F7FBF8] disabled:opacity-50 cursor-pointer"
                     >
                       {loadingMore ? "Loading..." : "Load more"}
                     </button>

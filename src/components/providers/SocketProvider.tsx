@@ -14,28 +14,26 @@ import { getSocket, getSocketStatus, type AppSocket } from "@/lib/Socket";
  * lib/Socket.ts disconnectSocket() call on logout.
  */
 export function SocketProvider({ children }: { children: React.ReactNode }) {
-  const [socket, setSocket] = useState<AppSocket | null>(null);
-  const [status, setStatus] = useState(getSocketStatus());
+  const [socket] = useState<AppSocket | null>(() =>
+    typeof window !== "undefined" ? getSocket() : null
+  );
+  const [status, setStatus] = useState(() => getSocketStatus());
 
   useEffect(() => {
-    const socketInstance = getSocket();
-    setSocket(socketInstance);
-    setStatus(getSocketStatus());
+    if (!socket) return;
 
     const syncStatus = () => setStatus(getSocketStatus());
 
-    // connect and disconnect are valid reserved events on the typed socket
-    socketInstance.on("connect", syncStatus);
-    socketInstance.on("disconnect", syncStatus);
-    // reconnect variants fire on the Manager — sync status there too
-    socketInstance.io.on("reconnect", syncStatus);
+    socket.on("connect", syncStatus);
+    socket.on("disconnect", syncStatus);
+    socket.io.on("reconnect", syncStatus);
 
     return () => {
-      socketInstance.off("connect", syncStatus);
-      socketInstance.off("disconnect", syncStatus);
-      socketInstance.io.off("reconnect", syncStatus);
+      socket.off("connect", syncStatus);
+      socket.off("disconnect", syncStatus);
+      socket.io.off("reconnect", syncStatus);
     };
-  }, []);
+  }, [socket]);
 
   return (
     <SocketContext.Provider
