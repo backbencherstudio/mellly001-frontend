@@ -1,49 +1,51 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { Socket } from "socket.io-client";
 
 import { SocketContext } from "@/hooks/useSocket";
-import { getSocket, getSocketStatus } from "@/lib/Socket";
+import { getSocket, getSocketStatus, type AppSocket } from "@/lib/Socket";
 
+/**
+ * Provides the shared Socket.IO instance to the admin dashboard subtree.
+ * Place this inside the dashboard layout so it only runs when the user
+ * is authenticated.
+ *
+ * The socket is lazily created on first render and torn down via the
+ * lib/Socket.ts disconnectSocket() call on logout.
+ */
 export function SocketProvider({ children }: { children: React.ReactNode }) {
-    const [socket, setSocket] = useState<Socket | null>(null);
-    const [status, setStatus] = useState(getSocketStatus());
+  const [socket, setSocket] = useState<AppSocket | null>(null);
+  const [status, setStatus] = useState(getSocketStatus());
 
-    useEffect(() => {
-        const socketInstance = getSocket();
-        setSocket(socketInstance);
-        setStatus(getSocketStatus());
+  useEffect(() => {
+    const socketInstance = getSocket();
+    setSocket(socketInstance);
+    setStatus(getSocketStatus());
 
-        const syncStatus = () => setStatus(getSocketStatus());
+    const syncStatus = () => setStatus(getSocketStatus());
 
-        if (!socketInstance) return;
+    // connect and disconnect are valid reserved events on the typed socket
+    socketInstance.on("connect", syncStatus);
+    socketInstance.on("disconnect", syncStatus);
+    // reconnect variants fire on the Manager — sync status there too
+    socketInstance.io.on("reconnect", syncStatus);
 
-        socketInstance.on("connect", syncStatus);
-        socketInstance.on("disconnect", syncStatus);
-        socketInstance.on("reconnect", syncStatus);
-        socketInstance.on("reconnect_attempt", syncStatus);
-        socketInstance.on("reconnect_failed", syncStatus);
+    return () => {
+      socketInstance.off("connect", syncStatus);
+      socketInstance.off("disconnect", syncStatus);
+      socketInstance.io.off("reconnect", syncStatus);
+    };
+  }, []);
 
-        return () => {
-            socketInstance.off("connect", syncStatus);
-            socketInstance.off("disconnect", syncStatus);
-            socketInstance.off("reconnect", syncStatus);
-            socketInstance.off("reconnect_attempt", syncStatus);
-            socketInstance.off("reconnect_failed", syncStatus);
-        };
-    }, []);
-
-    return (
-        <SocketContext.Provider
-            value={{
-                socket,
-                connected: status.connected,
-                id: status.id,
-                rooms: status.rooms,
-            }}
-        >
-            {children}
-        </SocketContext.Provider>
-    );
+  return (
+    <SocketContext.Provider
+      value={{
+        socket,
+        connected: status.connected,
+        id: status.id,
+      }}
+    >
+      {children}
+    </SocketContext.Provider>
+  );
 }

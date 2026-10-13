@@ -39,6 +39,10 @@ export default function DashboardSidebar() {
     disconnectSocket();
     Cookies.remove("token");
     Cookies.remove("userType");
+    Cookies.remove("userId");
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("userId");
+    }
     router.push("/login");
   };
 

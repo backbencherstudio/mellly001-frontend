@@ -6,10 +6,17 @@ import { Bell, CheckCheck } from "lucide-react";
 
 import { getSocket } from "@/lib/Socket";
 
+import { toast } from "sonner";
+import { useSocket } from "@/hooks/useSocket";
+import type { RealtimeNotification } from "@/lib/socket-types";
 import {
   useGetAllNotificationQuery,
   useLazyGetAllNotificationQuery,
 } from "@/redux/features/chattingAndSocket/socket";
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
 interface Notification {
   id: string;
@@ -62,15 +69,23 @@ const getNotificationLabel = (notification: Notification) => {
     type
       ?.replaceAll("_", " ")
       .replace(/\b\w/g, (letter) => letter.toUpperCase()) || "Notification";
+<<<<<<< HEAD
 
+=======
+>>>>>>> refactor/project
   return sanitizeTerminology(raw);
 };
 
 const getNotificationHref = (notification: Notification): string => {
   if (notification.targetUrl) return notification.targetUrl;
 
+<<<<<<< HEAD
   const type = (notification.type || "").toLowerCase();
   const text = (notification.text || "").toLowerCase();
+=======
+  const type = (notification.type ?? "").toLowerCase();
+  const text = (notification.text ?? "").toLowerCase();
+>>>>>>> refactor/project
 
   // Booking or Job related
   if (
@@ -90,7 +105,10 @@ const getNotificationHref = (notification: Notification): string => {
     return "/dashboard/booking";
   }
 
+<<<<<<< HEAD
   // Emergency / Safety Request
+=======
+>>>>>>> refactor/project
   if (
     notification.dangerRequestId ||
     type.includes("danger") ||
@@ -102,7 +120,10 @@ const getNotificationHref = (notification: Notification): string => {
     return "/dashboard/danger-request";
   }
 
+<<<<<<< HEAD
   // Cleaner application / registration
+=======
+>>>>>>> refactor/project
   if (
     notification.applicationId ||
     type.includes("cleaner_registration") ||
@@ -114,6 +135,7 @@ const getNotificationHref = (notification: Notification): string => {
     return "/dashboard/cleaner-request";
   }
 
+<<<<<<< HEAD
   // Existing cleaner account
   if (notification.cleanerId) {
     return "/dashboard/cleaners";
@@ -129,6 +151,14 @@ const getNotificationHref = (notification: Notification): string => {
   }
 
   // New User Registration (fixes item where New User Registration did nothing)
+=======
+  if (notification.cleanerId) return "/dashboard/cleaners";
+
+  if (notification.homeownerId || type.includes("homeowner") || text.includes("homeowner")) {
+    return "/dashboard/homeowners";
+  }
+
+>>>>>>> refactor/project
   if (
     type.includes("user") ||
     type.includes("registration") ||
@@ -141,6 +171,7 @@ const getNotificationHref = (notification: Notification): string => {
     return "/dashboard/homeowners";
   }
 
+<<<<<<< HEAD
   // Job Approvals
   if (
     notification.jobApprovalId ||
@@ -151,6 +182,12 @@ const getNotificationHref = (notification: Notification): string => {
   }
 
   // Payments / Transactions
+=======
+  if (notification.jobApprovalId || type.includes("approval") || text.includes("approval")) {
+    return "/dashboard/jobAppruve";
+  }
+
+>>>>>>> refactor/project
   if (
     type.includes("payment") ||
     type.includes("transaction") ||
@@ -200,9 +237,21 @@ const routeMeta: Record<string, { title: string; desc: string }> = {
 
 const STORAGE_KEY = "cleen_admin_read_notification_ids";
 
+<<<<<<< HEAD
 const DashboardHeader = () => {
   const pathname = usePathname();
   const router = useRouter();
+=======
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
+
+const DashboardHeader = () => {
+  const pathname = usePathname();
+  const router = useRouter();
+  const { socket } = useSocket();
+
+>>>>>>> refactor/project
   const [open, setOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [moreItems, setMoreItems] = useState<Notification[]>([]);
@@ -210,18 +259,29 @@ const DashboardHeader = () => {
   const [loadingMore, setLoadingMore] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+<<<<<<< HEAD
   // Load persistent read IDs on client mount
+=======
+  // Load persisted read-state from localStorage on mount
+>>>>>>> refactor/project
   useEffect(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
+<<<<<<< HEAD
         if (Array.isArray(parsed)) {
           setReadIds(parsed);
         }
       }
     } catch (e) {
       console.error("Failed to load read notifications from localStorage:", e);
+=======
+        if (Array.isArray(parsed)) setReadIds(parsed);
+      }
+    } catch {
+      // localStorage not available (SSR guard)
+>>>>>>> refactor/project
     }
   }, []);
 
@@ -232,14 +292,12 @@ const DashboardHeader = () => {
 
   const [fetchMore] = useLazyGetAllNotificationQuery();
 
-  const firstItems: Notification[] = Array.isArray(firstData?.data)
-    ? firstData.data
-    : [];
-
+  const firstItems: Notification[] = Array.isArray(firstData?.data) ? firstData.data : [];
   const list = [...firstItems, ...moreItems];
   const totalPages = firstData?.pagination?.totalPages ?? 1;
   const hasNextPage = page < totalPages;
 
+<<<<<<< HEAD
   const isItemRead = (item: Notification) => {
     return Boolean(item.isRead || item.is_read || readIds.includes(item.id));
   };
@@ -252,26 +310,45 @@ const DashboardHeader = () => {
   };
 
   // Socket listener
+=======
+  // ---------------------------------------------------------------------------
+  // Real-time: listen for receiveNotification (backend legacy relay).
+  // Per the integration doc, backend-generated inbox notifications are NOT
+  // currently emitted via socket — so we refetch the REST inbox whenever the
+  // relay fires.  This gives us live updates when the relay is used and also
+  // covers future backend upgrades.
+  // ---------------------------------------------------------------------------
+>>>>>>> refactor/project
   useEffect(() => {
-    const socket = getSocket();
-    const onNew = () => {
+    if (!socket) return;
+
+    const handleReceiveNotification = (notif?: RealtimeNotification) => {
+      // Reset pagination and refresh the first page of the inbox
       setPage(1);
       setMoreItems([]);
       refetch();
-    };
-    socket.on("new-notification", onNew);
-    return () => {
-      socket.off("new-notification", onNew);
-    };
-  }, [refetch]);
 
+<<<<<<< HEAD
   // Outside click listener
+=======
+      if (notif?.title || notif?.body) {
+        toast.info(notif.title || "New Notification", {
+          description: notif.body,
+        });
+      }
+    };
+
+    socket.on("receiveNotification", handleReceiveNotification);
+    return () => {
+      socket.off("receiveNotification", handleReceiveNotification);
+    };
+  }, [socket, refetch]);
+
+  // Close dropdown on outside click
+>>>>>>> refactor/project
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node)
-      ) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setOpen(false);
       }
     };
@@ -279,26 +356,34 @@ const DashboardHeader = () => {
     return () => document.removeEventListener("mousedown", handler);
   }, [open]);
 
+  // ---------------------------------------------------------------------------
+  // Helpers
+  // ---------------------------------------------------------------------------
+
+  const isItemRead = (item: Notification) =>
+    Boolean(item.isRead || item.is_read || readIds.includes(item.id));
+
+  const unReadCount = list.filter((item) => !isItemRead(item)).length;
+
+  const meta = routeMeta[pathname] ?? { title: "Dashboard", desc: "Welcome back" };
+
   const loadMore = async () => {
     if (loadingMore || !hasNextPage) return;
-
     setLoadingMore(true);
     try {
       const nextPage = page + 1;
       const res = await fetchMore({ page: nextPage, perPage: 10 }).unwrap();
       const newItems: Notification[] = Array.isArray(res?.data) ? res.data : [];
-
       setMoreItems((prev) => {
         const existingIds = new Set([
           ...firstItems.map((i) => i.id),
           ...prev.map((i) => i.id),
         ]);
-        const unique = newItems.filter((i) => !existingIds.has(i.id));
-        return [...prev, ...unique];
+        return [...prev, ...newItems.filter((i) => !existingIds.has(i.id))];
       });
       setPage(nextPage);
-    } catch (err) {
-      console.error("Load more failed:", err);
+    } catch {
+      // silently fail — user can retry by clicking again
     } finally {
       setLoadingMore(false);
     }
@@ -310,6 +395,7 @@ const DashboardHeader = () => {
       const updated = [...current, id];
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+<<<<<<< HEAD
       } catch (e) {
         console.error("Failed to save read notifications:", e);
       }
@@ -333,7 +419,30 @@ const DashboardHeader = () => {
 
     const href = getNotificationHref(item);
     router.push(href);
+=======
+      } catch {}
+      return updated;
+    });
+>>>>>>> refactor/project
   };
+
+  const markAllAsRead = () => {
+    const allIds = Array.from(new Set([...list.map((i) => i.id), ...readIds]));
+    setReadIds(allIds);
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(allIds));
+    } catch {}
+  };
+
+  const handleNotificationClick = (item: Notification) => {
+    markAsRead(item.id);
+    setOpen(false);
+    router.push(getNotificationHref(item));
+  };
+
+  // ---------------------------------------------------------------------------
+  // Render
+  // ---------------------------------------------------------------------------
 
   return (
     <div className="flex h-full w-full min-w-0 items-center justify-between gap-4">
@@ -346,14 +455,13 @@ const DashboardHeader = () => {
         </p>
       </div>
 
+      {/* Notification bell */}
       <div className="relative shrink-0" ref={dropdownRef}>
         <button
           type="button"
           onClick={() => setOpen(!open)}
           aria-label={
-            unReadCount > 0
-              ? `Notifications, ${unReadCount} unread`
-              : "Notifications"
+            unReadCount > 0 ? `Notifications, ${unReadCount} unread` : "Notifications"
           }
           aria-expanded={open}
           aria-haspopup="true"
@@ -369,11 +477,18 @@ const DashboardHeader = () => {
 
         {open && (
           <div className="absolute right-0 top-full z-50 mt-3 w-[min(24rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-[#E3EAE5] bg-white shadow-[0px_16px_40px_rgba(16,40,26,0.14)]">
+<<<<<<< HEAD
             <div className="flex items-center justify-between border-b border-[#EEF2EF] px-4 py-3.5">
               <div className="flex items-center gap-2">
                 <h2 className="text-sm font-semibold text-[#173323]">
                   Notifications
                 </h2>
+=======
+            {/* Dropdown header */}
+            <div className="flex items-center justify-between border-b border-[#EEF2EF] px-4 py-3.5">
+              <div className="flex items-center gap-2">
+                <h2 className="text-sm font-semibold text-[#173323]">Notifications</h2>
+>>>>>>> refactor/project
                 {unReadCount > 0 && (
                   <span className="rounded-full bg-[#E34D4D]/10 px-2 py-0.5 text-xs font-semibold text-[#E34D4D]">
                     {unReadCount} unread
@@ -392,13 +507,12 @@ const DashboardHeader = () => {
               )}
             </div>
 
+            {/* List */}
             <div className="max-h-80 overflow-y-auto">
               {list.length === 0 ? (
                 <div className="px-4 py-10 text-center">
                   <Bell className="mx-auto mb-2 h-5 w-5 text-[#9AA8A0]" aria-hidden="true" />
-                  <p className="text-sm font-medium text-[#53645A]">
-                    No notifications
-                  </p>
+                  <p className="text-sm font-medium text-[#53645A]">No notifications</p>
                 </div>
               ) : (
                 <>
@@ -441,7 +555,7 @@ const DashboardHeader = () => {
                       disabled={loadingMore}
                       className="w-full border-t border-[#EEF2EF] py-3 text-sm font-semibold text-[#168044] transition hover:bg-[#F7FBF8] disabled:opacity-50"
                     >
-                      {loadingMore ? "Loading..." : "See All"}
+                      {loadingMore ? "Loading..." : "Load more"}
                     </button>
                   )}
                 </>
