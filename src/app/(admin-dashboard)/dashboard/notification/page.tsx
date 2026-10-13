@@ -288,7 +288,7 @@ export default function NotificationsPage() {
               variant="outline"
               disabled={isMarkingAll}
               onClick={handleMarkAllAsRead}
-              className="flex items-center gap-2 border-[#168044] text-[#168044] hover:bg-[#F2F7F3]"
+              className="flex items-center gap-2 border-[#168044] text-[#168044] hover:bg-[#F2F7F3] cursor-pointer"
             >
               <CheckCheck className="h-4 w-4" />
               Mark all as read
@@ -301,7 +301,7 @@ export default function NotificationsPage() {
               variant="outline"
               disabled={isDeletingAll}
               onClick={handleDeleteAll}
-              className="flex items-center gap-2 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+              className="flex items-center gap-2 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 cursor-pointer"
             >
               <Trash2 className="h-4 w-4" />
               Delete all
@@ -316,7 +316,7 @@ export default function NotificationsPage() {
           <button
             type="button"
             onClick={() => handleFilterChange("all")}
-            className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
+            className={`rounded-xl px-4 py-2 text-sm font-semibold transition cursor-pointer ${
               filterStatus === "all"
                 ? "bg-[#168044] text-white shadow-sm"
                 : "text-[#59675E] hover:bg-gray-100"
@@ -327,7 +327,7 @@ export default function NotificationsPage() {
           <button
             type="button"
             onClick={() => handleFilterChange("unread")}
-            className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold transition ${
+            className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold transition cursor-pointer ${
               filterStatus === "unread"
                 ? "bg-[#168044] text-white shadow-sm"
                 : "text-[#59675E] hover:bg-gray-100"
@@ -349,7 +349,7 @@ export default function NotificationsPage() {
           <button
             type="button"
             onClick={() => handleFilterChange("read")}
-            className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
+            className={`rounded-xl px-4 py-2 text-sm font-semibold transition cursor-pointer ${
               filterStatus === "read"
                 ? "bg-[#168044] text-white shadow-sm"
                 : "text-[#59675E] hover:bg-gray-100"
@@ -388,6 +388,7 @@ export default function NotificationsPage() {
                 refetch();
                 refetchUnreadCount();
               }}
+              className="cursor-pointer"
             >
               Retry
             </Button>
@@ -508,7 +509,7 @@ export default function NotificationsPage() {
               variant="outline"
               disabled={page <= 1}
               onClick={() => setPage((p) => Math.max(1, p - 1))}
-              className="text-xs"
+              className="text-xs cursor-pointer"
             >
               Previous
             </Button>
@@ -519,7 +520,7 @@ export default function NotificationsPage() {
               variant="outline"
               disabled={page >= totalPages}
               onClick={() => setPage((p) => p + 1)}
-              className="text-xs"
+              className="text-xs cursor-pointer"
             >
               Next
             </Button>

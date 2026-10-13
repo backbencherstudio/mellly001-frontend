@@ -7,6 +7,16 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: "https",
+        hostname: "backend.cleennconnect.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "http",
+        hostname: "backend.cleennconnect.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
         hostname: "cleennconnect.anikstudio.com",
         pathname: "/**",
       },

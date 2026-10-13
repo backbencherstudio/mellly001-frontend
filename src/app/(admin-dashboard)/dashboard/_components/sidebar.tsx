@@ -97,7 +97,7 @@ export default function DashboardSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton
               onClick={() => setOpen(true)}
-              className="text-red-600"
+              className="text-red-600 cursor-pointer"
             >
               <LogOut />
               <span>Logout</span>
@@ -116,13 +116,13 @@ export default function DashboardSidebar() {
                 </AlertDialogHeader>
 
                 <AlertDialogFooter className="w-full flex flex-col md:flex-row items-center justify-center gap-4 md:-ml-9 ml-0">
-                  <AlertDialogCancel className="md:w-[180px] w-full">
+                  <AlertDialogCancel className="md:w-[180px] w-full cursor-pointer">
                     Cancel
                   </AlertDialogCancel>
 
                   <AlertDialogAction
                     onClick={handleLogout}
-                    className=" w-full md:w-[180px] bg-red-600 hover:bg-red-700"
+                    className="w-full md:w-[180px] bg-red-600 hover:bg-red-700 cursor-pointer"
                   >
                     Logout
                   </AlertDialogAction>
