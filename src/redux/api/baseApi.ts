@@ -23,6 +23,7 @@ export const baseApi = createApi({
     "Homeowners",
     "Cleaners",
     "Bookings",
+    "Notification",
   ],
   endpoints: () => ({}),
 });

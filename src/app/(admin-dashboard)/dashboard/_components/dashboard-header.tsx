@@ -10,6 +10,9 @@ import type { RealtimeNotification } from "@/lib/socket-types";
 import {
   useGetAllNotificationQuery,
   useLazyGetAllNotificationQuery,
+  useGetUnreadNotificationCountQuery,
+  useMarkAllNotificationsAsReadMutation,
+  useMarkNotificationAsReadMutation,
 } from "@/redux/features/chattingAndSocket/socket";
 
 // ---------------------------------------------------------------------------
@@ -222,6 +225,12 @@ const DashboardHeader = () => {
     perPage: 10,
   });
 
+  const { data: unreadCountData, refetch: refetchUnreadCount } =
+    useGetUnreadNotificationCountQuery();
+
+  const [markNotificationAsRead] = useMarkNotificationAsReadMutation();
+  const [markAllNotificationsAsRead] = useMarkAllNotificationsAsReadMutation();
+
   const [fetchMore] = useLazyGetAllNotificationQuery();
 
   const firstItems: Notification[] = Array.isArray(firstData?.data) ? firstData.data : [];
@@ -231,19 +240,16 @@ const DashboardHeader = () => {
 
   // ---------------------------------------------------------------------------
   // Real-time: listen for receiveNotification (backend legacy relay).
-  // Per the integration doc, backend-generated inbox notifications are NOT
-  // currently emitted via socket — so we refetch the REST inbox whenever the
-  // relay fires.  This gives us live updates when the relay is used and also
-  // covers future backend upgrades.
   // ---------------------------------------------------------------------------
   useEffect(() => {
     if (!socket) return;
 
     const handleReceiveNotification = (notif?: RealtimeNotification) => {
-      // Reset pagination and refresh the first page of the inbox
+      // Reset pagination and refresh the first page of the inbox + unread count
       setPage(1);
       setMoreItems([]);
       refetch();
+      refetchUnreadCount();
 
       if (notif?.title || notif?.body) {
         toast.info(notif.title || "New Notification", {
@@ -256,7 +262,7 @@ const DashboardHeader = () => {
     return () => {
       socket.off("receiveNotification", handleReceiveNotification);
     };
-  }, [socket, refetch]);
+  }, [socket, refetch, refetchUnreadCount]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -276,7 +282,12 @@ const DashboardHeader = () => {
   const isItemRead = (item: Notification) =>
     Boolean(item.isRead || item.is_read || readIds.includes(item.id));
 
-  const unReadCount = list.filter((item) => !isItemRead(item)).length;
+  const unReadCount =
+    typeof unreadCountData?.count === "number"
+      ? unreadCountData.count
+      : typeof firstData?.unread_count === "number"
+      ? firstData.unread_count
+      : list.filter((item) => !isItemRead(item)).length;
 
   const meta = routeMeta[pathname] ?? { title: "Dashboard", desc: "Welcome back" };
 
@@ -302,7 +313,7 @@ const DashboardHeader = () => {
     }
   };
 
-  const markAsRead = (id: string) => {
+  const markAsRead = async (id: string) => {
     setReadIds((current) => {
       if (current.includes(id)) return current;
       const updated = [...current, id];
@@ -311,14 +322,27 @@ const DashboardHeader = () => {
       } catch {}
       return updated;
     });
+
+    try {
+      await markNotificationAsRead(id).unwrap();
+    } catch (err) {
+      console.error("Failed to mark notification as read on backend:", err);
+    }
   };
 
-  const markAllAsRead = () => {
+  const markAllAsRead = async () => {
     const allIds = Array.from(new Set([...list.map((i) => i.id), ...readIds]));
     setReadIds(allIds);
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(allIds));
     } catch {}
+
+    try {
+      await markAllNotificationsAsRead().unwrap();
+      toast.success("All notifications marked as read");
+    } catch (err) {
+      console.error("Failed to mark all notifications as read on backend:", err);
+    }
   };
 
   const handleNotificationClick = (item: Notification) => {

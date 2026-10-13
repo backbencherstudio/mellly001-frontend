@@ -2,31 +2,28 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Bell, CheckCheck, Clock, ExternalLink } from "lucide-react";
+import {
+  Bell,
+  CheckCheck,
+  CheckCircle2,
+  Clock,
+  ExternalLink,
+  Trash2,
+} from "lucide-react";
+import { toast } from "sonner";
+
+import { useSocket } from "@/hooks/useSocket";
+import type { RealtimeNotification } from "@/lib/socket-types";
 import {
   useGetAllNotificationQuery,
+  useGetUnreadNotificationCountQuery,
+  useMarkAllNotificationsAsReadMutation,
+  useMarkNotificationAsReadMutation,
+  useDeleteNotificationMutation,
+  useDeleteAllNotificationsMutation,
+  type NotificationItem,
 } from "@/redux/features/chattingAndSocket/socket";
 import { Button } from "@/components/ui/button";
-
-interface NotificationItem {
-  id: string;
-  text: string;
-  created_at: string;
-  type?: string;
-  isRead?: boolean;
-  is_read?: boolean;
-  targetUrl?: string;
-  entityId?: string;
-  bookingId?: string;
-  applicationId?: string;
-  homeownerId?: string;
-  cleanerId?: string;
-  jobApprovalId?: string;
-  dangerRequestId?: string;
-  sender?: { name?: string } | null;
-}
-
-const STORAGE_KEY = "cleen_admin_read_notification_ids";
 
 const sanitizeTerminology = (text?: string | null): string => {
   if (!text) return "";
@@ -137,23 +134,53 @@ const getNotificationHref = (item: NotificationItem): string => {
 
 export default function NotificationsPage() {
   const router = useRouter();
+  const { socket } = useSocket();
+
   const [page, setPage] = useState(1);
-  const [readIds, setReadIds] = useState<string[]>([]);
+  const [filterStatus, setFilterStatus] = useState<"all" | "unread" | "read">("all");
 
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) setReadIds(parsed);
-      }
-    } catch {}
-  }, []);
-
+  // API Queries & Mutations
   const { data, isLoading, isError, refetch } = useGetAllNotificationQuery({
     page,
     perPage: 15,
+    ...(filterStatus === "unread" ? { is_read: false } : {}),
+    ...(filterStatus === "read" ? { is_read: true } : {}),
   });
+
+  const { data: unreadCountData, refetch: refetchUnreadCount } =
+    useGetUnreadNotificationCountQuery();
+
+  const [markNotificationAsRead] = useMarkNotificationAsReadMutation();
+  const [markAllNotificationsAsRead, { isLoading: isMarkingAll }] =
+    useMarkAllNotificationsAsReadMutation();
+  const [deleteNotification] = useDeleteNotificationMutation();
+  const [deleteAllNotifications, { isLoading: isDeletingAll }] =
+    useDeleteAllNotificationsMutation();
+
+  const handleFilterChange = (status: "all" | "unread" | "read") => {
+    setFilterStatus(status);
+    setPage(1);
+  };
+
+  // Real-time socket listener
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleReceiveNotification = (notif?: RealtimeNotification) => {
+      refetch();
+      refetchUnreadCount();
+      if (notif?.title || notif?.body) {
+        toast.info(notif.title || "New Notification", {
+          description: notif.body,
+        });
+      }
+    };
+
+    socket.on("receiveNotification", handleReceiveNotification);
+    return () => {
+      socket.off("receiveNotification", handleReceiveNotification);
+    };
+  }, [socket, refetch, refetchUnreadCount]);
 
   const notifications: NotificationItem[] = Array.isArray(data?.data)
     ? data.data
@@ -161,62 +188,182 @@ export default function NotificationsPage() {
   const pagination = data?.pagination;
   const totalPages = pagination?.totalPages ?? 1;
 
+  const totalUnreadCount =
+    typeof unreadCountData?.count === "number"
+      ? unreadCountData.count
+      : typeof data?.unread_count === "number"
+      ? data.unread_count
+      : notifications.filter((i) => !i.is_read && !i.isRead).length;
+
   const isItemRead = (item: NotificationItem) => {
-    return Boolean(item.isRead || item.is_read || readIds.includes(item.id));
+    return Boolean(item.isRead || item.is_read);
   };
 
-  const markAsRead = (id: string) => {
-    setReadIds((current) => {
-      if (current.includes(id)) return current;
-      const updated = [...current, id];
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-      } catch {}
-      return updated;
-    });
-  };
-
-  const markAllAsRead = () => {
-    const allIds = Array.from(new Set([...notifications.map((i) => i.id), ...readIds]));
-    setReadIds(allIds);
+  const handleMarkAsRead = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(allIds));
-    } catch {}
+      await markNotificationAsRead(id).unwrap();
+      toast.success("Notification marked as read");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to mark as read");
+    }
   };
 
-  const handleClick = (item: NotificationItem) => {
-    markAsRead(item.id);
+  const handleMarkAllAsRead = async () => {
+    try {
+      await markAllNotificationsAsRead().unwrap();
+      toast.success("All notifications marked as read");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to mark all notifications as read");
+    }
+  };
+
+  const handleDeleteSingle = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    try {
+      await deleteNotification(id).unwrap();
+      toast.success("Notification deleted");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to delete notification");
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    if (!window.confirm("Are you sure you want to delete all notifications?")) return;
+    try {
+      await deleteAllNotifications().unwrap();
+      toast.success("All notifications deleted");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to delete all notifications");
+    }
+  };
+
+  const handleClick = async (item: NotificationItem) => {
+    if (!isItemRead(item)) {
+      try {
+        await markNotificationAsRead(item.id).unwrap();
+      } catch (err) {
+        console.error(err);
+      }
+    }
     const href = getNotificationHref(item);
     router.push(href);
   };
 
-  const unreadCount = notifications.filter((i) => !isItemRead(i)).length;
-
   return (
     <div className="w-full space-y-6">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-[#E5E7EB] bg-white p-6 shadow-sm">
+      {/* Header card */}
+      <div className="flex flex-col gap-4 rounded-2xl border border-[#E5E7EB] bg-white p-6 shadow-sm md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="text-xl font-bold text-[#173323]">Notifications</h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-xl font-bold text-[#173323]">Notifications</h2>
+            {totalUnreadCount > 0 && (
+              <span className="rounded-full bg-[#E34D4D]/10 px-2.5 py-0.5 text-xs font-bold text-[#E34D4D]">
+                {totalUnreadCount} unread
+              </span>
+            )}
+          </div>
           <p className="mt-1 text-sm text-[#718078]">
             Stay updated with booking, incident, application, and registration alerts.
           </p>
         </div>
 
-        {unreadCount > 0 && (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={markAllAsRead}
-            className="flex items-center gap-2 border-[#168044] text-[#168044] hover:bg-[#F2F7F3]"
-          >
-            <CheckCheck className="h-4 w-4" />
-            Mark all as read
-          </Button>
-        )}
+        {/* Global Action buttons */}
+        <div className="flex flex-wrap items-center gap-2">
+          {totalUnreadCount > 0 && (
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isMarkingAll}
+              onClick={handleMarkAllAsRead}
+              className="flex items-center gap-2 border-[#168044] text-[#168044] hover:bg-[#F2F7F3]"
+            >
+              <CheckCheck className="h-4 w-4" />
+              Mark all as read
+            </Button>
+          )}
+
+          {notifications.length > 0 && (
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isDeletingAll}
+              onClick={handleDeleteAll}
+              className="flex items-center gap-2 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+            >
+              <Trash2 className="h-4 w-4" />
+              Delete all
+            </Button>
+          )}
+        </div>
       </div>
 
-      {/* Notifications List */}
+      {/* Filter Tabs */}
+      <div className="flex items-center justify-between border-b border-[#E5E7EB] pb-2">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => handleFilterChange("all")}
+            className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
+              filterStatus === "all"
+                ? "bg-[#168044] text-white shadow-sm"
+                : "text-[#59675E] hover:bg-gray-100"
+            }`}
+          >
+            All
+          </button>
+          <button
+            type="button"
+            onClick={() => handleFilterChange("unread")}
+            className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold transition ${
+              filterStatus === "unread"
+                ? "bg-[#168044] text-white shadow-sm"
+                : "text-[#59675E] hover:bg-gray-100"
+            }`}
+          >
+            Unread
+            {totalUnreadCount > 0 && (
+              <span
+                className={`rounded-full px-1.5 py-0.2 text-[10px] font-bold ${
+                  filterStatus === "unread"
+                    ? "bg-white text-[#168044]"
+                    : "bg-[#E34D4D]/10 text-[#E34D4D]"
+                }`}
+              >
+                {totalUnreadCount}
+              </span>
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={() => handleFilterChange("read")}
+            className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
+              filterStatus === "read"
+                ? "bg-[#168044] text-white shadow-sm"
+                : "text-[#59675E] hover:bg-gray-100"
+            }`}
+          >
+            Read
+          </button>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => {
+            refetch();
+            refetchUnreadCount();
+          }}
+          className="text-xs font-semibold text-[#168044] hover:underline cursor-pointer"
+        >
+          Refresh
+        </button>
+      </div>
+
+      {/* Notifications List Card */}
       <div className="rounded-2xl border border-[#E5E7EB] bg-white shadow-sm overflow-hidden">
         {isLoading ? (
           <div className="space-y-4 p-6">
@@ -227,7 +374,13 @@ export default function NotificationsPage() {
         ) : isError ? (
           <div className="flex flex-col items-center gap-3 py-16 text-center">
             <p className="text-sm text-red-600">Failed to load notifications.</p>
-            <Button variant="outline" onClick={() => refetch()}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                refetch();
+                refetchUnreadCount();
+              }}
+            >
               Retry
             </Button>
           </div>
@@ -236,7 +389,13 @@ export default function NotificationsPage() {
             <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#F2F7F3] text-[#7A9A84]">
               <Bell className="h-6 w-6" />
             </div>
-            <p className="text-base font-semibold text-[#173323]">No notifications found</p>
+            <p className="text-base font-semibold text-[#173323]">
+              {filterStatus === "unread"
+                ? "No unread notifications"
+                : filterStatus === "read"
+                ? "No read notifications"
+                : "No notifications found"}
+            </p>
             <p className="mt-1 text-sm text-gray-500">You are all caught up!</p>
           </div>
         ) : (
@@ -256,6 +415,7 @@ export default function NotificationsPage() {
                     read ? "bg-white" : "bg-[#F7FBF8]/80"
                   }`}
                 >
+                  {/* Left content */}
                   <div className="flex items-start gap-3.5 min-w-0 flex-1">
                     <span
                       className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${
@@ -284,8 +444,31 @@ export default function NotificationsPage() {
                     </div>
                   </div>
 
-                  <div className="flex shrink-0 items-center text-[#718078] group-hover:text-[#168044] transition-colors">
-                    <ExternalLink className="h-4 w-4" />
+                  {/* Actions on row */}
+                  <div className="flex shrink-0 items-center gap-2">
+                    {!read && (
+                      <button
+                        type="button"
+                        onClick={(e) => handleMarkAsRead(e, item.id)}
+                        title="Mark as read"
+                        className="rounded-lg p-1.5 text-gray-400 hover:bg-[#F2F7F3] hover:text-[#168044] transition-colors cursor-pointer"
+                      >
+                        <CheckCircle2 className="h-4 w-4" />
+                      </button>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={(e) => handleDeleteSingle(e, item.id)}
+                      title="Delete notification"
+                      className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors cursor-pointer"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+
+                    <div className="pl-1 text-[#718078] group-hover:text-[#168044] transition-colors">
+                      <ExternalLink className="h-4 w-4" />
+                    </div>
                   </div>
                 </div>
               );
