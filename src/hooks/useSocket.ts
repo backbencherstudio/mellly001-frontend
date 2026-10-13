@@ -1,22 +1,27 @@
 "use client";
 
 import { createContext, useContext } from "react";
-import type { Socket } from "socket.io-client";
+import type { AppSocket } from "@/lib/Socket";
 
 interface SocketContextValue {
-  socket: Socket | null;
+  /** The typed Socket.IO instance — null before connection is established */
+  socket: AppSocket | null;
   connected: boolean;
   id: string | null;
-  rooms: string[];
 }
 
 const SocketContext = createContext<SocketContextValue>({
   socket: null,
   connected: false,
   id: null,
-  rooms: [],
 });
 
+/**
+ * Consume the shared socket from SocketProvider.
+ *
+ * @example
+ * const { socket, connected } = useSocket();
+ */
 export const useSocket = () => useContext(SocketContext);
 
 export { SocketContext };
